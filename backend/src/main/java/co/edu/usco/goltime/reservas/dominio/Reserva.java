@@ -98,6 +98,26 @@ public class Reserva {
         return r;
     }
 
+    /**
+     * Reserva interna de un partido de torneo: nace CONFIRMADA, sin cliente y sin costo (la inscripción del torneo
+     * se cobra aparte). Ocupa la cancha como cualquier otra reserva.
+     */
+    public static Reserva crearParaTorneo(String codigo, long canchaId, Instant inicio, Instant fin, String descripcion, long adminId, Instant ahora) {
+        Reserva r = new Reserva();
+        r.codigo = codigo;
+        r.canchaId = canchaId;
+        r.inicio = inicio;
+        r.fin = fin;
+        r.precio = Precio.sinDescuento(0);
+        r.nombreEquipo = limpiar(descripcion);
+        r.estado = EstadoReserva.CONFIRMADA;
+        r.origen = OrigenReserva.TORNEO;
+        r.estadoPago = EstadoPago.PAGADO;
+        r.aprobadaPor = adminId;
+        r.fechaAprobacion = ahora;
+        return r;
+    }
+
     /** Reconstruye una reserva existente desde el almacenamiento. */
     public static Reserva reconstruir(Long id, String codigo, Long clienteId, Long clienteMostradorId, long canchaId,
             Instant inicio, Instant fin, EstadoReserva estado, OrigenReserva origen, Precio precio, EstadoPago estadoPago,

@@ -182,3 +182,12 @@ CREATE TABLE eventos_partido (
 );
 CREATE INDEX ix_eventos_partido ON eventos_partido (partido_id, minuto);
 CREATE INDEX ix_eventos_jugador ON eventos_partido (jugador_id, tipo);
+
+-- Los partidos de torneo reservan la cancha con una reserva interna (origen TORNEO) que no pertenece a ningún cliente.
+ALTER TABLE reservas DROP CONSTRAINT ck_reservas_cliente;
+ALTER TABLE reservas ADD CONSTRAINT ck_reservas_cliente CHECK (
+    (origen = 'TORNEO' AND cliente_id IS NULL AND cliente_mostrador_id IS NULL)
+    OR (origen <> 'TORNEO' AND (cliente_id IS NOT NULL)::int + (cliente_mostrador_id IS NOT NULL)::int = 1));
+
+-- Un documento identifica a un único jugador (se reutiliza entre equipos y torneos).
+CREATE UNIQUE INDEX uq_jugadores_documento ON jugadores (documento) WHERE documento IS NOT NULL;
