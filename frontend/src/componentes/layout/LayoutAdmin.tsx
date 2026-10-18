@@ -12,6 +12,8 @@ const enlaces = [
   { a: '/admin/agenda', texto: 'Agenda' },
   { a: '/admin/reservas', texto: 'Reservas' },
   { a: '/admin/bloqueos', texto: 'Bloqueos' },
+  { a: '/admin/torneos', texto: 'Torneos' },
+  { a: '/admin/equipos', texto: 'Equipos' },
   { a: '/admin/sedes', texto: 'Sedes' },
   { a: '/admin/canchas', texto: 'Canchas' },
   { a: '/admin/festivos', texto: 'Festivos' },
