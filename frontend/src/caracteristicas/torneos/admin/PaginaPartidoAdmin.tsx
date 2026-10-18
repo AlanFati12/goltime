@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -389,7 +390,7 @@ function PanelEventos({ detalle, torneoId }: { detalle: DetallePartido; torneoId
 
   return (
     <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Registrar eventos</h2>
+      <h2 className="text-base font-semibold">Registrar eventos</h2>
       <p className="text-texto-suave text-xs">
         Los goles registrados por equipo no pueden superar el marcador. Una asistencia se liga a un
         gol de otro jugador del mismo equipo.
@@ -510,9 +511,10 @@ export function PaginaPartidoAdmin() {
     <div className="flex max-w-4xl flex-col gap-6">
       <Link
         to={t ? `/admin/torneos/${t.id}` : '/admin/torneos'}
-        className="text-primario text-sm hover:underline"
+        className="text-texto-suave hover:text-texto inline-flex items-center gap-1.5 self-start text-sm font-medium"
       >
-        ← {t?.nombre ?? 'Torneos'}
+        <ArrowLeft className="size-4" aria-hidden />
+        {t?.nombre ?? 'Torneos'}
       </Link>
       {partido.isPending && <Cargando texto="Cargando partido…" />}
       {partido.isError && <Alerta tipo="error">{mensajeDeError(partido.error)}</Alerta>}
@@ -525,7 +527,7 @@ export function PaginaPartidoAdmin() {
               previos.
             </Alerta>
           )}
-          <Tarjeta className="flex flex-wrap gap-2">
+          <Tarjeta className="flex flex-wrap gap-2 p-4 sm:p-4">
             {activo && !jugado && p.estado !== 'BYE' && (
               <Boton onClick={() => setDialogo('programar')}>
                 {p.inicio ? 'Reprogramar' : 'Programar'}

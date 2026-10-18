@@ -16,21 +16,23 @@ function Lista({
 }) {
   return (
     <Tarjeta className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold">{titulo}</h3>
+      <h3 className="text-base font-semibold">{titulo}</h3>
       {filas.length === 0 ? (
         <p className="text-texto-suave text-sm">{vacio}</p>
       ) : (
-        <ol className="flex flex-col gap-1 text-sm">
+        <ol className="flex flex-col gap-2 text-sm">
           {filas.map((f, i) => (
             <li key={f.clave} className="flex items-center justify-between gap-2">
               <span>
                 <span className="text-texto-suave mr-2 inline-block w-5">{i + 1}.</span>
-                <Link to={`/jugadores/${f.jugadorId}`} className="font-medium hover:underline">
+                <Link to={`/jugadores/${f.jugadorId}`} className="hover:text-primario font-medium">
                   {f.jugador}
                 </Link>
                 <span className="text-texto-suave"> · {f.equipo}</span>
               </span>
-              <span className="font-bold">{f.valor}</span>
+              <span className="bg-tenue rounded-full px-2 text-xs font-bold tabular-nums">
+                {f.valor}
+              </span>
             </li>
           ))}
         </ol>

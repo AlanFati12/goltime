@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { useAccionesSolicitud } from '@/caracteristicas/extras/consultas'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -11,6 +12,7 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { MenuDesplegable } from '@/componentes/ui/MenuDesplegable'
+import { estilosBoton } from '@/componentes/ui/estilosBoton'
 import { estiloItemMenu } from '@/componentes/ui/estilosMenu'
 import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Modal } from '@/componentes/ui/Modal'
@@ -133,7 +135,7 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-base font-semibold">
         Equipos inscritos ({detalle.inscripciones.length}
         {t.cupoEquipos ? ` de ${t.cupoEquipos}` : ''})
       </h2>
@@ -141,7 +143,7 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
         {detalle.inscripciones.map((i) => (
           <li
             key={i.id}
-            className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
+            className="border-borde/70 flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0 last:pb-0"
           >
             <span className="flex items-center gap-2">
               <span
@@ -244,13 +246,13 @@ function SeccionSolicitudes({ detalle }: { detalle: DetalleTorneo }) {
   if (solicitudes.length === 0) return null
   const error = (e: unknown) => avisar.error(mensajeDeError(e))
   return (
-    <Tarjeta className="border-alerta flex flex-col gap-3 border-2">
-      <h2 className="text-lg font-semibold">Solicitudes de inscripción ({solicitudes.length})</h2>
+    <Tarjeta className="flex flex-col gap-3 border-amber-300 bg-amber-50/40">
+      <h2 className="text-base font-semibold">Solicitudes de inscripción ({solicitudes.length})</h2>
       <ul className="flex flex-col gap-2">
         {solicitudes.map((s) => (
           <li
             key={s.id}
-            className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
+            className="border-borde/70 flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0 last:pb-0"
           >
             <span>
               <span className="font-medium">{s.equipo}</span>{' '}
@@ -302,7 +304,7 @@ function SeccionFixture({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Fixture</h2>
+      <h2 className="text-base font-semibold">Fixture</h2>
       <p className="text-texto-suave text-sm">
         {hay
           ? `${detalle.partidosTotales} partidos generados, ${detalle.partidosJugados} jugados.`
@@ -386,15 +388,13 @@ export function PaginaTorneoGestion() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link to="/admin/torneos" className="text-primario text-sm hover:underline">
-        ← Torneos
-      </Link>
       {isPending && <Cargando texto="Cargando torneo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
           <EncabezadoPagina
             titulo={data.torneo.nombre}
+            volver={{ a: '/admin/torneos', texto: 'Torneos' }}
             acciones={
               <>
                 {ACCIONES[data.torneo.estado]
@@ -411,7 +411,13 @@ export function PaginaTorneoGestion() {
                 {!terminado && (
                   <MenuDesplegable
                     etiqueta="Más acciones del torneo"
-                    boton={<span className="px-2 text-sm font-medium">Más ▾</span>}
+                    claseBoton={estilosBoton({ variante: 'secundario' })}
+                    boton={
+                      <>
+                        Más
+                        <ChevronDown aria-hidden />
+                      </>
+                    }
                   >
                     <Link
                       role="menuitem"

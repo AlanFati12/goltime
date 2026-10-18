@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { Alerta } from './Alerta'
 import { Boton } from './Boton'
 import { CampoTexto } from './Campo'
 import { Modal } from './Modal'
@@ -45,12 +46,8 @@ export function ModalMotivo({
   return (
     <Modal abierto titulo={titulo} alCerrar={alCerrar}>
       <div className="flex flex-col gap-4">
-        <p className="text-sm">{descripcion}</p>
-        {advertencia && (
-          <p className="border-alerta/40 bg-alerta/10 text-alerta rounded-boton border px-3 py-2 text-sm">
-            {advertencia}
-          </p>
-        )}
+        <p className="text-texto-suave text-sm">{descripcion}</p>
+        {advertencia && <Alerta tipo="aviso">{advertencia}</Alerta>}
         <CampoTexto
           etiqueta={
             motivoObligatorio ? `${etiquetaMotivo} (obligatorio)` : `${etiquetaMotivo} (opcional)`
@@ -63,7 +60,7 @@ export function ModalMotivo({
               : undefined
           }
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-1">
           <Boton variante="secundario" onClick={alCerrar}>
             Volver
           </Boton>

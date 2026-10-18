@@ -1,10 +1,13 @@
+import { Gift } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Insignia } from '@/componentes/ui/Insignia'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 
@@ -24,19 +27,29 @@ export function PaginaMisPremios() {
   const disponibles = data?.premios.filter((p) => p.estado === 'DISPONIBLE') ?? []
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Mis premios</h1>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Mis premios"
+        descripcion="Cada reserva completada te acerca a un descuento."
+      />
       {isPending && <Cargando texto="Cargando tus premios…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && data.progreso.length === 0 && (
-        <Tarjeta className="text-texto-suave text-sm">
-          Por ahora no hay premios de fidelidad activos. Vuelve pronto.
-        </Tarjeta>
+        <EstadoVacio
+          icono={Gift}
+          titulo="No hay premios de fidelidad activos"
+          descripcion="Vuelve pronto."
+        />
       )}
       {data?.progreso.map((p) => (
         <Tarjeta key={p.regla.id} className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">{p.regla.nombre}</h2>
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <Gift className="size-5" aria-hidden />
+              </span>
+              <h2 className="text-base font-semibold">{p.regla.nombre}</h2>
+            </div>
             <Insignia tono="verde">{p.regla.beneficio} de descuento</Insignia>
           </div>
           <div
@@ -45,16 +58,16 @@ export function PaginaMisPremios() {
             aria-valuemax={p.regla.reservasRequeridas}
             aria-valuenow={p.enCiclo}
             aria-label={`Progreso hacia ${p.regla.nombre}`}
-            className="bg-borde h-3 overflow-hidden rounded-full"
+            className="bg-tenue h-2.5 overflow-hidden rounded-full"
           >
             <div
-              className="bg-primario h-full"
+              className="bg-primario h-full rounded-full transition-all"
               style={{ width: `${(100 * p.enCiclo) / p.regla.reservasRequeridas}%` }}
             />
           </div>
-          <p className="text-sm">
+          <p className="text-texto-suave text-sm">
             {p.enCiclo} de {p.regla.reservasRequeridas} reservas completadas.{' '}
-            <strong>
+            <strong className="text-texto font-semibold">
               {p.faltan === 1 ? 'Te falta 1 reserva' : `Te faltan ${p.faltan} reservas`}
             </strong>{' '}
             para ganar este premio.
@@ -76,14 +89,11 @@ export function PaginaMisPremios() {
       )}
 
       {data && data.premios.length > 0 && (
-        <Tarjeta className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">Premios ganados</h2>
-          <ul className="flex flex-col gap-2 text-sm">
+        <Tarjeta className="flex flex-col">
+          <TituloTarjeta titulo="Premios ganados" className="mb-2" />
+          <ul className="divide-borde flex flex-col divide-y text-sm">
             {data.premios.map((p) => (
-              <li
-                key={p.id}
-                className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
-              >
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                 <span>
                   <span className="font-medium">{p.nombre}</span> · {p.beneficio}
                   <span className="text-texto-suave block text-xs">
@@ -94,10 +104,7 @@ export function PaginaMisPremios() {
                 <span className="flex items-center gap-2">
                   <Insignia tono={TONO[p.estado]}>{ETIQUETA[p.estado]}</Insignia>
                   {p.reservaUsoId && (
-                    <Link
-                      to={`/mis-reservas/${p.reservaUsoId}`}
-                      className="text-primario text-xs hover:underline"
-                    >
+                    <Link to={`/mis-reservas/${p.reservaUsoId}`} className="enlace text-xs">
                       Ver reserva
                     </Link>
                   )}

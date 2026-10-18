@@ -13,7 +13,7 @@ function Cruce({ p, ruta }: { p: Partido; ruta: (p: Partido) => string }) {
   return (
     <Link
       to={ruta(p)}
-      className="border-borde bg-superficie rounded-boton hover:border-primario flex w-48 flex-col border text-sm shadow-sm"
+      className="border-borde bg-superficie rounded-boton hover:border-primario/50 shadow-suave flex w-52 flex-col overflow-hidden border text-sm transition-colors"
       aria-label={`${nombreLado(p.local)} contra ${nombreLado(p.visitante)}: ${marcador(p)}`}
     >
       {filas.map((f, i) => (

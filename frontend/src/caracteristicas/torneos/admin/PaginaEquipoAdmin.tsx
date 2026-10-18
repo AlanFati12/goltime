@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
@@ -8,6 +8,7 @@ import { Campo } from '@/componentes/ui/Campo'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 
 import { useAccionesEquipo, useBuscarJugadores, useEquipo } from '../consultas'
@@ -42,7 +43,7 @@ function DatosEquipo({ equipo }: { equipo: Equipo }) {
   return (
     <Tarjeta className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Datos del equipo</h2>
+        <h2 className="text-base font-semibold">Datos del equipo</h2>
         {!equipo.activo && <Insignia tono="rojo">Desactivado</Insignia>}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -115,7 +116,7 @@ function AgregarJugador({ equipoId }: { equipoId: number }) {
 
   return (
     <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Agregar jugador</h2>
+      <h2 className="text-base font-semibold">Agregar jugador</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Campo etiqueta="Nombres" value={nombres} onChange={(e) => setNombres(e.target.value)} />
         <Campo
@@ -195,18 +196,20 @@ export function PaginaEquipoAdmin() {
   const { quitarJugador } = useAccionesEquipo()
 
   return (
-    <div className="flex flex-col gap-4">
-      <Link to="/admin/equipos" className="text-primario text-sm hover:underline">
-        ← Equipos
-      </Link>
+    <div className="flex flex-col gap-6">
       {isPending && <Cargando texto="Cargando equipo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="text-2xl font-bold sm:text-3xl">{data.equipo.nombre}</h1>
+          <EncabezadoPagina
+            titulo={data.equipo.nombre}
+            volver={{ a: '/admin/equipos', texto: 'Equipos' }}
+          />
           <DatosEquipo key={data.equipo.id + data.equipo.nombre} equipo={data.equipo} />
           <Tarjeta className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold">Plantilla habitual ({data.plantilla.length})</h2>
+            <h2 className="text-base font-semibold">
+              Plantilla habitual ({data.plantilla.length})
+            </h2>
             <p className="text-texto-suave text-xs">
               Al inscribir el equipo en un torneo se copia esta plantilla; los cambios posteriores
               no afectan torneos ya inscritos.
@@ -215,7 +218,7 @@ export function PaginaEquipoAdmin() {
               {data.plantilla.map((j) => (
                 <li
                   key={j.id}
-                  className="border-borde flex items-center justify-between gap-2 border-b py-1"
+                  className="border-borde/70 flex items-center justify-between gap-2 border-b py-2 last:border-0"
                 >
                   <span>
                     <span className="text-texto-suave inline-block w-8">{j.dorsal ?? ''}</span>

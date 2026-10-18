@@ -4,11 +4,13 @@ import type { HorarioDia } from './tipos'
 /** Horario semanal de solo lectura. */
 export function HorarioTabla({ dias }: { dias: HorarioDia[] }) {
   return (
-    <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1 text-sm">
+    <dl className="divide-borde/70 divide-y text-sm">
       {dias.map((d) => (
-        <div key={d.diaSemana} className="contents">
+        <div key={d.diaSemana} className="flex justify-between gap-3 py-1.5">
           <dt className="text-texto-suave">{NOMBRES_DIAS[d.diaSemana - 1]}</dt>
-          <dd>{d.cerrado ? 'Cerrado' : `${d.apertura} – ${d.cierre}`}</dd>
+          <dd className={d.cerrado ? 'text-texto-suave' : 'font-medium tabular-nums'}>
+            {d.cerrado ? 'Cerrado' : `${d.apertura} – ${d.cierre}`}
+          </dd>
         </div>
       ))}
     </dl>

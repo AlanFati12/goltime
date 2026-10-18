@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
@@ -10,6 +11,7 @@ import { Insignia } from '@/componentes/ui/Insignia'
 import { Modal } from '@/componentes/ui/Modal'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 
@@ -134,19 +136,20 @@ export function PaginaPremiosAdmin() {
   const [aRevocar, setARevocar] = useState<Premio | null>(null)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Premios de fidelidad</h1>
-        <Boton onClick={() => setRegla({ regla: null })}>Nueva regla</Boton>
-      </div>
-      <p className="text-texto-suave max-w-3xl text-sm">
-        Cada cierto número de reservas completadas, el cliente gana un descuento para una reserva
-        posterior. Si el administrador corrige una reserva completada y el cliente se queda sin las
-        reservas necesarias, el premio sin usar se revoca solo.
-      </p>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Premios de fidelidad"
+        descripcion="Cada cierto número de reservas completadas, el cliente gana un descuento para una reserva posterior. Si se corrige una reserva completada y el cliente se queda sin las reservas necesarias, el premio sin usar se revoca solo."
+        acciones={
+          <Boton onClick={() => setRegla({ regla: null })}>
+            <Plus aria-hidden />
+            Nueva regla
+          </Boton>
+        }
+      />
 
       <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Reglas</h2>
+        <h2 className="text-base font-semibold">Reglas</h2>
         {reglas.isPending && <Cargando texto="Cargando reglas…" />}
         {reglas.isError && <Alerta tipo="error">{mensajeDeError(reglas.error)}</Alerta>}
         {reglas.data?.length === 0 && (
@@ -176,7 +179,7 @@ export function PaginaPremiosAdmin() {
 
       <Tarjeta className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-lg font-semibold">Premios otorgados</h2>
+          <h2 className="text-base font-semibold">Premios otorgados</h2>
           <CampoSelect
             className="w-44"
             etiqueta="Estado"

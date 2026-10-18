@@ -1,3 +1,4 @@
+import { RotateCcw, ScrollText } from 'lucide-react'
 import { useState } from 'react'
 
 import {
@@ -12,6 +13,9 @@ import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Paginacion } from '@/componentes/ui/Paginacion'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 
@@ -33,15 +37,13 @@ export function PaginaAuditoria() {
     setFiltros((f) => ({ ...f, pagina: 0, ...parcial }))
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-bold sm:text-3xl">Auditoría</h1>
-        <p className="text-texto-suave text-sm">
-          Quién hizo qué sobre cualquier dato del negocio, de lo más reciente a lo más antiguo.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Auditoría"
+        descripcion="Quién hizo qué sobre cualquier dato del negocio, de lo más reciente a lo más antiguo."
+      />
 
-      <Tarjeta className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <Tarjeta className="grid gap-3 p-4 sm:grid-cols-2 sm:p-4 lg:grid-cols-5">
         <CampoSelect
           etiqueta="Entidad"
           value={filtros.entidad}
@@ -77,7 +79,8 @@ export function PaginaAuditoria() {
           onChange={(e) => cambiar({ hasta: e.target.value })}
         />
         <div className="flex items-end">
-          <Boton variante="secundario" onClick={() => setFiltros(INICIALES)}>
+          <Boton variante="fantasma" onClick={() => setFiltros(INICIALES)}>
+            <RotateCcw aria-hidden />
             Limpiar filtros
           </Boton>
         </div>
@@ -86,30 +89,32 @@ export function PaginaAuditoria() {
       {isPending && <Cargando texto="Cargando bitácora…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          No hay registros con esos filtros.
-        </Tarjeta>
+        <EstadoVacio icono={ScrollText} titulo="No hay registros con esos filtros" />
       )}
 
       {data && data.contenido.length > 0 && (
-        <Tarjeta className={isFetching ? 'overflow-x-auto p-0 opacity-60' : 'overflow-x-auto p-0'}>
-          <table className="w-full text-left text-sm">
-            <thead className="border-borde text-texto-suave border-b text-xs uppercase">
+        <Tarjeta
+          className={
+            isFetching ? 'overflow-x-auto p-0 opacity-60 sm:p-0' : 'overflow-x-auto p-0 sm:p-0'
+          }
+        >
+          <table className="tabla">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Cuándo</th>
-                <th className="px-4 py-3">Quién</th>
-                <th className="px-4 py-3">Qué</th>
-                <th className="px-4 py-3">Motivo</th>
-                <th className="px-4 py-3 text-right">Detalle</th>
+                <th>Cuándo</th>
+                <th>Quién</th>
+                <th>Qué</th>
+                <th>Motivo</th>
+                <th className="text-right">Detalle</th>
               </tr>
             </thead>
             <tbody>
               {data.contenido.map((r) => (
-                <tr key={r.id} className="border-borde border-b align-top last:border-0">
+                <tr key={r.id} className="align-top">
                   <td className="px-4 py-3 whitespace-nowrap capitalize">
                     {formatearFechaHora(r.fecha)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div>
                       {r.actorNombre ?? (r.actorRol === 'SISTEMA' ? 'Sistema' : 'Desconocido')}
                     </div>
@@ -125,15 +130,15 @@ export function PaginaAuditoria() {
                       {r.actorRol.toLowerCase()}
                     </Insignia>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="font-medium">{legible(r.accion)}</div>
                     <div className="text-texto-suave text-xs">
                       {r.entidad}
                       {r.entidadId ? ` #${r.entidadId}` : ''}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{r.motivo ?? '—'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td>{r.motivo ?? '—'}</td>
+                  <td className="text-right">
                     {r.cambios && (
                       <Boton
                         tamano="sm"
@@ -160,30 +165,14 @@ export function PaginaAuditoria() {
         </Tarjeta>
       )}
 
-      {data && data.totalPaginas > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-texto-suave">
-            Página {data.pagina + 1} de {data.totalPaginas} · {data.totalElementos} registros
-          </span>
-          <div className="flex gap-2">
-            <Boton
-              tamano="sm"
-              variante="secundario"
-              disabled={data.pagina === 0}
-              onClick={() => setFiltros((f) => ({ ...f, pagina: f.pagina - 1 }))}
-            >
-              Anterior
-            </Boton>
-            <Boton
-              tamano="sm"
-              variante="secundario"
-              disabled={data.pagina + 1 >= data.totalPaginas}
-              onClick={() => setFiltros((f) => ({ ...f, pagina: f.pagina + 1 }))}
-            >
-              Siguiente
-            </Boton>
-          </div>
-        </div>
+      {data && (
+        <Paginacion
+          pagina={data.pagina}
+          totalPaginas={data.totalPaginas}
+          totalElementos={data.totalElementos}
+          unidad="registros"
+          alCambiar={(pagina) => setFiltros((f) => ({ ...f, pagina }))}
+        />
       )}
     </div>
   )

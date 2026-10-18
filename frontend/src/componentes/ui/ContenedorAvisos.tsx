@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { CircleAlert, CircleCheck, X } from 'lucide-react'
 
 import { useAvisos } from './almacenAvisos'
 
@@ -13,19 +13,21 @@ export function ContenedorAvisos() {
         <div
           key={a.id}
           role={a.tipo === 'error' ? 'alert' : 'status'}
-          className={cn(
-            'rounded-boton flex items-start justify-between gap-3 px-4 py-3 text-sm text-white shadow-lg',
-            a.tipo === 'exito' ? 'bg-primario-oscuro' : 'bg-peligro',
-          )}
+          className="border-borde bg-superficie rounded-tarjeta shadow-flotante flex items-start gap-3 border px-4 py-3 text-sm"
         >
-          <span>{a.texto}</span>
+          {a.tipo === 'exito' ? (
+            <CircleCheck className="text-exito mt-px size-5 shrink-0" aria-hidden />
+          ) : (
+            <CircleAlert className="text-peligro mt-px size-5 shrink-0" aria-hidden />
+          )}
+          <span className="flex-1">{a.texto}</span>
           <button
             type="button"
             onClick={() => quitar(a.id)}
             aria-label="Cerrar aviso"
-            className="opacity-80 hover:opacity-100"
+            className="text-texto-suave hover:text-texto"
           >
-            ×
+            <X className="size-4" aria-hidden />
           </button>
         </div>
       ))}

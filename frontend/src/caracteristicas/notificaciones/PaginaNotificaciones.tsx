@@ -1,3 +1,4 @@
+import { BellOff, CheckCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -6,7 +7,9 @@ import { useAccionesNotificaciones, useNotificaciones } from '@/caracteristicas/
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
+import { Paginacion } from '@/componentes/ui/Paginacion'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 import { cn } from '@/lib/utils'
@@ -21,44 +24,54 @@ export function PaginaNotificaciones() {
   const { leer, leerTodas } = useAccionesNotificaciones()
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Notificaciones</h1>
-        <Boton
-          variante="secundario"
-          tamano="sm"
-          onClick={() => leerTodas.mutate()}
-          disabled={leerTodas.isPending}
-        >
-          Marcar todas como leídas
-        </Boton>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Notificaciones"
+        acciones={
+          <Boton
+            variante="secundario"
+            tamano="sm"
+            onClick={() => leerTodas.mutate()}
+            disabled={leerTodas.isPending}
+          >
+            <CheckCheck aria-hidden />
+            Marcar todas como leídas
+          </Boton>
+        }
+      />
       {isPending && <Cargando />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          No tienes notificaciones.
-        </Tarjeta>
+        <EstadoVacio icono={BellOff} titulo="No tienes notificaciones" />
       )}
-      <ul className="flex flex-col gap-2">
+      <ul className="border-borde bg-superficie rounded-tarjeta shadow-suave divide-borde flex flex-col divide-y overflow-hidden border empty:hidden">
         {data?.contenido.map((n) => {
           const ruta = rutaDeNotificacion(n, rol)
           return (
             <li key={n.id}>
-              <Tarjeta
+              <div
                 className={cn(
-                  'flex items-start justify-between gap-3 p-4',
-                  !n.leida && 'border-primario',
+                  'flex items-start justify-between gap-3 px-5 py-4',
+                  !n.leida && 'bg-primario-claro/40',
                 )}
               >
-                <div>
-                  <p className="font-medium">{n.titulo}</p>
-                  <p className="text-texto-suave text-sm">{n.mensaje}</p>
-                  <p className="text-texto-suave mt-1 text-xs capitalize">
-                    {formatearFechaHora(n.creadoEn)}
-                  </p>
+                <div className="flex gap-3">
+                  <span
+                    className={cn(
+                      'mt-2 size-2 shrink-0 rounded-full',
+                      n.leida ? 'bg-transparent' : 'bg-primario',
+                    )}
+                    aria-label={n.leida ? undefined : 'Sin leer'}
+                  />
+                  <div>
+                    <p className="font-medium">{n.titulo}</p>
+                    <p className="text-texto-suave text-sm">{n.mensaje}</p>
+                    <p className="text-texto-suave mt-1 text-xs capitalize">
+                      {formatearFechaHora(n.creadoEn)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   {ruta && (
                     <Boton
                       tamano="sm"
@@ -74,30 +87,13 @@ export function PaginaNotificaciones() {
                     </Boton>
                   )}
                 </div>
-              </Tarjeta>
+              </div>
             </li>
           )
         })}
       </ul>
-      {data && data.totalPaginas > 1 && (
-        <div className="flex justify-between text-sm">
-          <Boton
-            tamano="sm"
-            variante="secundario"
-            disabled={pagina === 0}
-            onClick={() => setPagina((p) => p - 1)}
-          >
-            Anterior
-          </Boton>
-          <Boton
-            tamano="sm"
-            variante="secundario"
-            disabled={pagina + 1 >= data.totalPaginas}
-            onClick={() => setPagina((p) => p + 1)}
-          >
-            Siguiente
-          </Boton>
-        </div>
+      {data && (
+        <Paginacion pagina={data.pagina} totalPaginas={data.totalPaginas} alCambiar={setPagina} />
       )}
     </div>
   )

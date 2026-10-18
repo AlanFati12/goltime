@@ -18,3 +18,9 @@
 
 - **Prompt:** "Aprobado. Expiración de pendientes: 12 h o 2 h antes del inicio. Haz git init local y empieza la Fase 0."
 - **Resultado:** la Fase 0 descrita en [README.md](README.md).
+
+## Frontend de pruebas más limpio (18/oct/2026)
+
+- **Prompt:** "Se realizó este proyecto que tiene un frontend que cambiaré pero quiero probar la página con un front que se vea más limpio, más agradable e intuitivo, así que por favor revisa las pantallas que hay y modifica todo el frontend […]".
+- **Resultado:** nuevo sistema visual y rediseño de todas las pantallas en la rama `feat/frontend-limpio`; ver [ADR 0014](../decisiones/0014-frontend-de-pruebas-limpio.md).
+- **Qué se verificó:** `npm test`, `npm run lint` y `npm run build` pasan; revisión visual en el navegador como administrador (escritorio y móvil). Las pantallas solo de cliente (mis reservas, favoritas, premios) no se revisaron con sesión de cliente.

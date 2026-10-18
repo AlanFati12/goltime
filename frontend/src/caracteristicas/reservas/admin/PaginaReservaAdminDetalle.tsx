@@ -8,6 +8,7 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Migas } from '@/componentes/ui/Migas'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
 
@@ -45,7 +46,7 @@ export function PaginaReservaAdminDetalle() {
             ? 'Esta reserva no existe.'
             : mensajeDeError(error)}
         </Alerta>
-        <Link to="/admin/reservas" className="text-primario text-sm underline">
+        <Link to="/admin/reservas" className="enlace text-sm">
           Volver a reservas
         </Link>
       </div>
@@ -71,13 +72,8 @@ export function PaginaReservaAdminDetalle() {
     )
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-      <nav aria-label="Ruta" className="text-texto-suave text-sm">
-        <Link to="/admin/reservas" className="hover:underline">
-          Reservas
-        </Link>{' '}
-        / {r.codigo}
-      </nav>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      <Migas items={[{ texto: 'Reservas', a: '/admin/reservas' }, { texto: r.codigo }]} />
 
       <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <Tarjeta className="flex flex-col gap-4">
@@ -145,7 +141,7 @@ export function PaginaReservaAdminDetalle() {
         </Tarjeta>
 
         <Tarjeta className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Pagos</h2>
+          <h2 className="text-base font-semibold">Pagos</h2>
           <div className="flex items-center justify-between">
             <span className="text-sm">
               Valor <strong>{formatearCOP(r.precioFinal)}</strong>
@@ -243,7 +239,7 @@ export function PaginaReservaAdminDetalle() {
       </div>
 
       <Tarjeta>
-        <h2 className="mb-3 text-lg font-semibold">Historial</h2>
+        <h2 className="mb-3 text-base font-semibold">Historial</h2>
         <ol className="border-borde flex flex-col gap-3 border-l pl-4 text-sm">
           {r.historial?.map((h) => (
             <li key={h.id} className="relative">

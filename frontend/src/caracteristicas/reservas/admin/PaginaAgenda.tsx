@@ -1,3 +1,4 @@
+import { Building2, ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -8,6 +9,9 @@ import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
+import { Segmentado } from '@/componentes/ui/Pestanas'
 import { mensajeDeError } from '@/lib/api'
 import {
   aIsoBogota,
@@ -25,11 +29,12 @@ import { useAgenda } from './consultas'
 
 const PX_POR_HORA = 56
 const COLORES: Record<string, string> = {
-  PENDIENTE: 'border-alerta bg-alerta/15 text-texto',
-  CONFIRMADA: 'border-primario bg-primario-claro text-primario-oscuro',
-  COMPLETADA: 'border-borde bg-borde/60 text-texto-suave',
-  NO_ASISTIO: 'border-peligro bg-peligro/10 text-peligro',
-  BLOQUEO: 'border-texto-suave bg-texto-suave/20 text-texto',
+  PENDIENTE: 'border-amber-500 bg-amber-50 text-amber-900 hover:bg-amber-100',
+  CONFIRMADA: 'border-primario bg-emerald-50 text-primario-oscuro hover:bg-emerald-100',
+  COMPLETADA: 'border-slate-300 bg-tenue text-texto-suave hover:bg-slate-200',
+  NO_ASISTIO: 'border-peligro bg-red-50 text-peligro hover:bg-red-100',
+  BLOQUEO:
+    'border-slate-500 bg-[repeating-linear-gradient(45deg,#f1f5f9_0,#f1f5f9_6px,#e2e8f0_6px,#e2e8f0_12px)] text-texto',
 }
 
 interface Cuadro {
@@ -146,26 +151,24 @@ export function PaginaAgenda() {
   const paso = vista === 'dia' ? 1 : 7
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Agenda</h1>
-        <div role="tablist" aria-label="Vista" className="flex gap-1">
-          {(['dia', 'semana'] as const).map((v) => (
-            <Boton
-              key={v}
-              variante={vista === v ? 'primario' : 'secundario'}
-              tamano="sm"
-              role="tab"
-              aria-selected={vista === v}
-              onClick={() => setVista(v)}
-            >
-              {v === 'dia' ? 'Día' : 'Semana'}
-            </Boton>
-          ))}
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Agenda"
+        descripcion="Toca un espacio vacío para crear una reserva a esa hora."
+        acciones={
+          <Segmentado
+            etiqueta="Vista"
+            opciones={[
+              { id: 'dia' as const, texto: 'Día' },
+              { id: 'semana' as const, texto: 'Semana' },
+            ]}
+            actual={vista}
+            alCambiar={setVista}
+          />
+        }
+      />
 
-      <Tarjeta className="flex flex-wrap items-end gap-3">
+      <Tarjeta className="flex flex-wrap items-end gap-3 p-4 sm:p-4">
         <CampoSelect
           className="min-w-48"
           etiqueta="Sede"
@@ -195,10 +198,12 @@ export function PaginaAgenda() {
         <div className="flex items-end gap-1">
           <Boton
             variante="secundario"
+            tamano="icono"
+            className="size-10"
             aria-label={vista === 'dia' ? 'Día anterior' : 'Semana anterior'}
             onClick={() => cambiarFecha(-paso)}
           >
-            ←
+            <ChevronLeft aria-hidden />
           </Boton>
           <Campo
             className="w-40"
@@ -209,26 +214,27 @@ export function PaginaAgenda() {
           />
           <Boton
             variante="secundario"
+            tamano="icono"
+            className="size-10"
             aria-label={vista === 'dia' ? 'Día siguiente' : 'Semana siguiente'}
             onClick={() => cambiarFecha(paso)}
           >
-            →
+            <ChevronRight aria-hidden />
           </Boton>
-          <Boton variante="fantasma" onClick={() => setFecha(hoyEnBogota())}>
+          <Boton variante="secundario" onClick={() => setFecha(hoyEnBogota())}>
             Hoy
           </Boton>
         </div>
         <div className="text-texto-suave ml-auto flex flex-wrap gap-3 text-xs" aria-hidden>
-          <span className="flex items-center gap-1">
-            <span className="border-alerta bg-alerta/15 size-3 rounded-sm border" /> Pendiente
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded-sm border-l-4 border-amber-500 bg-amber-50" /> Pendiente
           </span>
-          <span className="flex items-center gap-1">
-            <span className="border-primario bg-primario-claro size-3 rounded-sm border" />{' '}
+          <span className="flex items-center gap-1.5">
+            <span className="border-primario size-3 rounded-sm border-l-4 bg-emerald-50" />{' '}
             Confirmada
           </span>
-          <span className="flex items-center gap-1">
-            <span className="border-texto-suave bg-texto-suave/20 size-3 rounded-sm border" />{' '}
-            Bloqueo
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded-sm border-l-4 border-slate-500 bg-slate-200" /> Bloqueo
           </span>
         </div>
       </Tarjeta>
@@ -236,21 +242,19 @@ export function PaginaAgenda() {
       {agenda.isPending && sedeId !== null && <Cargando texto="Cargando agenda…" />}
       {agenda.isError && <Alerta tipo="error">{mensajeDeError(agenda.error)}</Alerta>}
       {sedes.data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          Primero crea una sede con canchas.
-        </Tarjeta>
+        <EstadoVacio icono={Building2} titulo="Primero crea una sede con canchas" />
       )}
       {agenda.data?.canchas.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          Esta sede no tiene canchas.
-        </Tarjeta>
+        <EstadoVacio icono={Flag} titulo="Esta sede no tiene canchas" />
       )}
 
       {agenda.data && columnas.length > 0 && (
-        <Tarjeta className={cn('overflow-x-auto p-0', agenda.isPlaceholderData && 'opacity-60')}>
+        <Tarjeta
+          className={cn('overflow-x-auto p-0 sm:p-0', agenda.isPlaceholderData && 'opacity-60')}
+        >
           <div className="flex min-w-max">
-            <div className="w-14 shrink-0 border-r" style={{ borderColor: 'var(--color-borde)' }}>
-              <div className="h-12" />
+            <div className="border-borde bg-superficie sticky left-0 z-10 w-14 shrink-0 border-r">
+              <div className="border-borde h-12 border-b" />
               <div className="relative" style={{ height: alto }}>
                 {horas.map((h) => (
                   <span
@@ -275,7 +279,7 @@ export function PaginaAgenda() {
                   key={col.clave}
                   className="border-borde w-44 shrink-0 border-r last:border-r-0"
                 >
-                  <div className="border-borde flex h-12 flex-col justify-center border-b px-2 text-center text-sm font-medium capitalize">
+                  <div className="border-borde bg-tenue/50 flex h-12 flex-col justify-center border-b px-2 text-center text-sm font-semibold capitalize">
                     {col.titulo}
                     {col.subtitulo && (
                       <span className="text-texto-suave text-xs font-normal normal-case">
@@ -284,7 +288,7 @@ export function PaginaAgenda() {
                     )}
                   </div>
                   <div
-                    className="relative cursor-cell"
+                    className="hover:bg-primario-claro/30 relative cursor-cell transition-colors"
                     style={{
                       height: alto,
                       backgroundImage:
@@ -302,7 +306,7 @@ export function PaginaAgenda() {
                         height: Math.max(((c.hasta - c.desde) / 60) * PX_POR_HORA - 2, 18),
                       }
                       const clases = cn(
-                        'absolute inset-x-1 overflow-hidden rounded-boton border-l-4 px-1.5 py-1 text-xs',
+                        'absolute inset-x-1 overflow-hidden rounded-md border-l-[3px] px-2 py-1 text-xs shadow-suave transition-colors',
                         COLORES[e.tipo === 'BLOQUEO' ? 'BLOQUEO' : (e.estado ?? 'CONFIRMADA')],
                       )
                       return e.tipo === 'RESERVA' && e.reservaId ? (
@@ -335,8 +339,7 @@ export function PaginaAgenda() {
         </Tarjeta>
       )}
       <p className="text-texto-suave text-xs">
-        Toca un espacio vacío para crear una reserva a esa hora. Fecha mostrada:{' '}
-        {fechaEnBogota(aIsoBogota(fecha, '12:00'))}.
+        Fecha mostrada: {fechaEnBogota(aIsoBogota(fecha, '12:00'))}.
       </p>
     </div>
   )
