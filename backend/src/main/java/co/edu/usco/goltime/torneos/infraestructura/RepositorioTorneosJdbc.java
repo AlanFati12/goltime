@@ -227,6 +227,26 @@ class RepositorioTorneosJdbc implements RepositorioTorneos {
     }
 
     @Override
+    public List<SolicitudDeCliente> solicitudesDe(long usuarioId) {
+        return jdbc.query("""
+                SELECT i.id, i.torneo_id, t.nombre AS torneo, e.nombre AS equipo, i.estado, i.creado_en
+                FROM inscripciones_torneo i JOIN equipos e ON e.id = i.equipo_id JOIN torneos t ON t.id = i.torneo_id
+                WHERE e.usuario_responsable_id = ? ORDER BY i.creado_en DESC, i.id DESC""",
+                (rs, n) -> new SolicitudDeCliente(rs.getLong("id"), rs.getLong("torneo_id"), rs.getString("torneo"), rs.getString("equipo"),
+                        EstadoInscripcion.valueOf(rs.getString("estado")), rs.getObject("creado_en", java.time.OffsetDateTime.class).toInstant()), usuarioId);
+    }
+
+    @Override
+    public void vaciarPlantilla(long inscripcionId) {
+        jdbc.update("DELETE FROM plantillas_torneo WHERE inscripcion_id = ?", inscripcionId);
+    }
+
+    @Override
+    public List<InscripcionVista> solicitadas(long torneoId) {
+        return inscripciones(torneoId).stream().filter(i -> i.inscripcion().estado() == EstadoInscripcion.SOLICITADA).toList();
+    }
+
+    @Override
     public List<Long> responsablesDeInscripciones(Collection<Long> inscripcionIds) {
         if (inscripcionIds.isEmpty()) {
             return List.of();
