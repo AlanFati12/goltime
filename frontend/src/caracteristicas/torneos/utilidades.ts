@@ -6,13 +6,13 @@ export function nombreLado(lado: Lado | null): string {
 
 /** "2 - 1" o "—" si aún no hay resultado. */
 export function marcador(p: Partido): string {
-  if (p.golesLocal === null || p.golesVisitante === null) return '—'
+  if (p.golesLocal == null || p.golesVisitante == null) return '—'
   return `${p.golesLocal} - ${p.golesVisitante}`
 }
 
 /** Penales como "(4-3 pen.)" cuando el partido se definió así. */
 export function textoPenales(p: Partido): string | null {
-  return p.penalesLocal !== null && p.penalesVisitante !== null
+  return p.penalesLocal != null && p.penalesVisitante != null
     ? `(${p.penalesLocal}-${p.penalesVisitante} pen.)`
     : null
 }

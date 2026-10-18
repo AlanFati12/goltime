@@ -22,7 +22,7 @@ interface Props {
 /** Tarjeta de un partido: rivales, marcador, fecha y cancha. */
 export function TarjetaPartido({ partido: p, ruta, acciones, mostrarTorneo }: Props) {
   const gana = (id: number | null | undefined) =>
-    p.ganadorInscripcionId !== null && p.ganadorInscripcionId === id
+    p.ganadorInscripcionId != null && p.ganadorInscripcionId === id
   return (
     <Tarjeta className="flex flex-col gap-2 p-4">
       <div className="text-texto-suave flex flex-wrap items-center justify-between gap-2 text-xs">

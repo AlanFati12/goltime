@@ -64,7 +64,7 @@ export function EncabezadoPartido({
                   <span aria-hidden="true">{ICONO_EVENTO[e.tipo]}</span>
                   <span>
                     <Link to={`/jugadores/${e.jugadorId}`} className="font-medium hover:underline">
-                      {e.dorsal !== null && `${e.dorsal} · `}
+                      {e.dorsal != null && `${e.dorsal} · `}
                       {e.jugador}
                     </Link>
                     <span className="text-texto-suave">
