@@ -46,6 +46,9 @@ class EnviadorCorreoSmtp implements EnviadorCorreo {
             ayudante.setTo(mensaje.destinatario());
             ayudante.setSubject(mensaje.asunto());
             ayudante.setText(html, true);
+            for (Adjunto a : mensaje.adjuntos()) {
+                ayudante.addAttachment(a.nombre(), new org.springframework.core.io.ByteArrayResource(a.contenido()), a.tipoContenido());
+            }
             remitente.send(mime);
         } catch (Exception ex) {
             log.warn("No se pudo enviar el correo '{}' a {}: {}", mensaje.asunto(), mensaje.destinatario(),

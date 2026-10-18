@@ -1,3 +1,5 @@
+import { descargarCalendario } from '@/caracteristicas/extras/consultas'
+import { PanelCalificacion } from '@/caracteristicas/extras/PanelCalificacion'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -129,6 +131,16 @@ export function PaginaReservaDetalle() {
         <Boton variante="secundario" onClick={() => window.print()}>
           Imprimir comprobante
         </Boton>
+        {(r.estado === 'CONFIRMADA' || r.estado === 'PENDIENTE') && (
+          <Boton
+            variante="secundario"
+            onClick={() =>
+              descargarCalendario(r.id, r.codigo).catch((e) => avisar.error(mensajeDeError(e)))
+            }
+          >
+            Agregar al calendario
+          </Boton>
+        )}
         <a
           href={`https://wa.me/?text=${textoWhatsapp}`}
           target="_blank"
@@ -138,6 +150,8 @@ export function PaginaReservaDetalle() {
           Compartir por WhatsApp
         </a>
       </div>
+
+      <PanelCalificacion reservaId={r.id} />
       {r.puedeCancelar && !r.puedeReprogramar && r.estado !== 'PENDIENTE' && (
         <p className="text-texto-suave text-xs print:hidden">
           Ya no puedes reprogramar (alcanzaste el máximo o falta poco para el partido).

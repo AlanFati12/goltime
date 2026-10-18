@@ -8,6 +8,8 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 import { formatearCOP } from '@/lib/formato'
 
+import { BotonFavorito } from '@/caracteristicas/extras/BotonFavorito'
+import { ResumenCalificaciones } from '@/caracteristicas/extras/ResumenCalificaciones'
 import { Cotizador } from './Cotizador'
 import { Galeria } from './Galeria'
 import { HorarioTabla } from './HorarioTabla'
@@ -54,7 +56,10 @@ export function PaginaCanchaDetalle() {
         <Tarjeta className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-2xl font-bold">{c.nombre}</h1>
-            <Insignia tono="verde">{c.modalidad}</Insignia>
+            <span className="flex items-center gap-2">
+              <Insignia tono="verde">{c.modalidad}</Insignia>
+              <BotonFavorito canchaId={c.id} />
+            </span>
           </div>
           {c.descripcion && <p className="text-sm">{c.descripcion}</p>}
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -127,6 +132,10 @@ export function PaginaCanchaDetalle() {
           </Tarjeta>
         </div>
       </div>
+      <section aria-label="Calificaciones" className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold">Calificaciones</h2>
+        <ResumenCalificaciones canchaId={c.id} />
+      </section>
     </div>
   )
 }

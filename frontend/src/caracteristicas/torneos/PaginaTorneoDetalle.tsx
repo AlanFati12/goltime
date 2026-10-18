@@ -7,6 +7,11 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearDia } from '@/lib/formato'
 
+import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
+import { useMisSolicitudes } from '@/caracteristicas/extras/consultas'
+import { ModalSolicitarInscripcion } from '@/caracteristicas/extras/ModalSolicitarInscripcion'
+import { Boton } from '@/componentes/ui/Boton'
+import { useState } from 'react'
 import { useTorneo } from './consultas'
 import { ETIQUETA_ESTADO_TORNEO, ETIQUETA_FORMATO, TONO_ESTADO_TORNEO } from './etiquetas'
 import { PanelTorneo } from './PanelTorneo'
@@ -58,6 +63,15 @@ export function ResumenTorneo({ t }: { t: Torneo }) {
 export function PaginaTorneoDetalle() {
   const id = Number(useParams().id)
   const { data, isPending, isError, error } = useTorneo(id, false)
+  const usuario = useSesion((s) => s.usuario)
+  const solicitudes = useMisSolicitudes(usuario?.rol === 'CLIENTE')
+  const [solicitando, setSolicitando] = useState(false)
+  const puedeSolicitar =
+    data?.torneo.estado === 'INSCRIPCIONES' && solicitudes.data?.habilitado === true
+  const yaSolicito =
+    solicitudes.data?.solicitudes.some(
+      (x) => x.torneoId === id && (x.estado === 'SOLICITADA' || x.estado === 'APROBADA'),
+    ) ?? false
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 sm:p-6">
       <Link to="/torneos" className="text-primario text-sm hover:underline">
@@ -69,7 +83,25 @@ export function PaginaTorneoDetalle() {
         <>
           <h1 className="text-3xl font-bold">{data.torneo.nombre}</h1>
           <ResumenTorneo t={data.torneo} />
+          {puedeSolicitar && (
+            <div>
+              {yaSolicito ? (
+                <p className="text-primario-oscuro text-sm font-medium">
+                  Ya enviaste una solicitud para este torneo. Revisa su estado en «Mi cuenta».
+                </p>
+              ) : (
+                <Boton onClick={() => setSolicitando(true)}>Solicitar inscripción</Boton>
+              )}
+            </div>
+          )}
           <PanelTorneo detalle={data} />
+          {solicitando && (
+            <ModalSolicitarInscripcion
+              torneoId={id}
+              minimoJugadores={data.torneo.jugadoresPorEquipo}
+              alCerrar={() => setSolicitando(false)}
+            />
+          )}
         </>
       )}
     </div>

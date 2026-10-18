@@ -22,6 +22,7 @@ import co.edu.usco.goltime.compartido.dominio.Pagina;
 import co.edu.usco.goltime.compartido.dominio.Rol;
 import co.edu.usco.goltime.compartido.dominio.SolicitudPagina;
 import co.edu.usco.goltime.compartido.dominio.ZonaHoraria;
+import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo.Adjunto;
 import co.edu.usco.goltime.notificaciones.aplicacion.Notificador;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.FiltroReservasAdmin;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.PestanaReservas;
@@ -30,10 +31,12 @@ import co.edu.usco.goltime.reservas.aplicacion.Vistas.ResultadoSolicitud;
 import co.edu.usco.goltime.reservas.aplicacion.PoliticaDescuentos.Descuento;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
+import co.edu.usco.goltime.reservas.dominio.GeneradorIcs;
 import co.edu.usco.goltime.reservas.dominio.PoliticaReservas;
 import co.edu.usco.goltime.reservas.dominio.Precio;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
 import co.edu.usco.goltime.reservas.dominio.ReservaCompletadaEvento;
+import co.edu.usco.goltime.reservas.dominio.ReservaCreadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ReservaLiberadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja.ReglasCancha;
@@ -120,6 +123,7 @@ public class ServicioReservas {
         Reserva guardada = reservas.guardar(nueva);
         ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(cancha), inicio, fin);
         descuento.ifPresent(d -> descuentos.consumir(d, guardada.id(), clienteId));
+        eventos.publishEvent(new ReservaCreadaEvento(guardada.id(), clienteId, canchaId, inicio, fin));
 
         Actor actor = new Actor(clienteId, Rol.CLIENTE);
         Map<String, Object> datosCreada = datosDe(guardada);
@@ -233,8 +237,9 @@ public class ServicioReservas {
         reserva.aprobar(adminId, reloj.instant());
         Reserva guardada = reservas.guardar(reserva);
         registrar(id, "APROBADA", new Actor(adminId, Rol.ADMIN), null, Map.of("estado", antes.name()), Map.of("estado", guardada.estado().name()));
-        notificarCliente(guardada, "RESERVA_CONFIRMADA", "¡Reserva confirmada!",
-                "Tu reserva %s para el %s fue aprobada.".formatted(guardada.codigo(), FormatoTexto.fechaHora(guardada.inicio())));
+        notificarClienteConCalendario(guardada, "RESERVA_CONFIRMADA", "¡Reserva confirmada!",
+                "Tu reserva %s para el %s fue aprobada. Agrégala a tu calendario con el archivo adjunto.".formatted(guardada.codigo(),
+                        FormatoTexto.fechaHora(guardada.inicio())));
         return vista(guardada, true);
     }
 
@@ -368,6 +373,29 @@ public class ServicioReservas {
 
     private void registrar(long reservaId, String accion, Actor actor, String motivo, Map<String, Object> antes, Map<String, Object> despues) {
         historial.registrar(new EntradaHistorial(null, reservaId, accion, actor.id(), null, actor.rol(), motivo, antes, despues, reloj.instant()));
+    }
+
+    /** Igual que {@link #notificarCliente} pero el correo lleva el evento .ics de la reserva. */
+    private void notificarClienteConCalendario(Reserva r, String tipo, String titulo, String mensaje) {
+        if (r.clienteId() != null) {
+            notificador.notificar(r.clienteId(), tipo, titulo, mensaje, "reserva", r.id(), List.of(adjuntoCalendario(r)));
+        }
+    }
+
+    /** Archivo .ics de la reserva (para el correo de confirmación y la descarga del cliente). */
+    public Adjunto adjuntoCalendario(Reserva r) {
+        Relacionados rel = reservas.relacionados(List.of(r.id())).get(r.id());
+        String resumen = "Cancha " + (rel == null ? "" : rel.canchaNombre()) + " · Goltime";
+        String ubicacion = rel == null ? null : rel.sedeNombre();
+        String ics = GeneradorIcs.evento(r.codigo(), resumen, ubicacion, "Reserva " + r.codigo() + (r.nombreEquipo() != null ? " · " + r.nombreEquipo() : ""),
+                r.inicio(), r.fin(), reloj.instant());
+        return new Adjunto("reserva-" + r.codigo() + ".ics", "text/calendar", ics.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    /** Evento de calendario de una reserva propia (o de cualquiera, para el administrador). */
+    @Transactional(readOnly = true)
+    public Adjunto calendario(long id, Actor actor) {
+        return adjuntoCalendario(cargarAutorizada(id, actor));
     }
 
     private void notificarCliente(Reserva r, String tipo, String titulo, String mensaje) {

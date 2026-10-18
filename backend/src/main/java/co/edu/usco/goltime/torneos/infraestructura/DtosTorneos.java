@@ -127,7 +127,7 @@ public final class DtosTorneos {
     public record RespuestaFase(Long id, TipoFase tipo, int orden, String nombre) {
     }
 
-    public record RespuestaDetalleTorneo(RespuestaTorneo torneo, List<Long> canchaIds, List<RespuestaInscripcion> inscripciones, List<RespuestaFase> fases,
+    public record RespuestaDetalleTorneo(RespuestaTorneo torneo, List<Long> canchaIds, List<RespuestaInscripcion> inscripciones, List<RespuestaInscripcion> solicitudes, List<RespuestaFase> fases,
             int partidosTotales, int partidosJugados) {
     }
 

@@ -35,6 +35,13 @@ import { PaginaMisPremios } from '@/caracteristicas/promociones/PaginaMisPremios
 import { PaginaPremiosAdmin } from '@/caracteristicas/promociones/PaginaPremiosAdmin'
 import { PaginaPromociones } from '@/caracteristicas/promociones/PaginaPromociones'
 import { PaginaPromocionesAdmin } from '@/caracteristicas/promociones/PaginaPromocionesAdmin'
+import {
+  PaginaFavoritos,
+  PaginaListaEspera,
+  PaginaMiCuenta,
+  PaginaMisSolicitudes,
+} from '@/caracteristicas/extras/PaginasCliente'
+import { PaginaSeries } from '@/caracteristicas/extras/PaginaSeries'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
 ;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
@@ -86,6 +93,10 @@ export default function App() {
                 <Route path="mis-reservas/:id" element={<PaginaReservaDetalle />} />
                 <Route path="notificaciones" element={<PaginaNotificaciones />} />
                 <Route path="mis-premios" element={<PaginaMisPremios />} />
+                <Route path="mi-cuenta" element={<PaginaMiCuenta />} />
+                <Route path="favoritos" element={<PaginaFavoritos />} />
+                <Route path="lista-espera" element={<PaginaListaEspera />} />
+                <Route path="mis-torneos" element={<PaginaMisSolicitudes />} />
               </Route>
               <Route path="*" element={<PaginaNoEncontrada />} />
             </Route>
@@ -106,6 +117,7 @@ export default function App() {
                 <Route path="canchas/nueva" element={<PaginaCanchaForm />} />
                 <Route path="canchas/:id" element={<PaginaCanchaForm />} />
                 <Route path="festivos" element={<PaginaFestivos />} />
+                <Route path="series" element={<PaginaSeries />} />
                 <Route path="estadisticas" element={<PaginaEstadisticas />} />
                 <Route path="promociones" element={<PaginaPromocionesAdmin />} />
                 <Route path="premios" element={<PaginaPremiosAdmin />} />

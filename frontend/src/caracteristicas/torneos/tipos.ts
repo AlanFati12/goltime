@@ -60,6 +60,7 @@ export interface DetalleTorneo {
   torneo: Torneo
   canchaIds: number[]
   inscripciones: Inscripcion[]
+  solicitudes: Inscripcion[]
   fases: { id: number; tipo: 'GRUPOS' | 'LIGA' | 'ELIMINATORIA'; orden: number; nombre: string }[]
   partidosTotales: number
   partidosJugados: number

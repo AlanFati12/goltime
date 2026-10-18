@@ -67,6 +67,18 @@ public interface RepositorioTorneos {
 
     void actualizarDorsal(long inscripcionId, long jugadorId, Integer dorsal);
 
+    /** Solicitud o inscripción de un equipo cuyo responsable es el usuario (para que el cliente siga sus solicitudes). */
+    record SolicitudDeCliente(long inscripcionId, long torneoId, String torneoNombre, String equipoNombre, EstadoInscripcion estado, java.time.Instant creadaEn) {
+    }
+
+    List<SolicitudDeCliente> solicitudesDe(long usuarioId);
+
+    /** Borra la plantilla del torneo de esa inscripción (al rechazarla o retirarla, para liberar a los jugadores). */
+    void vaciarPlantilla(long inscripcionId);
+
+    /** Inscripciones solicitadas del torneo, con su equipo. */
+    List<InscripcionVista> solicitadas(long torneoId);
+
     /** Ids de usuarios responsables de los equipos inscritos (para avisarles). */
     List<Long> responsablesDeInscripciones(java.util.Collection<Long> inscripcionIds);
 }

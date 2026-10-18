@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 7 (promociones y premios)** completada, sobre las Fases 0 a 6. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 8 (extras)** completada, sobre las Fases 0 a 7. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,19 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Extras (Fase 8)
+
+| Qué | Dónde |
+|---|---|
+| Reservas recurrentes (revisión previa de cada fecha, omitir ocupadas, cancelar la serie) | Panel: `/admin/series` |
+| Lista de espera ("Avisarme si se libera" en los horarios ocupados) | Web: `/reservar` y `/lista-espera` |
+| Correos de confirmación con evento de calendario `.ics`, y descarga | Detalle de la reserva: «Agregar al calendario»; `GET /api/v1/reservas/{id}/calendario.ics` |
+| Solicitar la inscripción de un equipo (clientes habilitados) y aprobarla | Web: `/torneos/:id` y `/mis-torneos`; panel: `/admin/torneos/:id` |
+| Favoritas y calificaciones | Corazón en la cancha, `/favoritos`, calificación en el detalle de una reserva jugada |
+| Centro de la cuenta del cliente | Web: `/mi-cuenta` |
+
+Los correos salen por SMTP (Mailpit en desarrollo, <http://localhost:8025>). Detalle en el [ADR 0012](docs/decisiones/0012-extras-recurrentes-espera-correos.md).
 
 ## Promociones y premios (Fase 7)
 

@@ -90,6 +90,17 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 | `reglas_premio` | "Cada N reservas completadas, un beneficio" | Porcentaje o monto fijo, vigencia en días |
 | `premios_cliente` | Premios ganados | Copia el beneficio; estados `DISPONIBLE`, `USADO`, `VENCIDO`, `REVOCADO` |
 
+### V9 y V10: extras (Fase 8)
+
+| Tabla | Para qué sirve | Notas |
+|---|---|---|
+| `series_reservas` | Una serie recurrente | Las reservas se ligan con `reservas.serie_id` y origen `RECURRENTE` |
+| `lista_espera` | Cliente que espera un horario ocupado | Estados `ESPERANDO`, `NOTIFICADA`, `CUMPLIDA`, `CANCELADA`; única por cliente, cancha y rango mientras esté activa |
+| `favoritos` | Canchas favoritas | Clave (usuario, cancha) |
+| `calificaciones` | 1 a 5 estrellas por reserva completada | `reserva_id` único |
+
+`inscripciones_torneo` ya admitía el estado `SOLICITADA` desde la Fase 5.
+
 ## Relaciones
 
 ```mermaid
@@ -114,4 +125,4 @@ erDiagram
 - Fase 5: ver V7 abajo.
 - Fase 6: sin tablas nuevas (lee reservas, pagos y horarios).
 - Fase 7: ver V8 abajo.
-- Fase 8: series de reservas, lista de espera. Ver [propuesta-inicial.md](propuesta-inicial.md).
+- Fase 8: ver V9 y V10 abajo. Ver [propuesta-inicial.md](propuesta-inicial.md).

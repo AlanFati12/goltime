@@ -68,7 +68,7 @@ final class MapeadorTorneos {
 
     static RespuestaDetalleTorneo detalle(DetalleTorneo d) {
         return new RespuestaDetalleTorneo(torneo(d.torneo(), d.sedeNombre(), d.inscripciones().size(), d.campeon(), d.subcampeon(), d.tercero()),
-                d.canchaIds(), d.inscripciones().stream().map(MapeadorTorneos::inscripcion).toList(),
+                d.canchaIds(), d.inscripciones().stream().map(MapeadorTorneos::inscripcion).toList(), d.solicitudes().stream().map(MapeadorTorneos::inscripcion).toList(),
                 d.fases().stream().map(f -> new RespuestaFase(f.id(), f.tipo(), f.orden(), f.nombre())).toList(), d.partidosTotales(), d.partidosJugados());
     }
 

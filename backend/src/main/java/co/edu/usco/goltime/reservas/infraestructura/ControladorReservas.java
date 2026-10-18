@@ -1,6 +1,9 @@
 package co.edu.usco.goltime.reservas.infraestructura;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -63,6 +66,15 @@ public class ControladorReservas {
     public Pagina<RespuestaReserva> mias(@RequestParam(defaultValue = "PROXIMAS") PestanaReservas pestana,
             @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "20") int tamano) {
         return reservas.deCliente(actor().id(), pestana, new SolicitudPagina(pagina, tamano)).mapear(MapeadorReservas::aRespuesta);
+    }
+
+    @GetMapping(value = "/reservas/{id}/calendario.ics", produces = "text/calendar")
+    @Operation(summary = "Evento de calendario (.ics) de una reserva propia")
+    public ResponseEntity<byte[]> calendario(@PathVariable long id) {
+        var adjunto = reservas.calendario(id, actor());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(adjunto.nombre()).build().toString())
+                .contentType(new MediaType("text", "calendar", java.nio.charset.StandardCharsets.UTF_8)).body(adjunto.contenido());
     }
 
     @GetMapping("/reservas/{id}")

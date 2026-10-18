@@ -1,3 +1,4 @@
+import { useAccionesSolicitud } from '@/caracteristicas/extras/consultas'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -233,6 +234,61 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
   )
 }
 
+function SeccionSolicitudes({ detalle }: { detalle: DetalleTorneo }) {
+  const { aprobar, rechazar } = useAccionesSolicitud()
+  const [rechazando, setRechazando] = useState<Inscripcion | null>(null)
+  const solicitudes = detalle.solicitudes ?? []
+  if (solicitudes.length === 0) return null
+  const error = (e: unknown) => avisar.error(mensajeDeError(e))
+  return (
+    <Tarjeta className="border-alerta flex flex-col gap-3 border-2">
+      <h2 className="text-lg font-semibold">Solicitudes de inscripción ({solicitudes.length})</h2>
+      <ul className="flex flex-col gap-2">
+        {solicitudes.map((s) => (
+          <li
+            key={s.id}
+            className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
+          >
+            <span>
+              <span className="font-medium">{s.equipo}</span>{' '}
+              <Insignia>{s.jugadores} jugadores</Insignia>
+            </span>
+            <span className="flex gap-2">
+              <Boton
+                tamano="sm"
+                onClick={() =>
+                  aprobar.mutate(
+                    { torneoId: detalle.torneo.id, inscripcionId: s.id },
+                    { onSuccess: () => avisar.exito('Equipo inscrito.'), onError: error },
+                  )
+                }
+              >
+                Aprobar
+              </Boton>
+              <Boton tamano="sm" variante="secundario" onClick={() => setRechazando(s)}>
+                Rechazar
+              </Boton>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {rechazando && (
+        <ModalMotivo
+          titulo="Rechazar solicitud"
+          descripcion={`La inscripción de ${rechazando.equipo} no será aprobada y su responsable recibirá el motivo.`}
+          textoConfirmar="Rechazar"
+          alConfirmar={async (motivo) => {
+            await rechazar
+              .mutateAsync({ torneoId: detalle.torneo.id, inscripcionId: rechazando.id, motivo })
+              .then(() => setRechazando(null), error)
+          }}
+          alCerrar={() => setRechazando(null)}
+        />
+      )}
+    </Tarjeta>
+  )
+}
+
 function SeccionFixture({ detalle }: { detalle: DetalleTorneo }) {
   const t = detalle.torneo
   const { generarFixture, descartarFixture } = useAccionesTorneo()
@@ -353,6 +409,7 @@ export function PaginaTorneoGestion() {
             </div>
           </div>
           <ResumenTorneo t={data.torneo} />
+          <SeccionSolicitudes detalle={data} />
           <div className="grid gap-4 lg:grid-cols-2">
             <SeccionEquipos detalle={data} />
             <SeccionFixture detalle={data} />

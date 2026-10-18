@@ -49,7 +49,7 @@ public class ServicioConsultaTorneos {
         this.sedes = sedes;
     }
 
-    public record DetalleTorneo(Torneo torneo, String sedeNombre, List<Long> canchaIds, List<InscripcionVista> inscripciones, List<Fase> fases,
+    public record DetalleTorneo(Torneo torneo, String sedeNombre, List<Long> canchaIds, List<InscripcionVista> inscripciones, List<InscripcionVista> solicitudes, List<Fase> fases,
             int partidosTotales, int partidosJugados, String campeon, String subcampeon, String tercero) {
     }
 
@@ -68,7 +68,7 @@ public class ServicioConsultaTorneos {
         int jugados = (int) todos.stream().filter(Partido::jugado).count();
         Map<Long, String> nombres = inscripciones.stream().collect(Collectors.toMap(i -> i.inscripcion().equipoId(), InscripcionVista::equipoNombre, (a, b) -> a));
         return new DetalleTorneo(t, sedes.detalleAdmin(t.sedeId()).sede().nombre(), torneos.canchas(id).stream().sorted().toList(), inscripciones,
-                partidos.fases(id), jugables, jugados, nombres.get(t.campeonId()), nombres.get(t.subcampeonId()), nombres.get(t.terceroId()));
+                publico ? List.of() : torneos.solicitadas(id), partidos.fases(id), jugables, jugados, nombres.get(t.campeonId()), nombres.get(t.subcampeonId()), nombres.get(t.terceroId()));
     }
 
     @Transactional(readOnly = true)
