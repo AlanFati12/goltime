@@ -2,7 +2,7 @@ import { Heart, Hourglass, Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
-import { SECCIONES_CUENTA } from '@/componentes/layout/LayoutCuenta'
+import { SECCIONES_CUENTA } from '@/componentes/layout/seccionesCuenta'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'

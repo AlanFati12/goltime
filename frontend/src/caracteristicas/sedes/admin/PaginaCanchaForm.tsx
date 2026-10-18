@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
@@ -11,6 +11,7 @@ import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 
 import { EditorHorario } from '../EditorHorario'
@@ -85,7 +86,7 @@ function FormularioDatos({ cancha, sedeId }: { cancha: Cancha | null; sedeId: nu
 
   return (
     <Tarjeta>
-      <h2 className="mb-4 text-lg font-semibold">Datos de la cancha</h2>
+      <h2 className="mb-4 text-base font-semibold">Datos de la cancha</h2>
       <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo
@@ -230,7 +231,7 @@ function SeccionEstado({ cancha }: { cancha: Cancha }) {
 
   return (
     <Tarjeta>
-      <h2 className="mb-1 text-lg font-semibold">Estado</h2>
+      <h2 className="mb-1 text-base font-semibold">Estado</h2>
       <p className="text-texto-suave mb-3 text-sm">
         Solo las canchas activas se pueden reservar. Sacar una cancha de servicio cancela sus
         reservas futuras (previa confirmación).
@@ -297,15 +298,11 @@ export function PaginaCanchaForm() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div>
-        <Link to="/admin/canchas" className="text-texto-suave text-sm hover:underline">
-          ← Canchas
-        </Link>
-        <h1 className="text-2xl font-bold sm:text-[1.75rem]">
-          {cancha ? cancha.nombre : 'Nueva cancha'}
-        </h1>
-        {cancha && <p className="text-texto-suave text-sm">{cancha.sedeNombre}</p>}
-      </div>
+      <EncabezadoPagina
+        titulo={cancha ? cancha.nombre : 'Nueva cancha'}
+        volver={{ a: '/admin/canchas', texto: 'Canchas' }}
+        descripcion={cancha?.sedeNombre}
+      />
 
       <FormularioDatos key={cancha?.id ?? 'nueva'} cancha={cancha ?? null} sedeId={sedeId} />
 
@@ -314,7 +311,7 @@ export function PaginaCanchaForm() {
           <SeccionEstado key={cancha.estado} cancha={cancha} />
 
           <Tarjeta>
-            <h2 className="mb-1 text-lg font-semibold">Tarifas</h2>
+            <h2 className="mb-1 text-base font-semibold">Tarifas</h2>
             <p className="text-texto-suave mb-4 text-sm">
               Franjas por día y hora, y tarifa especial de festivos. Si un horario cruza dos
               franjas, se cobra proporcionalmente.
@@ -323,7 +320,7 @@ export function PaginaCanchaForm() {
           </Tarjeta>
 
           <Tarjeta>
-            <h2 className="mb-1 text-lg font-semibold">Horario</h2>
+            <h2 className="mb-1 text-base font-semibold">Horario</h2>
             <p className="text-texto-suave mb-4 text-sm">
               {cancha.horarioPropio.length > 0
                 ? 'Esta cancha tiene un horario propio que reemplaza al de la sede.'
@@ -356,7 +353,7 @@ export function PaginaCanchaForm() {
           </Tarjeta>
 
           <Tarjeta>
-            <h2 className="mb-4 text-lg font-semibold">Fotos</h2>
+            <h2 className="mb-4 text-base font-semibold">Fotos</h2>
             <GestorFotos
               fotos={cancha.fotos}
               subiendo={fotos.subirACancha.isPending}

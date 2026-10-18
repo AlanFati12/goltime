@@ -11,6 +11,7 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 import { aIsoBogota, formatearCOP, formatearFechaHora, hoyEnBogota, sumarDias } from '@/lib/formato'
 import { cn } from '@/lib/utils'
@@ -85,7 +86,7 @@ function FormularioSerie() {
 
   return (
     <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Nueva serie</h2>
+      <h2 className="text-base font-semibold">Nueva serie</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <CampoSelect
           etiqueta="Sede"
@@ -273,17 +274,18 @@ export function PaginaSeries() {
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-[1.75rem]">Reservas recurrentes</h1>
-      <p className="text-texto-suave max-w-3xl text-sm">
-        La misma reserva todas las semanas, confirmada de una vez. Primero se revisa cada fecha
-        (horario, ocupación y precio) y puedes omitir las que no estén disponibles.
-      </p>
+      <EncabezadoPagina
+        titulo="Reservas recurrentes"
+        descripcion="La misma reserva todas las semanas, confirmada de una vez. Primero se revisa cada fecha (horario, ocupación y precio) y puedes omitir las que no estén disponibles."
+      />
       <FormularioSerie />
       <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Series creadas</h2>
+        <h2 className="text-base font-semibold">Series creadas</h2>
         {isPending && <Cargando texto="Cargando series…" />}
         {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
-        {data?.length === 0 && <p className="text-texto-suave text-sm">Aún no hay series.</p>}
+        {data?.length === 0 && (
+          <p className="text-texto-suave py-6 text-center text-sm">Aún no hay series.</p>
+        )}
         <ul className="flex flex-col gap-2">
           {data?.map((s) => (
             <li

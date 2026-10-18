@@ -135,7 +135,7 @@ export function ModalReprogramar({
         </div>
 
         {elegido && fin && (
-          <div aria-live="polite" className="bg-primario-claro rounded-boton p-3 text-sm">
+          <div aria-live="polite" className="bg-primario-claro/60 rounded-boton px-4 py-3 text-sm">
             <p>
               Nuevo horario:{' '}
               <strong className="capitalize">{formatearFechaHora(elegido.inicio)}</strong> ·{' '}

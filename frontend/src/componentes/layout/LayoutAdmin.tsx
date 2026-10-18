@@ -91,12 +91,15 @@ export function LayoutAdmin() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    setAbierto(false)
     window.scrollTo(0, 0)
   }, [pathname])
 
   const navegacion = (
-    <nav aria-label="Administración" className="flex flex-col gap-5 px-3 pb-6">
+    <nav
+      aria-label="Administración"
+      className="flex flex-col gap-5 px-3 pb-6"
+      onClick={() => setAbierto(false)}
+    >
       {GRUPOS.map((g, i) => (
         <div key={g.titulo ?? i} className="flex flex-col gap-0.5">
           {g.titulo && (

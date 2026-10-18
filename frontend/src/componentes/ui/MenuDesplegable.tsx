@@ -7,11 +7,14 @@ export function MenuDesplegable({
   etiqueta,
   boton,
   className,
+  claseBoton = 'hover:bg-tenue flex items-center gap-2 rounded-full py-1 pr-2 pl-1',
   children,
 }: {
   etiqueta: string
   boton: ReactNode
   className?: string
+  /** Aspecto del botón que abre el menú; por defecto, el del avatar de la cuenta. */
+  claseBoton?: string
   children: ReactNode
 }) {
   const [abierto, setAbierto] = useState(false)
@@ -38,7 +41,7 @@ export function MenuDesplegable({
         aria-expanded={abierto}
         aria-haspopup="menu"
         onClick={() => setAbierto((a) => !a)}
-        className="hover:bg-tenue flex items-center gap-2 rounded-full py-1 pr-2 pl-1"
+        className={claseBoton}
       >
         {boton}
       </button>

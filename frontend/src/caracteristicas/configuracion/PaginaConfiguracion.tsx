@@ -6,6 +6,7 @@ import { Boton } from '@/componentes/ui/Boton'
 import { Campo, CampoTexto, Casilla } from '@/componentes/ui/Campo'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { api, mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -120,8 +121,11 @@ export function PaginaConfiguracion() {
   const { data, isPending, isError, error } = useParametros()
   const porClave = new Map(data?.map((p) => [p.clave, p]))
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold sm:text-[1.75rem]">Configuración</h1>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Configuración"
+        descripcion="Reglas del negocio: anticipación, duraciones, cancelaciones y límites."
+      />
       <Alerta tipo="info">
         Los cambios aplican a las reservas nuevas desde el momento de guardarlos; las que ya existen
         conservan lo que se les prometió. Cada cambio queda en la auditoría.
@@ -131,7 +135,7 @@ export function PaginaConfiguracion() {
       {data &&
         GRUPOS.map((g) => (
           <Tarjeta key={g.titulo} className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold">{g.titulo}</h2>
+            <h2 className="text-base font-semibold">{g.titulo}</h2>
             <ul className="flex flex-col gap-4">
               {g.claves
                 .map((c) => porClave.get(c))

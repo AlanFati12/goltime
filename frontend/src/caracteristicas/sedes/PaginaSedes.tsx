@@ -35,7 +35,7 @@ export function PaginaSedes() {
                 <Galeria fotos={s.fotos.slice(0, 1)} className="rounded-none" />
                 <div className="flex flex-1 flex-col gap-3 p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-lg font-semibold">{s.nombre}</h2>
+                    <h2 className="text-base font-semibold">{s.nombre}</h2>
                     <ArrowRight
                       className="text-texto-suave group-hover:text-primario mt-1 size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
                       aria-hidden
