@@ -19,7 +19,9 @@ import co.edu.usco.goltime.torneos.aplicacion.Modelos.EstadoInscripcion;
 import co.edu.usco.goltime.torneos.aplicacion.ServicioSolicitudes;
 import co.edu.usco.goltime.torneos.aplicacion.ServicioSolicitudes.DatosSolicitud;
 import co.edu.usco.goltime.torneos.aplicacion.ServicioSolicitudes.JugadorSolicitado;
+import co.edu.usco.goltime.torneos.infraestructura.DtosTorneos.RespuestaEquipo;
 import co.edu.usco.goltime.torneos.infraestructura.DtosTorneos.RespuestaInscripcion;
+import co.edu.usco.goltime.torneos.infraestructura.DtosTorneos.RespuestaJugador;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -50,6 +52,13 @@ final class ControladoresSolicitudes {
     }
 
     record RespuestaMisSolicitudes(boolean habilitado, List<RespuestaSolicitud> solicitudes) {
+    }
+
+    record RespuestaResponsable(long id, String nombre, String correo, String telefono, boolean activo) {
+    }
+
+    record RespuestaDetalleSolicitud(long inscripcionId, EstadoInscripcion estado, RespuestaEquipo equipo, RespuestaResponsable responsable,
+            List<RespuestaJugador> jugadores) {
     }
 
     @RestController
@@ -105,6 +114,16 @@ final class ControladoresSolicitudes {
 
         Admin(ServicioSolicitudes solicitudes) {
             this.solicitudes = solicitudes;
+        }
+
+        @GetMapping("/{inscripcionId}")
+        @Operation(summary = "Ver la solicitud antes de resolverla: equipo, responsable y plantilla")
+        public RespuestaDetalleSolicitud detalle(@PathVariable long id, @PathVariable long inscripcionId) {
+            var d = solicitudes.detalle(id, inscripcionId);
+            var r = d.responsable();
+            return new RespuestaDetalleSolicitud(d.inscripcion().id(), d.inscripcion().estado(), MapeadorTorneos.equipo(d.equipo()),
+                    r == null ? null : new RespuestaResponsable(r.id(), r.nombre(), r.correo(), r.telefono(), r.activo()),
+                    d.jugadores().stream().map(MapeadorTorneos::jugador).toList());
         }
 
         @PostMapping("/{inscripcionId}/aprobar")

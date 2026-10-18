@@ -234,4 +234,23 @@ class EstadisticasIT extends BaseReservasIT {
         assertThat(r.getResponse().getHeader("Content-Disposition")).contains("estadisticas-goltime.csv");
         assertThat(Map.of("ok", true)).isNotEmpty();
     }
+
+    @Test
+    void elTableroMuestraLoDeHoyLoPorCobrarYElEstadoDeLasCanchas() throws Exception {
+        LocalDate hoy = co.edu.usco.goltime.compartido.dominio.ZonaHoraria.fechaLocal(Instant.now());
+        long conSaldo = reserva(canchaId, dia, "10:00", "11:00", "COMPLETADA", "WEB", 90_000, 30_000, clienteA.id(), null);
+        jdbc.update("UPDATE reservas SET estado_pago = 'ABONADO' WHERE id = ?", conSaldo);
+        reserva(canchaId, hoy.plusDays(2), "06:00", "07:00", "PENDIENTE", "WEB", 80_000, 0, clienteA.id(), null);
+
+        MvcResult r = obtener("/api/v1/admin/estadisticas/tablero", admin.token());
+
+        esperarEstado(r, 200);
+        assertThat((Integer) leer(r, "$.cobros.reservasConSaldo")).isPositive();
+        assertThat(((Number) leer(r, "$.cobros.saldoPendiente")).longValue()).isGreaterThanOrEqualTo(60_000);
+        assertThat((List<?>) leer(r, "$.proximosDias")).hasSize(7);
+        assertThat((Integer) leer(r, "$.proximosDias[2].pendientes")).isPositive();
+        assertThat((List<Integer>) leer(r, "$.canchas[*].canchaId")).contains((int) canchaId);
+        assertThat((Integer) leer(r, "$.clientes.activos")).isPositive();
+        esperarEstado(obtener("/api/v1/admin/estadisticas/tablero", clienteA.token()), 403);
+    }
 }

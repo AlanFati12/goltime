@@ -179,7 +179,7 @@ class RepositorioPartidosJdbc implements RepositorioPartidos {
 
     @Override
     public List<EventoPartido> eventosDe(long partidoId) {
-        return jdbc.query("SELECT * FROM eventos_partido WHERE partido_id = ? ORDER BY minuto, id", (rs, i) -> evento(rs), partidoId);
+        return jdbc.query("SELECT * FROM eventos_partido WHERE partido_id = ? ORDER BY minuto NULLS LAST, id", (rs, i) -> evento(rs), partidoId);
     }
 
     @Override
@@ -199,7 +199,7 @@ class RepositorioPartidosJdbc implements RepositorioPartidos {
 
     private static EventoPartido evento(ResultSet rs) throws SQLException {
         return new EventoPartido(rs.getLong("id"), rs.getLong("partido_id"), rs.getLong("inscripcion_id"), rs.getLong("jugador_id"),
-                TipoEvento.valueOf(rs.getString("tipo")), rs.getInt("minuto"), (Long) rs.getObject("evento_relacionado_id"), rs.getString("observacion"));
+                TipoEvento.valueOf(rs.getString("tipo")), (Integer) rs.getObject("minuto"), (Long) rs.getObject("evento_relacionado_id"), rs.getString("observacion"));
     }
 
     private static Partido partido(ResultSet rs) throws SQLException {

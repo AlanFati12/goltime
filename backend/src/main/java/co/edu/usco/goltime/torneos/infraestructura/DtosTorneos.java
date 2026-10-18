@@ -95,7 +95,7 @@ public final class DtosTorneos {
     public record SolicitudWO(@NotNull Lado ganador, @Size(max = 500) String motivo) {
     }
 
-    public record SolicitudEvento(@NotNull Long inscripcionId, @NotNull Long jugadorId, @NotNull TipoEvento tipo, @NotNull @Min(0) @Max(130) Integer minuto,
+    public record SolicitudEvento(@NotNull Long inscripcionId, @NotNull Long jugadorId, @NotNull TipoEvento tipo, @Min(0) @Max(130) Integer minuto,
             Long eventoRelacionadoId, @Size(max = 200) String observacion) {
     }
 
@@ -142,7 +142,7 @@ public final class DtosTorneos {
     }
 
     public record RespuestaEvento(Long id, Long partidoId, Long inscripcionId, String equipo, Long jugadorId, String jugador, Integer dorsal, TipoEvento tipo,
-            int minuto, Long eventoRelacionadoId, String observacion) {
+            Integer minuto, Long eventoRelacionadoId, String observacion) {
     }
 
     // ===== Respuestas públicas y de lectura =====
