@@ -19,6 +19,11 @@ const accesos = [
     texto: 'Cierra horarios por mantenimiento, eventos o clima, avisando a los clientes afectados.',
   },
   {
+    a: '/admin/configuracion',
+    titulo: 'Configuración',
+    texto: 'Políticas de cancelación, antelación, expiración y avisos.',
+  },
+  {
     a: '/admin/auditoria',
     titulo: 'Auditoría',
     texto: 'Quién hizo qué sobre cada dato del negocio.',

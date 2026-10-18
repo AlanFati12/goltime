@@ -42,6 +42,7 @@ import {
   PaginaMisSolicitudes,
 } from '@/caracteristicas/extras/PaginasCliente'
 import { PaginaSeries } from '@/caracteristicas/extras/PaginaSeries'
+import { PaginaConfiguracion } from '@/caracteristicas/configuracion/PaginaConfiguracion'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
 ;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
@@ -117,6 +118,7 @@ export default function App() {
                 <Route path="canchas/nueva" element={<PaginaCanchaForm />} />
                 <Route path="canchas/:id" element={<PaginaCanchaForm />} />
                 <Route path="festivos" element={<PaginaFestivos />} />
+                <Route path="configuracion" element={<PaginaConfiguracion />} />
                 <Route path="series" element={<PaginaSeries />} />
                 <Route path="estadisticas" element={<PaginaEstadisticas />} />
                 <Route path="promociones" element={<PaginaPromocionesAdmin />} />

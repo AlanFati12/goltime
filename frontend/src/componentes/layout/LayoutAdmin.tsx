@@ -23,6 +23,7 @@ const enlaces = [
   { a: '/admin/festivos', texto: 'Festivos' },
   { a: '/admin/clientes', texto: 'Clientes' },
   { a: '/admin/administradores', texto: 'Administradores' },
+  { a: '/admin/configuracion', texto: 'Configuración' },
   { a: '/admin/auditoria', texto: 'Auditoría' },
 ]
 
