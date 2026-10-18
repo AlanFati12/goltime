@@ -25,6 +25,15 @@ public record PoliticaReservas(int horasMinCancelacion, int maxReprogramaciones,
         return new PoliticaReservas(4, 2, 3, 30, 5, 12, 2, true, 2);
     }
 
+    /**
+     * Reglas del administrador al crear o mover reservas: sin límite de reservas activas, sin antelación mínima
+     * (incluso puede registrar un partido que empezó hace menos de 2 horas) y hasta un año hacia adelante.
+     */
+    public PoliticaReservas paraAdministrador() {
+        return new PoliticaReservas(horasMinCancelacion, maxReprogramaciones, -2, 365, Integer.MAX_VALUE, horasExpiracionAprobacion,
+                horasExpiracionAntesInicio, completarAutomaticamente, horasRecordatorio);
+    }
+
     /** Una solicitud expira a las N horas de creada o M horas antes del inicio, lo que ocurra primero. */
     public Instant calcularExpiracion(Instant ahora, Instant inicio) {
         Instant porTiempo = ahora.plus(Duration.ofHours(horasExpiracionAprobacion));

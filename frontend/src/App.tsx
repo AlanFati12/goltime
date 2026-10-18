@@ -1,6 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+import { PaginaAgenda } from '@/caracteristicas/reservas/admin/PaginaAgenda'
+import { PaginaBloqueos } from '@/caracteristicas/reservas/admin/PaginaBloqueos'
+import { PaginaNuevaReservaAdmin } from '@/caracteristicas/reservas/admin/PaginaNuevaReservaAdmin'
+import { PaginaReservaAdminDetalle } from '@/caracteristicas/reservas/admin/PaginaReservaAdminDetalle'
+import { PaginaAuditoria } from '@/caracteristicas/auditoria/PaginaAuditoria'
 import { PaginaReservasAdmin } from '@/caracteristicas/reservas/admin/PaginaReservasAdmin'
 import { PaginaMisReservas } from '@/caracteristicas/reservas/PaginaMisReservas'
 import { PaginaReservaDetalle } from '@/caracteristicas/reservas/PaginaReservaDetalle'
@@ -65,7 +70,12 @@ export default function App() {
             <Route element={<RutaProtegida rol="ADMIN" />}>
               <Route path="admin" element={<LayoutAdmin />}>
                 <Route index element={<PaginaPanelAdmin />} />
+                <Route path="agenda" element={<PaginaAgenda />} />
                 <Route path="reservas" element={<PaginaReservasAdmin />} />
+                <Route path="reservas/nueva" element={<PaginaNuevaReservaAdmin />} />
+                <Route path="reservas/:id" element={<PaginaReservaAdminDetalle />} />
+                <Route path="bloqueos" element={<PaginaBloqueos />} />
+                <Route path="auditoria" element={<PaginaAuditoria />} />
                 <Route path="sedes" element={<PaginaSedesAdmin />} />
                 <Route path="sedes/nueva" element={<PaginaSedeForm />} />
                 <Route path="sedes/:id" element={<PaginaSedeForm />} />

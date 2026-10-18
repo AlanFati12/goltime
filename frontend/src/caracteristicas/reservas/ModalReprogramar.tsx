@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
-import { Campo } from '@/componentes/ui/Campo'
+import { Campo, CampoTexto } from '@/componentes/ui/Campo'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Modal } from '@/componentes/ui/Modal'
 import { mensajeDeError } from '@/lib/api'
@@ -28,9 +28,11 @@ import { rangoHorario, sumarMinutos } from './utilidades'
 export function ModalReprogramar({
   reserva,
   alCerrar,
+  admin = false,
 }: {
   reserva: Reserva
   alCerrar: () => void
+  admin?: boolean
 }) {
   const [fecha, setFecha] = useState(fechaEnBogota(reserva.inicio))
   const [elegido, setElegido] = useState<{
@@ -42,6 +44,7 @@ export function ModalReprogramar({
   const previsualizar = usePrevisualizarReprogramacion()
   const reprogramar = useReprogramarReserva()
   const [error, setError] = useState<string | null>(null)
+  const [motivo, setMotivo] = useState('')
 
   const fin = elegido ? sumarMinutos(elegido.inicio, reserva.duracionMin) : null
 
@@ -49,7 +52,7 @@ export function ModalReprogramar({
     if (!elegido || !fin) return
     setError(null)
     previsualizar.mutate(
-      { id: reserva.id, datos: { canchaId: elegido.canchaId, inicio: elegido.inicio, fin } },
+      { id: reserva.id, datos: { canchaId: elegido.canchaId, inicio: elegido.inicio, fin }, admin },
       { onError: (e) => setError(mensajeDeError(e)) },
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,7 +63,12 @@ export function ModalReprogramar({
   const confirmar = () => {
     if (!elegido || !fin) return
     reprogramar.mutate(
-      { id: reserva.id, datos: { canchaId: elegido.canchaId, inicio: elegido.inicio, fin } },
+      {
+        id: reserva.id,
+        datos: { canchaId: elegido.canchaId, inicio: elegido.inicio, fin },
+        admin,
+        motivo: motivo.trim(),
+      },
       {
         onSuccess: () => {
           avisar.exito('Reserva reprogramada.')
@@ -151,13 +159,30 @@ export function ModalReprogramar({
             )}
           </div>
         )}
+        {admin && (
+          <CampoTexto
+            etiqueta="Motivo (obligatorio, se informa al cliente)"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            error={
+              motivo.length > 0 && motivo.trim().length < 5
+                ? 'Describe el motivo (mínimo 5 caracteres)'
+                : undefined
+            }
+          />
+        )}
         {error && <Alerta tipo="error">{error}</Alerta>}
 
         <div className="flex justify-end gap-2">
           <Boton variante="secundario" onClick={alCerrar}>
             Cancelar
           </Boton>
-          <Boton onClick={confirmar} disabled={!previa?.disponible || reprogramar.isPending}>
+          <Boton
+            onClick={confirmar}
+            disabled={
+              !previa?.disponible || reprogramar.isPending || (admin && motivo.trim().length < 5)
+            }
+          >
             {reprogramar.isPending ? 'Reprogramando…' : 'Confirmar cambio'}
           </Boton>
         </div>

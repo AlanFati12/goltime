@@ -4,6 +4,21 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 
 const accesos = [
   {
+    a: '/admin/agenda',
+    titulo: 'Agenda',
+    texto: 'Calendario por día o semana con las reservas y bloqueos de cada cancha.',
+  },
+  {
+    a: '/admin/bloqueos',
+    titulo: 'Bloqueos',
+    texto: 'Cierra horarios por mantenimiento, eventos o clima, avisando a los clientes afectados.',
+  },
+  {
+    a: '/admin/auditoria',
+    titulo: 'Auditoría',
+    texto: 'Quién hizo qué sobre cada dato del negocio.',
+  },
+  {
     a: '/admin/reservas',
     titulo: 'Reservas',
     texto: 'Aprueba o rechaza las solicitudes pendientes y revisa todas las reservas.',

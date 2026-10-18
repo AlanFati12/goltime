@@ -71,6 +71,33 @@ public class Reserva {
         return r;
     }
 
+    /**
+     * Reserva creada por el administrador a nombre de un cliente registrado o de mostrador: nace CONFIRMADA
+     * (no necesita aprobación) y queda como creada por él.
+     */
+    public static Reserva crearPorAdmin(String codigo, Long clienteId, Long clienteMostradorId, long canchaId, Instant inicio,
+            Instant fin, Precio precio, String nombreEquipo, String notas, long adminId, Instant ahora) {
+        if ((clienteId == null) == (clienteMostradorId == null)) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Indica un cliente registrado o un cliente de mostrador.");
+        }
+        Reserva r = new Reserva();
+        r.codigo = codigo;
+        r.clienteId = clienteId;
+        r.clienteMostradorId = clienteMostradorId;
+        r.canchaId = canchaId;
+        r.inicio = inicio;
+        r.fin = fin;
+        r.precio = precio;
+        r.nombreEquipo = limpiar(nombreEquipo);
+        r.notas = limpiar(notas);
+        r.estado = EstadoReserva.CONFIRMADA;
+        r.origen = OrigenReserva.ADMIN;
+        r.estadoPago = EstadoPago.PENDIENTE;
+        r.aprobadaPor = adminId;
+        r.fechaAprobacion = ahora;
+        return r;
+    }
+
     /** Reconstruye una reserva existente desde el almacenamiento. */
     public static Reserva reconstruir(Long id, String codigo, Long clienteId, Long clienteMostradorId, long canchaId,
             Instant inicio, Instant fin, EstadoReserva estado, OrigenReserva origen, Precio precio, EstadoPago estadoPago,
@@ -131,6 +158,7 @@ public class Reserva {
         String motivoValido = motivoObligatorio(motivo, "El motivo del rechazo es obligatorio.");
         this.estado = EstadoReserva.RECHAZADA;
         this.motivoRechazo = motivoValido;
+        pendienteDeReembolsoSiHayDinero();
         this.aprobadaPor = adminId;
         this.fechaAprobacion = ahora;
         this.expiraEn = null;
@@ -143,6 +171,7 @@ public class Reserva {
             throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "La solicitud todavía no expira.");
         }
         this.estado = EstadoReserva.EXPIRADA;
+        pendienteDeReembolsoSiHayDinero();
     }
 
     /**
@@ -165,6 +194,7 @@ public class Reserva {
         this.rolCancelador = actor.rol();
         this.fechaCancelacion = ahora;
         this.expiraEn = null;
+        pendienteDeReembolsoSiHayDinero();
     }
 
     /**
@@ -194,6 +224,7 @@ public class Reserva {
         this.inicio = nuevoInicio;
         this.fin = nuevoFin;
         this.precio = nuevoPrecio;
+        recalcularEstadoPago();
         this.vecesReprogramada++;
         if (estado == EstadoReserva.PENDIENTE) {
             this.expiraEn = nuevaExpiracion;
@@ -218,6 +249,63 @@ public class Reserva {
             throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "La reserva todavía no comienza.");
         }
         this.estado = EstadoReserva.NO_ASISTIO;
+    }
+
+    // ---------- Pagos (registrados a mano por el administrador) ----------
+
+    /**
+     * Registra un pago o abono. Solo en reservas confirmadas o ya jugadas y sin pasarse del valor de la
+     * reserva. Devuelve el tipo del movimiento: ABONO si queda saldo, PAGO si lo completa.
+     */
+    public TipoPago aplicarPago(int monto) {
+        if (estado != EstadoReserva.CONFIRMADA && estado != EstadoReserva.COMPLETADA && estado != EstadoReserva.NO_ASISTIO) {
+            throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "Solo se registran pagos en reservas confirmadas o ya jugadas.");
+        }
+        if (monto <= 0) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "El monto debe ser mayor a cero.");
+        }
+        if (montoPagado + monto > precio.finalAPagar()) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS,
+                    "El pago excede el saldo pendiente (" + (precio.finalAPagar() - montoPagado) + ").");
+        }
+        this.montoPagado += monto;
+        recalcularEstadoPago();
+        return montoPagado >= precio.finalAPagar() ? TipoPago.PAGO : TipoPago.ABONO;
+    }
+
+    /**
+     * Devuelve dinero al cliente. Solo cuando hay un reembolso pendiente (la reserva se canceló, rechazó o expiró
+     * con dinero abonado) y sin devolver más de lo pagado. Con {@code cerrar} el reembolso se da por saldado aunque
+     * quede dinero retenido (ej. penalidad por cancelación tardía).
+     */
+    public void aplicarReembolso(int monto, boolean cerrar) {
+        if (estadoPago != EstadoPago.REEMBOLSO_PENDIENTE) {
+            throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "Esta reserva no tiene un reembolso pendiente.");
+        }
+        if (monto <= 0 || monto > montoPagado) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "El reembolso debe ser mayor a cero y no superar lo pagado (" + montoPagado + ").");
+        }
+        this.montoPagado -= monto;
+        if (montoPagado == 0 || cerrar) {
+            this.estadoPago = EstadoPago.REEMBOLSADO;
+        }
+    }
+
+    private void pendienteDeReembolsoSiHayDinero() {
+        if (montoPagado > 0) {
+            this.estadoPago = EstadoPago.REEMBOLSO_PENDIENTE;
+        }
+    }
+
+    private void recalcularEstadoPago() {
+        if (estadoPago == EstadoPago.REEMBOLSO_PENDIENTE || estadoPago == EstadoPago.REEMBOLSADO) {
+            return;
+        }
+        this.estadoPago = montoPagado <= 0 ? EstadoPago.PENDIENTE : montoPagado >= precio.finalAPagar() ? EstadoPago.PAGADO : EstadoPago.ABONADO;
+    }
+
+    public int saldoPendiente() {
+        return Math.max(0, precio.finalAPagar() - montoPagado);
     }
 
     public void registrarRecordatorio(Instant ahora) {

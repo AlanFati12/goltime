@@ -38,7 +38,7 @@ class CicloReservasIT extends BaseReservasIT {
         sedeId = crearSede(admin);
         canchaId = crearCancha(admin, sedeId, "Cancha A");
         cliente = nuevoClienteConSesion();
-        fecha = enDias(5);
+        fecha = diaHabil(5);
     }
 
     /** Mueve una reserva (y su ocupación) a otro instante, para simular el paso del tiempo sin esperar. */
@@ -374,10 +374,11 @@ class CicloReservasIT extends BaseReservasIT {
     void elRecordatorioSeEnviaUnaSolaVezAlAcercarseLaReserva() throws Exception {
         long reservaId = solicitarOk(cliente.token(), canchaId, fecha, "19:00", "20:00");
         aprobar(admin, reservaId);
-        assertThat(tareas.enviarRecordatorios()).as("falta mucho todavía").isZero();
+        tareas.enviarRecordatorios(); // la tarea es global: otras pruebas pueden tener reservas por recordar
+        assertThat(notificaciones(cliente.id(), "RESERVA_RECORDATORIO")).as("falta mucho todavía").isZero();
 
         mover(reservaId, Instant.now().plus(Duration.ofMinutes(90)), Instant.now().plus(Duration.ofMinutes(150)));
-        assertThat(tareas.enviarRecordatorios()).isGreaterThanOrEqualTo(1);
+        tareas.enviarRecordatorios();
         assertThat(notificaciones(cliente.id(), "RESERVA_RECORDATORIO")).isEqualTo(1);
         tareas.enviarRecordatorios();
         assertThat(notificaciones(cliente.id(), "RESERVA_RECORDATORIO")).as("no se repite").isEqualTo(1);

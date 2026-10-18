@@ -103,3 +103,101 @@ export interface Notificacion {
   entidadId: number | null
   creadoEn: string
 }
+
+export type MetodoPago = 'EFECTIVO' | 'TRANSFERENCIA' | 'NEQUI' | 'DAVIPLATA' | 'TARJETA'
+export type TipoPago = 'PAGO' | 'ABONO' | 'REEMBOLSO'
+
+export interface Pago {
+  id: number
+  monto: number
+  metodo: MetodoPago
+  referencia: string | null
+  tipo: TipoPago
+  registradoPor: string | null
+  fecha: string
+}
+
+export interface ClienteMostrador {
+  id: number
+  nombre: string
+  telefono: string | null
+}
+
+export type MotivoBloqueo = 'MANTENIMIENTO' | 'EVENTO_PRIVADO' | 'TORNEO' | 'CLIMA' | 'OTRO'
+
+export interface Bloqueo {
+  id: number
+  sedeId: number
+  canchaIds: number[]
+  tipo: 'PUNTUAL' | 'RECURRENTE'
+  inicio: string | null
+  fin: string | null
+  todoElDia: boolean
+  diasSemana: number[]
+  horaInicio: string | null
+  horaFin: string | null
+  fechaDesde: string | null
+  fechaHasta: string | null
+  motivo: MotivoBloqueo
+  detalle: string | null
+  motivoTexto: string
+  activo: boolean
+}
+
+export interface ConflictoReserva {
+  reservaId: number
+  codigo: string
+  cliente: string | null
+  cancha: string
+  inicio: string
+  fin: string
+  precioFinal: number
+  conPago: boolean
+  estadoPago: string
+  estado: string
+}
+
+export interface PrevisualizacionBloqueo {
+  conflictos: ConflictoReserva[]
+  intervalos: number
+  canchasAfectadas: number
+  huella: string
+  requiereConfirmacion: boolean
+}
+
+export interface ElementoAgenda {
+  tipo: 'RESERVA' | 'BLOQUEO'
+  canchaId: number
+  inicio: string
+  fin: string
+  reservaId: number | null
+  codigo: string | null
+  estado: EstadoReserva | null
+  cliente: string | null
+  equipo: string | null
+  precioFinal: number | null
+  estadoPago: string | null
+  origen: string | null
+  canchaReservaNombre: string | null
+  bloqueoId: number | null
+  motivoBloqueo: string | null
+}
+
+export interface Agenda {
+  canchas: { id: number; nombre: string; modalidad: string; estado: string; esCompuesta: boolean }[]
+  elementos: ElementoAgenda[]
+}
+
+export interface RegistroAuditado {
+  id: number
+  fecha: string
+  actorId: number | null
+  actorNombre: string | null
+  actorRol: 'ADMIN' | 'CLIENTE' | 'SISTEMA'
+  accion: string
+  entidad: string
+  entidadId: number | null
+  cambios: Record<string, unknown> | null
+  motivo: string | null
+  ip: string | null
+}

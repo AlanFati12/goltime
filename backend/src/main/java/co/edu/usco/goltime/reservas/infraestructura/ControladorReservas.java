@@ -88,7 +88,7 @@ public class ControladorReservas {
     @Operation(summary = "Reprogramar mi reserva a otra fecha, hora o cancha",
             description = "Respeta el máximo de reprogramaciones y la antelación mínima. El precio se recalcula.")
     public RespuestaReserva reprogramar(@PathVariable long id, @Valid @RequestBody SolicitudReprogramacion s) {
-        return MapeadorReservas.aRespuesta(reservas.reprogramar(id, actor(), s.canchaId(), s.inicio(), s.fin()));
+        return MapeadorReservas.aRespuesta(reservas.reprogramar(id, actor(), s.canchaId(), s.inicio(), s.fin(), null));
     }
 
     private Actor actor() {

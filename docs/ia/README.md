@@ -56,3 +56,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Pruebas: 178 en backend (29 de dominio y 42 de integración nuevas, con prueba de concurrencia de 8 clientes y de doble clic) y 41 en frontend. Verificado además en Docker y en el navegador (solicitud, aprobación y notificación).
 - Qué se corrigió: la prueba unitaria de `Reserva.rechazar` destapó un error real (el estado cambiaba antes de validar el motivo); un ciclo de beans entre sedes y reservas (resuelto con `@Lazy`); un mock que reemplazaba un adaptador que implementaba dos puertos (se separó en dos adaptadores); una grilla que dejaba pulsar horarios del día anterior mientras cargaba el nuevo.
 - Pendiente: crear reservas a nombre de clientes y de mostrador, agenda, bloqueos de horario, pagos y auditoría completa (Fase 4); correos de confirmación o rechazo y .ics (Fase 8).
+
+### Fase 4: Reservas del admin, bloqueos, pagos y auditoría (18/oct/2026)
+
+- Backend: migración V6; reservas creadas por el admin (cliente registrado o de mostrador, política propia); reprogramación con motivo y cambios de estado; pagos, abonos y reembolsos con estados de pago; bloqueos puntuales y recurrentes con previsualización, huella de confirmación y cancelación atómica; agenda por sede; filtros del listado y exportación CSV; consulta de la bitácora de auditoría.
+- Frontend: agenda por día y semana, listado con filtros y CSV, detalle con pagos e historial, nueva reserva, bloqueos con revisión de conflictos y auditoría.
+- Pruebas: 233 en backend (21 de dominio y 55 de integración nuevas, incluida la reversión completa cuando un bloqueo choca con otro y la huella desactualizada) y 48 en frontend. Verificado además en Docker y en el navegador.
+- Qué se corrigió: las pruebas destaparon que crear una reserva enviando a la vez un cliente registrado y uno de mostrador se aceptaba en silencio (ahora es un error); varias pruebas de las fases 3 y 4 dependían del día de la semana (los domingos la sede cierra a las 20:00) y se hicieron independientes de la fecha; una prueba de recordatorios asumía que no había otras reservas por recordar.
+- Pendiente: estadísticas e ingresos reales con estos pagos (Fase 6), promociones (descuento) y premios (Fases 7 y 8), torneos que reserven canchas (Fase 5), configuración general editable (Fase 9).

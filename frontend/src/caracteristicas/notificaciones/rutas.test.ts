@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { rutaDeNotificacion } from './CampanaNotificaciones'
 
 describe('rutaDeNotificacion', () => {
-  it('lleva al cliente al detalle de su reserva y al admin al listado de reservas', () => {
+  it('lleva al cliente al detalle de su reserva y al admin al detalle de la reserva', () => {
     expect(rutaDeNotificacion({ entidad: 'reserva', entidadId: 7 }, 'CLIENTE')).toBe(
       '/mis-reservas/7',
     )
     expect(rutaDeNotificacion({ entidad: 'reserva', entidadId: 7 }, 'ADMIN')).toBe(
-      '/admin/reservas',
+      '/admin/reservas/7',
     )
   })
 

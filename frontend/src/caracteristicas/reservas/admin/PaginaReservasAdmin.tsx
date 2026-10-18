@@ -1,35 +1,55 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
+import { useSedesAdmin } from '@/caracteristicas/sedes/consultas'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
+import { Insignia } from '@/componentes/ui/Insignia'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
 
 import { InsigniaEstadoReserva } from '../InsigniaEstadoReserva'
-import { useAccionesReservaAdmin, useReservasAdmin, type FiltrosReservasAdmin } from '../consultas'
+import {
+  FILTROS_RESERVAS_INICIALES,
+  paramsDeFiltros,
+  useAccionesReservaAdmin,
+  useReservasAdmin,
+  type FiltrosReservasAdmin,
+} from '../consultas'
 import type { EstadoReserva, Reserva } from '../tipos'
-import { ETIQUETA_ESTADO_RESERVA, rangoHorario } from '../utilidades'
+import { ETIQUETA_ESTADO_RESERVA, ETIQUETA_PAGO, rangoHorario } from '../utilidades'
+import { exportarReservasCsv } from './consultas'
 
 type Accion = { tipo: 'rechazar' | 'cancelar'; reserva: Reserva }
 
 export function PaginaReservasAdmin() {
-  const [filtros, setFiltros] = useState<FiltrosReservasAdmin>({
-    estado: 'PENDIENTE',
-    busqueda: '',
-    pagina: 0,
-  })
+  const [filtros, setFiltros] = useState<FiltrosReservasAdmin>(FILTROS_RESERVAS_INICIALES)
   const [accion, setAccion] = useState<Accion | null>(null)
+  const [exportando, setExportando] = useState(false)
+  const sedes = useSedesAdmin()
   const { data, isPending, isError, error, isFetching } = useReservasAdmin(filtros)
   const { aprobar, rechazar, cancelar } = useAccionesReservaAdmin()
 
   const cambiar = (parcial: Partial<FiltrosReservasAdmin>) =>
     setFiltros((f) => ({ ...f, pagina: 0, ...parcial }))
+
+  const exportar = async () => {
+    setExportando(true)
+    try {
+      await exportarReservasCsv(paramsDeFiltros(filtros))
+    } catch (e) {
+      avisar.error(mensajeDeError(e))
+    } finally {
+      setExportando(false)
+    }
+  }
 
   const aprobarReserva = (r: Reserva) =>
     aprobar.mutate(r.id, {
@@ -39,10 +59,19 @@ export function PaginaReservasAdmin() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Reservas</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Reservas</h1>
+        <div className="flex gap-2">
+          <Boton variante="secundario" onClick={exportar} disabled={exportando}>
+            {exportando ? 'Exportando…' : 'Exportar CSV'}
+          </Boton>
+          <EnlaceBoton to="/admin/reservas/nueva">Nueva reserva</EnlaceBoton>
+        </div>
+      </div>
 
-      <Tarjeta className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+      <Tarjeta className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Campo
+          className="lg:col-span-2"
           etiqueta="Buscar"
           type="search"
           placeholder="Código, nombre o correo del cliente"
@@ -61,13 +90,58 @@ export function PaginaReservasAdmin() {
             </option>
           ))}
         </CampoSelect>
+        <CampoSelect
+          etiqueta="Sede"
+          value={filtros.sedeId}
+          onChange={(e) => cambiar({ sedeId: e.target.value })}
+        >
+          <option value="">Todas</option>
+          {sedes.data?.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
+            </option>
+          ))}
+        </CampoSelect>
+        <CampoSelect
+          etiqueta="Estado de pago"
+          value={filtros.estadoPago}
+          onChange={(e) => cambiar({ estadoPago: e.target.value })}
+        >
+          <option value="">Todos</option>
+          {Object.entries(ETIQUETA_PAGO).map(([valor, texto]) => (
+            <option key={valor} value={valor}>
+              {texto}
+            </option>
+          ))}
+        </CampoSelect>
+        <CampoSelect
+          etiqueta="Origen"
+          value={filtros.origen}
+          onChange={(e) => cambiar({ origen: e.target.value })}
+        >
+          <option value="">Todos</option>
+          <option value="WEB">Web</option>
+          <option value="ADMIN">Administrador</option>
+        </CampoSelect>
+        <Campo
+          etiqueta="Desde"
+          type="date"
+          value={filtros.desde}
+          onChange={(e) => cambiar({ desde: e.target.value })}
+        />
+        <Campo
+          etiqueta="Hasta"
+          type="date"
+          value={filtros.hasta}
+          onChange={(e) => cambiar({ hasta: e.target.value })}
+        />
       </Tarjeta>
 
       {isPending && <Cargando texto="Cargando reservas…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
         <Tarjeta className="text-texto-suave text-center text-sm">
-          {filtros.estado === 'PENDIENTE'
+          {filtros.estado === 'PENDIENTE' && !filtros.busqueda
             ? 'No hay solicitudes pendientes. ¡Todo al día!'
             : 'No hay reservas con esos filtros.'}
         </Tarjeta>
@@ -90,7 +164,12 @@ export function PaginaReservasAdmin() {
               {data.contenido.map((r) => (
                 <tr key={r.id} className="border-borde border-b align-top last:border-0">
                   <td className="px-4 py-3">
-                    <div className="font-mono font-medium">{r.codigo}</div>
+                    <Link
+                      to={`/admin/reservas/${r.id}`}
+                      className="text-primario font-mono font-medium hover:underline"
+                    >
+                      {r.codigo}
+                    </Link>
                     <div className="text-texto-suave text-xs">
                       {r.sede.nombre} · {r.cancha.nombre}
                     </div>
@@ -105,9 +184,15 @@ export function PaginaReservasAdmin() {
                     <div className="capitalize">{formatearFechaHora(r.inicio)}</div>
                     <div className="text-texto-suave text-xs">{rangoHorario(r.inicio, r.fin)}</div>
                   </td>
-                  <td className="px-4 py-3">{formatearCOP(r.precioFinal)}</td>
+                  <td className="px-4 py-3">
+                    <div>{formatearCOP(r.precioFinal)}</div>
+                    <div className="text-texto-suave text-xs">
+                      {ETIQUETA_PAGO[r.estadoPago] ?? r.estadoPago}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     <InsigniaEstadoReserva estado={r.estado} />
+                    {r.origen === 'ADMIN' && <Insignia className="ml-1">Admin</Insignia>}
                     {r.estado === 'PENDIENTE' && r.expiraEn && (
                       <div className="text-texto-suave mt-1 text-xs">
                         Expira {formatearFechaHora(r.expiraEn)}
@@ -143,6 +228,9 @@ export function PaginaReservasAdmin() {
                           Cancelar
                         </Boton>
                       )}
+                      <EnlaceBoton to={`/admin/reservas/${r.id}`} tamano="sm" variante="fantasma">
+                        Ver
+                      </EnlaceBoton>
                     </div>
                   </td>
                 </tr>
