@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,12 +27,14 @@ import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.FiltroReserva
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.PestanaReservas;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionReprogramacion;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.ResultadoSolicitud;
+import co.edu.usco.goltime.reservas.aplicacion.PoliticaDescuentos.Descuento;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.PoliticaReservas;
 import co.edu.usco.goltime.reservas.dominio.Precio;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
 import co.edu.usco.goltime.reservas.dominio.ReservaCompletadaEvento;
+import co.edu.usco.goltime.reservas.dominio.ReservaLiberadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja.ReglasCancha;
 import co.edu.usco.goltime.sedes.aplicacion.ServicioCanchas;
@@ -57,12 +60,13 @@ public class ServicioReservas {
     private final CalculosReserva calculos;
     private final ConfiguracionReservas configuracion;
     private final Notificador notificador;
+    private final PoliticaDescuentos descuentos;
     private final ApplicationEventPublisher eventos;
     private final Clock reloj;
 
     public ServicioReservas(RepositorioReservas reservas, RepositorioOcupaciones ocupaciones, RepositorioHistorial historial,
             ServicioCanchas canchas, CalculosReserva calculos, ConfiguracionReservas configuracion, Notificador notificador,
-            ApplicationEventPublisher eventos, Clock reloj) {
+            PoliticaDescuentos descuentos, ApplicationEventPublisher eventos, Clock reloj) {
         this.reservas = reservas;
         this.ocupaciones = ocupaciones;
         this.historial = historial;
@@ -70,6 +74,7 @@ public class ServicioReservas {
         this.calculos = calculos;
         this.configuracion = configuracion;
         this.notificador = notificador;
+        this.descuentos = descuentos;
         this.eventos = eventos;
         this.reloj = reloj;
     }
@@ -82,6 +87,13 @@ public class ServicioReservas {
     @Transactional
     public ResultadoSolicitud solicitar(long clienteId, long canchaId, Instant inicio, Instant fin, String nombreEquipo,
             String notas, String claveIdempotencia) {
+        return solicitar(clienteId, canchaId, inicio, fin, nombreEquipo, notas, claveIdempotencia, null, null);
+    }
+
+    /** Igual que la solicitud simple, con un código de promoción y/o un premio de fidelidad opcionales. */
+    @Transactional
+    public ResultadoSolicitud solicitar(long clienteId, long canchaId, Instant inicio, Instant fin, String nombreEquipo,
+            String notas, String claveIdempotencia, String codigoPromocion, Long premioId) {
         String clave = claveIdempotencia == null || claveIdempotencia.isBlank() ? null : claveIdempotencia.trim();
         if (clave != null) {
             reservas.bloquearPorClave(clienteId + ":" + clave);
@@ -98,15 +110,21 @@ public class ServicioReservas {
             throw new ExcepcionNegocio(CodigoError.LIMITE_DE_RESERVAS,
                     "Ya tienes " + politica.maxReservasActivasCliente() + " reservas activas. Cancela alguna o espera a que se juegue.");
         }
-        Precio precio = calculos.calcularPrecio(cancha, inicio, fin);
+        Precio base = calculos.calcularPrecio(cancha, inicio, fin);
+        Optional<Descuento> descuento = descuentos.evaluar(new PoliticaDescuentos.Consulta(clienteId, cancha.cancha().sedeId(), canchaId, inicio, fin,
+                base.finalAPagar(), codigoPromocion, premioId, reservas.contarNoCanceladas(clienteId) == 0));
+        Precio precio = descuento.map(d -> new Precio(base.base(), d.monto(), base.base() - d.monto())).orElse(base);
         int anio = ZonaHoraria.fechaLocal(ahora).getYear();
         Reserva nueva = Reserva.solicitar(reservas.siguienteCodigo(anio), clienteId, canchaId, inicio, fin, precio, nombreEquipo,
                 notas, politica.calcularExpiracion(ahora, inicio), clave);
         Reserva guardada = reservas.guardar(nueva);
         ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(cancha), inicio, fin);
+        descuento.ifPresent(d -> descuentos.consumir(d, guardada.id(), clienteId));
 
         Actor actor = new Actor(clienteId, Rol.CLIENTE);
-        registrar(guardada.id(), "CREADA", actor, null, null, datosDe(guardada));
+        Map<String, Object> datosCreada = datosDe(guardada);
+        descuento.ifPresent(d -> datosCreada.put("descuentoAplicado", d.descripcion()));
+        registrar(guardada.id(), "CREADA", actor, null, null, datosCreada);
         notificador.notificarAdministradores("RESERVA_SOLICITADA", "Nueva solicitud de reserva",
                 "%s pidió %s el %s. Responde antes de que expire.".formatted(guardada.codigo(), cancha.cancha().nombre(),
                         FormatoTexto.fechaHora(inicio)), "reserva", guardada.id());
@@ -134,6 +152,7 @@ public class ServicioReservas {
         reserva.cancelar(actor, motivo, ahora, configuracion.politica());
         Reserva guardada = reservas.guardar(reserva);
         ocupaciones.liberar(guardada.id());
+        eventos.publishEvent(new ReservaLiberadaEvento(guardada.id(), guardada.clienteId()));
 
         Map<String, Object> despues = new LinkedHashMap<>();
         despues.put("estado", guardada.estado().name());
@@ -163,7 +182,7 @@ public class ServicioReservas {
         verificarPuedeReprogramar(reserva, actor, ahora, politica);
         VistaCancha destino = canchas.detallePublico(nuevaCanchaId != null ? nuevaCanchaId : reserva.canchaId());
         calculos.validarFranja(destino, inicio, fin, ahora, politica);
-        Precio nuevo = calculos.calcularPrecio(destino, inicio, fin);
+        Precio nuevo = conservarDescuento(reserva.precio(), calculos.calcularPrecio(destino, inicio, fin));
         boolean libre = !ocupaciones.hayOcupacion(CalculosReserva.idsQueOcupa(destino), inicio, fin, reserva.id());
         return new PrevisualizacionReprogramacion(libre, reserva.precio().finalAPagar(), nuevo.finalAPagar(),
                 nuevo.finalAPagar() - reserva.precio().finalAPagar());
@@ -176,7 +195,7 @@ public class ServicioReservas {
         PoliticaReservas politica = politicaPara(actor);
         VistaCancha destino = canchas.detallePublico(nuevaCanchaId != null ? nuevaCanchaId : reserva.canchaId());
         calculos.validarFranja(destino, inicio, fin, ahora, politica);
-        Precio nuevo = calculos.calcularPrecio(destino, inicio, fin);
+        Precio nuevo = conservarDescuento(reserva.precio(), calculos.calcularPrecio(destino, inicio, fin));
 
         Map<String, Object> antes = datosDe(reserva);
         reserva.reprogramar(actor, destino.cancha().id(), inicio, fin, nuevo, ahora, politica, politica.calcularExpiracion(ahora, inicio));
@@ -226,6 +245,7 @@ public class ServicioReservas {
         reserva.rechazar(adminId, motivo, reloj.instant());
         Reserva guardada = reservas.guardar(reserva);
         ocupaciones.liberar(id);
+        eventos.publishEvent(new ReservaLiberadaEvento(id, guardada.clienteId()));
         registrar(id, "RECHAZADA", new Actor(adminId, Rol.ADMIN), guardada.motivoRechazo(), Map.of("estado", antes.name()),
                 Map.of("estado", guardada.estado().name()));
         notificarCliente(guardada, "RESERVA_RECHAZADA", "Tu solicitud no fue aprobada",
@@ -266,6 +286,7 @@ public class ServicioReservas {
         reserva.expirar(reloj.instant());
         Reserva guardada = reservas.guardar(reserva);
         ocupaciones.liberar(id);
+        eventos.publishEvent(new ReservaLiberadaEvento(id, guardada.clienteId()));
         registrar(id, "EXPIRADA", Actor.sistema(), "El administrador no respondió a tiempo", Map.of("estado", "PENDIENTE"), Map.of("estado", "EXPIRADA"));
         notificarCliente(guardada, "RESERVA_EXPIRADA", "Tu solicitud expiró",
                 "La reserva %s del %s no fue respondida a tiempo y se liberó el horario. Puedes volver a solicitarla.".formatted(
@@ -294,6 +315,12 @@ public class ServicioReservas {
     // ===================================================================================
     // Apoyo
     // ===================================================================================
+
+    /** Al mover una reserva con descuento se conserva el monto descontado, sin pasar del nuevo precio base. */
+    private static Precio conservarDescuento(Precio actual, Precio nuevo) {
+        int descuento = Math.min(actual.descuento(), nuevo.base());
+        return descuento == 0 ? nuevo : new Precio(nuevo.base(), descuento, nuevo.base() - descuento);
+    }
 
     /** El cliente se rige por la política normal; el administrador, por la suya (sin antelación mínima ni límites). */
     private PoliticaReservas politicaPara(Actor actor) {

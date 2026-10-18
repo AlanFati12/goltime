@@ -54,7 +54,7 @@ public class ControladorReservas {
     public ResponseEntity<RespuestaReserva> solicitar(@Valid @RequestBody SolicitudReserva s,
             @RequestHeader(value = "Idempotency-Key", required = false) String claveIdempotencia) {
         Actor actor = actor();
-        ResultadoSolicitud resultado = reservas.solicitar(actor.id(), s.canchaId(), s.inicio(), s.fin(), s.nombreEquipo(), s.notas(), claveIdempotencia);
+        ResultadoSolicitud resultado = reservas.solicitar(actor.id(), s.canchaId(), s.inicio(), s.fin(), s.nombreEquipo(), s.notas(), claveIdempotencia, s.codigoPromocion(), s.premioId());
         return ResponseEntity.status(resultado.creada() ? HttpStatus.CREATED : HttpStatus.OK).body(MapeadorReservas.aRespuesta(resultado.vista()));
     }
 
