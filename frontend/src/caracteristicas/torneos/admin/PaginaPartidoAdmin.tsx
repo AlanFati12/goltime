@@ -21,11 +21,17 @@ import {
   hoyEnBogota,
 } from '@/lib/formato'
 
-import { useAccionesPartido, useDetallePartido, usePlantillaTorneo, useTorneo } from '../consultas'
+import {
+  useAccionesPartido,
+  useAccionesTorneo,
+  useDetallePartido,
+  usePlantillaTorneo,
+  useTorneo,
+} from '../consultas'
 import { EncabezadoPartido } from '../EncabezadoPartido'
-import { ETIQUETA_EVENTO, ICONO_EVENTO } from '../etiquetas'
-import type { ConflictoHorario, DetallePartido, Partido, TipoEvento, Torneo } from '../tipos'
-import { nombreLado } from '../utilidades'
+import type { ConflictoHorario, DetallePartido, Partido, Torneo } from '../tipos'
+import { golesDePlanilla, nombreLado } from '../utilidades'
+import { PlanillaPartido } from './PlanillaPartido'
 
 const error = (e: unknown) => avisar.error(mensajeDeError(e))
 
@@ -200,14 +206,17 @@ function ModalResultado({
   const acciones = useAccionesPartido(p.id)
   const local = usePlantillaTorneo(torneoId, p.local?.inscripcionId ?? null)
   const visitante = usePlantillaTorneo(torneoId, p.visitante?.inscripcionId ?? null)
-  const [gl, setGl] = useState(p.golesLocal?.toString() ?? '0')
-  const [gv, setGv] = useState(p.golesVisitante?.toString() ?? '0')
+  // Sin resultado aún, se propone el marcador que suma la planilla.
+  const [planillaLocal, planillaVisitante] = golesDePlanilla(detalle)
+  const [gl, setGl] = useState((p.golesLocal ?? planillaLocal).toString())
+  const [gv, setGv] = useState((p.golesVisitante ?? planillaVisitante).toString())
   const [pl, setPl] = useState(p.penalesLocal?.toString() ?? '')
   const [pv, setPv] = useState(p.penalesVisitante?.toString() ?? '')
   const [figura, setFigura] = useState(p.figuraJugadorId?.toString() ?? '')
   const empate = gl !== '' && gl === gv
   const pidePenales = p.tipoFase === 'ELIMINATORIA' && empate
   const jugadores = [...(local.data ?? []), ...(visitante.data ?? [])]
+  const menosQuePlanilla = Number(gl) < planillaLocal || Number(gv) < planillaVisitante
 
   const guardar = () =>
     acciones.resultado.mutate(
@@ -271,6 +280,12 @@ function ModalResultado({
             </div>
           </div>
         )}
+        {menosQuePlanilla && (
+          <Alerta tipo="aviso">
+            La planilla ya tiene {planillaLocal} - {planillaVisitante}: el marcador no puede ser
+            menor. Borra goles de la planilla si fue un error.
+          </Alerta>
+        )}
         <CampoSelect
           etiqueta="Figura del partido (opcional)"
           value={figura}
@@ -293,6 +308,7 @@ function ModalResultado({
               gl === '' ||
               gv === '' ||
               (pidePenales && (pl === '' || pv === '')) ||
+              menosQuePlanilla ||
               acciones.resultado.isPending
             }
             onClick={guardar}
@@ -356,135 +372,6 @@ function ModalWO({ partido, alCerrar }: { partido: Partido; alCerrar: () => void
   )
 }
 
-function PanelEventos({ detalle, torneoId }: { detalle: DetallePartido; torneoId: number }) {
-  const p = detalle.partido
-  const acciones = useAccionesPartido(p.id)
-  const [lado, setLado] = useState<'LOCAL' | 'VISITANTE'>('LOCAL')
-  const inscripcionId = (lado === 'LOCAL' ? p.local : p.visitante)?.inscripcionId ?? null
-  const plantilla = usePlantillaTorneo(torneoId, inscripcionId)
-  const [jugador, setJugador] = useState('')
-  const [tipo, setTipo] = useState<TipoEvento>('GOL')
-  const [minuto, setMinuto] = useState('')
-  const [gol, setGol] = useState('')
-  const golesDelEquipo = detalle.eventos.filter(
-    (e) => e.tipo === 'GOL' && e.inscripcionId === inscripcionId,
-  )
-
-  const agregar = () =>
-    acciones.agregarEvento.mutate(
-      {
-        inscripcionId: inscripcionId!,
-        jugadorId: Number(jugador),
-        tipo,
-        minuto: Number(minuto),
-        eventoRelacionadoId: tipo === 'ASISTENCIA' && gol ? Number(gol) : null,
-      },
-      {
-        onSuccess: () => {
-          setMinuto('')
-          setGol('')
-        },
-        onError: error,
-      },
-    )
-
-  return (
-    <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold">Registrar eventos</h2>
-      <p className="text-texto-suave text-xs">
-        Los goles registrados por equipo no pueden superar el marcador. Una asistencia se liga a un
-        gol de otro jugador del mismo equipo.
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <CampoSelect
-          etiqueta="Equipo"
-          value={lado}
-          onChange={(e) => {
-            setLado(e.target.value as 'LOCAL' | 'VISITANTE')
-            setJugador('')
-            setGol('')
-          }}
-        >
-          <option value="LOCAL">{nombreLado(p.local)}</option>
-          <option value="VISITANTE">{nombreLado(p.visitante)}</option>
-        </CampoSelect>
-        <CampoSelect
-          etiqueta="Jugador"
-          value={jugador}
-          onChange={(e) => setJugador(e.target.value)}
-        >
-          <option value="">Elige…</option>
-          {plantilla.data?.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.dorsal ? `${j.dorsal} · ` : ''}
-              {j.nombreCompleto}
-            </option>
-          ))}
-        </CampoSelect>
-        <CampoSelect
-          etiqueta="Evento"
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value as TipoEvento)}
-        >
-          {(Object.keys(ETIQUETA_EVENTO) as TipoEvento[]).map((t) => (
-            <option key={t} value={t}>
-              {ETIQUETA_EVENTO[t]}
-            </option>
-          ))}
-        </CampoSelect>
-        <Campo
-          etiqueta="Minuto"
-          type="number"
-          min={0}
-          max={130}
-          value={minuto}
-          onChange={(e) => setMinuto(e.target.value)}
-        />
-        {tipo === 'ASISTENCIA' && (
-          <CampoSelect etiqueta="Gol asistido" value={gol} onChange={(e) => setGol(e.target.value)}>
-            <option value="">Sin ligar</option>
-            {golesDelEquipo.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.minuto}' {g.jugador}
-              </option>
-            ))}
-          </CampoSelect>
-        )}
-      </div>
-      <div className="flex justify-end">
-        <Boton
-          disabled={!inscripcionId || !jugador || minuto === '' || acciones.agregarEvento.isPending}
-          onClick={agregar}
-        >
-          Agregar evento
-        </Boton>
-      </div>
-      <ul className="flex flex-col gap-1 text-sm">
-        {detalle.eventos.map((e) => (
-          <li
-            key={e.id}
-            className="border-borde flex items-center justify-between gap-2 border-b py-1"
-          >
-            <span>
-              {e.minuto}' {ICONO_EVENTO[e.tipo]} {e.jugador}{' '}
-              <span className="text-texto-suave">
-                · {ETIQUETA_EVENTO[e.tipo]} · {e.equipo}
-              </span>
-            </span>
-            <Boton
-              tamano="sm"
-              variante="fantasma"
-              onClick={() => acciones.eliminarEvento.mutate(e.id, { onError: error })}
-            >
-              Eliminar
-            </Boton>
-          </li>
-        ))}
-      </ul>
-    </Tarjeta>
-  )
-}
-
 export function PaginaPartidoAdmin() {
   const id = Number(useParams().id)
   const partido = useDetallePartido(id, true)
@@ -493,6 +380,7 @@ export function PaginaPartidoAdmin() {
   const torneo = useTorneo(torneoId, true)
   const sedes = useSedesAdmin()
   const acciones = useAccionesPartido(id)
+  const { cambiarEstado } = useAccionesTorneo()
   const [dialogo, setDialogo] = useState<'programar' | 'resultado' | 'wo' | null>(null)
 
   const t = torneo.data?.torneo
@@ -520,7 +408,11 @@ export function PaginaPartidoAdmin() {
       {partido.isError && <Alerta tipo="error">{mensajeDeError(partido.error)}</Alerta>}
       {detalle && p && t && (
         <>
-          <EncabezadoPartido detalle={detalle} admin />
+          <EncabezadoPartido
+            detalle={detalle}
+            admin
+            mostrarEventos={!(enCurso && listo && !p.porWO)}
+          />
           {!listo && (
             <Alerta tipo="info">
               Este partido aún tiene rivales por definir: se llenan solos al jugarse los partidos
@@ -559,7 +451,7 @@ export function PaginaPartidoAdmin() {
             )}
             {enCurso && listo && (
               <Boton onClick={() => setDialogo('resultado')}>
-                {jugado ? 'Corregir resultado' : 'Registrar resultado'}
+                {jugado ? 'Editar resultado' : 'Registrar resultado'}
               </Boton>
             )}
             {enCurso && listo && !jugado && (
@@ -575,13 +467,41 @@ export function PaginaPartidoAdmin() {
                 Deshacer resultado
               </Boton>
             )}
-            {!enCurso && activo && (
-              <p className="text-texto-suave self-center text-sm">
-                Inicia el torneo para registrar resultados y eventos.
-              </p>
-            )}
           </Tarjeta>
-          {enCurso && listo && !p.porWO && <PanelEventos detalle={detalle} torneoId={t.id} />}
+          {!enCurso && activo && (
+            <Alerta tipo="info">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  Para registrar el resultado, los goles, las asistencias y las tarjetas, el torneo
+                  debe estar en curso.
+                </span>
+                <Boton
+                  tamano="sm"
+                  disabled={cambiarEstado.isPending}
+                  onClick={() =>
+                    cambiarEstado.mutate(
+                      { id: t.id, estado: 'EN_CURSO' },
+                      { onSuccess: () => avisar.exito('Torneo iniciado.'), onError: error },
+                    )
+                  }
+                >
+                  Iniciar torneo
+                </Boton>
+              </div>
+            </Alerta>
+          )}
+          {t.estado === 'FINALIZADO' && (
+            <Alerta tipo="info">
+              El torneo ya finalizó: sus resultados y la planilla quedan como registro.
+            </Alerta>
+          )}
+          {enCurso && listo && !p.porWO && (
+            <PlanillaPartido
+              detalle={detalle}
+              torneoId={t.id}
+              alPedirResultado={() => setDialogo('resultado')}
+            />
+          )}
           {dialogo === 'programar' && (
             <ModalProgramacion
               partido={p}

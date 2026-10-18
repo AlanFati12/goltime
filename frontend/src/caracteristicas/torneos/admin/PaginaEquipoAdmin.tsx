@@ -7,12 +7,13 @@ import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 
 import { useAccionesEquipo, useBuscarJugadores, useEquipo } from '../consultas'
 import type { Equipo } from '../tipos'
+import { ListaJugadores } from './Jugadores'
 
 function DatosEquipo({ equipo }: { equipo: Equipo }) {
   const { actualizar, cambiarActivo } = useAccionesEquipo()
@@ -67,7 +68,7 @@ function DatosEquipo({ equipo }: { equipo: Equipo }) {
         />
         <Campo
           etiqueta="Id del cliente responsable (opcional)"
-          ayuda="Recibirá avisos de inscripción, programación y resultados del equipo."
+          ayuda="Lo ves en Clientes. Recibirá avisos de inscripción, programación y resultados."
           inputMode="numeric"
           value={responsable}
           onChange={(e) => setResponsable(e.target.value.replace(/\D/g, ''))}
@@ -93,99 +94,57 @@ function DatosEquipo({ equipo }: { equipo: Equipo }) {
   )
 }
 
-function AgregarJugador({ equipoId }: { equipoId: number }) {
+/** Busca un jugador que ya existe (de otro equipo o torneo) para sumarlo sin duplicarlo. */
+function JugadorExistente({ equipoId }: { equipoId: number }) {
   const { agregarJugador } = useAccionesEquipo()
-  const [nombres, setNombres] = useState('')
-  const [apellidos, setApellidos] = useState('')
-  const [documento, setDocumento] = useState('')
-  const [posicion, setPosicion] = useState('')
-  const [dorsal, setDorsal] = useState('')
   const [texto, setTexto] = useState('')
   const encontrados = useBuscarJugadores(texto)
 
-  const alExito = () => {
-    avisar.exito('Jugador agregado.')
-    setNombres('')
-    setApellidos('')
-    setDocumento('')
-    setPosicion('')
-    setDorsal('')
-    setTexto('')
-  }
-  const dorsalNumero = dorsal === '' ? null : Number(dorsal)
-
   return (
-    <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold">Agregar jugador</h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Campo etiqueta="Nombres" value={nombres} onChange={(e) => setNombres(e.target.value)} />
-        <Campo
-          etiqueta="Apellidos"
-          value={apellidos}
-          onChange={(e) => setApellidos(e.target.value)}
-        />
-        <Campo
-          etiqueta="Documento"
-          value={documento}
-          onChange={(e) => setDocumento(e.target.value)}
-        />
-        <Campo etiqueta="Posición" value={posicion} onChange={(e) => setPosicion(e.target.value)} />
-        <Campo
-          etiqueta="Dorsal"
-          inputMode="numeric"
-          value={dorsal}
-          onChange={(e) => setDorsal(e.target.value.replace(/\D/g, '').slice(0, 2))}
-        />
-      </div>
-      <div className="flex justify-end">
-        <Boton
-          disabled={!nombres.trim() || !apellidos.trim() || agregarJugador.isPending}
-          onClick={() =>
-            agregarJugador.mutate(
-              {
-                id: equipoId,
-                datos: { nombres, apellidos, documento, posicion, dorsal: dorsalNumero },
-              },
-              { onSuccess: alExito, onError: (e) => avisar.error(mensajeDeError(e)) },
-            )
-          }
-        >
-          Crear y agregar
-        </Boton>
-      </div>
-      <div className="border-borde border-t pt-4">
-        <Campo
-          etiqueta="¿Ya existe? Búscalo por nombre o documento"
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          ayuda="Reutiliza jugadores de otros equipos o torneos sin duplicarlos."
-        />
-        <ul className="mt-2 flex flex-col gap-1 text-sm">
-          {encontrados.data?.map((j) => (
-            <li key={j.id} className="flex items-center justify-between gap-2">
-              <span>
-                {j.nombreCompleto}
-                {j.documento && <span className="text-texto-suave"> · {j.documento}</span>}
-              </span>
-              <Boton
-                tamano="sm"
-                variante="secundario"
-                onClick={() =>
-                  agregarJugador.mutate(
-                    { id: equipoId, datos: { jugadorId: j.id, dorsal: dorsalNumero } },
-                    { onSuccess: alExito, onError: (e) => avisar.error(mensajeDeError(e)) },
-                  )
-                }
-              >
-                Agregar
-              </Boton>
-            </li>
-          ))}
-          {encontrados.data?.length === 0 && (
-            <li className="text-texto-suave">Sin coincidencias.</li>
-          )}
-        </ul>
-      </div>
+    <Tarjeta className="flex flex-col gap-3">
+      <TituloTarjeta
+        className="mb-0"
+        titulo="Sumar un jugador que ya existe"
+        descripcion="Búscalo por nombre o documento para reutilizarlo sin duplicarlo."
+      />
+      <Campo
+        etiqueta="Buscar jugador"
+        type="search"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+      />
+      <ul className="divide-borde/70 flex flex-col divide-y text-sm">
+        {encontrados.data?.map((j) => (
+          <li key={j.id} className="flex items-center justify-between gap-2 py-2">
+            <span>
+              {j.nombreCompleto}
+              {j.documento && <span className="text-texto-suave"> · {j.documento}</span>}
+            </span>
+            <Boton
+              tamano="sm"
+              variante="secundario"
+              disabled={agregarJugador.isPending}
+              onClick={() =>
+                agregarJugador.mutate(
+                  { id: equipoId, datos: { jugadorId: j.id } },
+                  {
+                    onSuccess: () => {
+                      avisar.exito('Jugador agregado.')
+                      setTexto('')
+                    },
+                    onError: (e) => avisar.error(mensajeDeError(e)),
+                  },
+                )
+              }
+            >
+              Agregar
+            </Boton>
+          </li>
+        ))}
+        {encontrados.data?.length === 0 && (
+          <li className="text-texto-suave py-2">Sin coincidencias.</li>
+        )}
+      </ul>
     </Tarjeta>
   )
 }
@@ -193,7 +152,7 @@ function AgregarJugador({ equipoId }: { equipoId: number }) {
 export function PaginaEquipoAdmin() {
   const id = Number(useParams().id)
   const { data, isPending, isError, error } = useEquipo(id)
-  const { quitarJugador } = useAccionesEquipo()
+  const { quitarJugador, editarJugador, agregarJugador } = useAccionesEquipo()
 
   return (
     <div className="flex flex-col gap-6">
@@ -207,45 +166,33 @@ export function PaginaEquipoAdmin() {
           />
           <DatosEquipo key={data.equipo.id + data.equipo.nombre} equipo={data.equipo} />
           <Tarjeta className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">
-              Plantilla habitual ({data.plantilla.length})
-            </h2>
-            <p className="text-texto-suave text-xs">
-              Al inscribir el equipo en un torneo se copia esta plantilla; los cambios posteriores
-              no afectan torneos ya inscritos.
-            </p>
-            <ul className="flex flex-col gap-1 text-sm">
-              {data.plantilla.map((j) => (
-                <li
-                  key={j.id}
-                  className="border-borde/70 flex items-center justify-between gap-2 border-b py-2 last:border-0"
-                >
-                  <span>
-                    <span className="text-texto-suave inline-block w-8">{j.dorsal ?? ''}</span>
-                    <span className="font-medium">{j.nombreCompleto}</span>
-                    {j.posicion && <span className="text-texto-suave"> · {j.posicion}</span>}
-                    {j.documento && <span className="text-texto-suave"> · {j.documento}</span>}
-                  </span>
-                  <Boton
-                    tamano="sm"
-                    variante="fantasma"
-                    onClick={() =>
-                      quitarJugador.mutate(
-                        { id, jugadorId: j.id },
-                        { onError: (e) => avisar.error(mensajeDeError(e)) },
-                      )
-                    }
-                  >
-                    Quitar
-                  </Boton>
-                </li>
-              ))}
-              {data.plantilla.length === 0 && (
-                <li className="text-texto-suave">Aún no hay jugadores.</li>
-              )}
-            </ul>
+            <TituloTarjeta
+              className="mb-0"
+              titulo={`Plantilla habitual (${data.plantilla.length})`}
+              descripcion="Al inscribir el equipo en un torneo se copia esta plantilla. Para cambiar la de un torneo ya inscrito, hazlo desde el torneo."
+            />
+            <ListaJugadores
+              jugadores={data.plantilla}
+              ocupado={editarJugador.isPending || quitarJugador.isPending}
+              alEditar={(jugadorId, datos) => editarJugador.mutateAsync({ id, jugadorId, datos })}
+              alQuitar={(jugadorId) => quitarJugador.mutateAsync({ id, jugadorId })}
+              alAgregar={(d) =>
+                agregarJugador
+                  .mutateAsync({
+                    id,
+                    datos: {
+                      nombres: d.nombres.trim(),
+                      apellidos: d.apellidos.trim(),
+                      documento: d.documento.trim() || undefined,
+                      posicion: d.posicion.trim() || undefined,
+                      dorsal: d.dorsal,
+                    },
+                  })
+                  .then(() => avisar.exito('Jugador agregado.'))
+              }
+            />
           </Tarjeta>
-          <AgregarJugador equipoId={id} />
+          <JugadorExistente equipoId={id} />
         </>
       )}
     </div>

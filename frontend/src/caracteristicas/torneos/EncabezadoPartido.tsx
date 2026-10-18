@@ -12,9 +12,12 @@ import { marcador, nombreLado, textoPenales, textoRonda } from './utilidades'
 export function EncabezadoPartido({
   detalle,
   admin = false,
+  mostrarEventos = true,
 }: {
   detalle: DetallePartido
   admin?: boolean
+  /** En la administración la planilla reemplaza a la línea de tiempo. */
+  mostrarEventos?: boolean
 }) {
   const p = detalle.partido
   const torneoRuta = admin ? `/admin/torneos/${p.torneoId}` : `/torneos/${p.torneoId}`
@@ -47,42 +50,44 @@ export function EncabezadoPartido({
         </div>
       </Tarjeta>
 
-      <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Eventos del partido</h2>
-        {detalle.eventos.length === 0 ? (
-          <p className="text-texto-suave py-4 text-center text-sm">No hay eventos registrados.</p>
-        ) : (
-          <ol className="flex flex-col gap-2 text-sm">
-            {detalle.eventos.map((e) => {
-              const esLocal = e.inscripcionId === p.local?.inscripcionId
-              return (
-                <li
-                  key={e.id}
-                  className={`flex items-center gap-3 ${esLocal ? '' : 'flex-row-reverse text-right'}`}
-                >
-                  <span className="bg-tenue rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
-                    {e.minuto}'
-                  </span>
-                  <span aria-hidden="true">{ICONO_EVENTO[e.tipo]}</span>
-                  <span>
-                    <Link
-                      to={`/jugadores/${e.jugadorId}`}
-                      className="hover:text-primario font-medium"
-                    >
-                      {e.dorsal != null && `${e.dorsal} · `}
-                      {e.jugador}
-                    </Link>
-                    <span className="text-texto-suave">
-                      {' '}
-                      · {ETIQUETA_EVENTO[e.tipo]} · {e.equipo}
+      {mostrarEventos && (
+        <Tarjeta className="flex flex-col gap-3">
+          <h2 className="text-base font-semibold">Eventos del partido</h2>
+          {detalle.eventos.length === 0 ? (
+            <p className="text-texto-suave py-4 text-center text-sm">No hay eventos registrados.</p>
+          ) : (
+            <ol className="flex flex-col gap-2 text-sm">
+              {detalle.eventos.map((e) => {
+                const esLocal = e.inscripcionId === p.local?.inscripcionId
+                return (
+                  <li
+                    key={e.id}
+                    className={`flex items-center gap-3 ${esLocal ? '' : 'flex-row-reverse text-right'}`}
+                  >
+                    <span className="bg-tenue rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
+                      {e.minuto != null ? `${e.minuto}'` : '—'}
                     </span>
-                  </span>
-                </li>
-              )
-            })}
-          </ol>
-        )}
-      </Tarjeta>
+                    <span aria-hidden="true">{ICONO_EVENTO[e.tipo]}</span>
+                    <span>
+                      <Link
+                        to={`/jugadores/${e.jugadorId}`}
+                        className="hover:text-primario font-medium"
+                      >
+                        {e.dorsal != null && `${e.dorsal} · `}
+                        {e.jugador}
+                      </Link>
+                      <span className="text-texto-suave">
+                        {' '}
+                        · {ETIQUETA_EVENTO[e.tipo]} · {e.equipo}
+                      </span>
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </Tarjeta>
+      )}
     </div>
   )
 }

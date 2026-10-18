@@ -121,3 +121,60 @@ export function useReservasDelDia(fecha: string) {
     refetchInterval: 60_000,
   })
 }
+
+/** Tablero del administrador, calculado en el servidor con la hora de Bogotá. */
+export interface Tablero {
+  generadoEn: string
+  hoy: {
+    pendientes: number
+    confirmadas: number
+    completadas: number
+    noAsistio: number
+    canceladas: number
+    partidosTorneo: number
+    valorReservado: number
+    recaudado: number
+    horasReservadas: number
+  }
+  pendientesPorVencer: number
+  cobros: {
+    reservasConSaldo: number
+    saldoPendiente: number
+    reembolsosPendientes: number
+    montoReembolsos: number
+    mayoresSaldos: {
+      reservaId: number
+      codigo: string
+      cliente?: string | null
+      inicio: string
+      saldo: number
+    }[]
+  }
+  proximosDias: { fecha: string; reservas: number; pendientes: number; horasConfirmadas: number }[]
+  canchas: {
+    canchaId: number
+    cancha: string
+    sede: string
+    estado: 'ACTIVA' | 'MANTENIMIENTO' | 'INACTIVA'
+    enUso: boolean
+    ocupadaHasta?: string | null
+    proximoInicio?: string | null
+    reservasHoy: number
+  }[]
+  torneos: {
+    enCurso: number
+    conInscripcionesAbiertas: number
+    solicitudesPendientes: number
+    partidosSinProgramar: number
+    partidosSinResultado: number
+  }
+  clientes: { activos: number; nuevosSemana: number; nuevosMes: number }
+}
+
+export function useTablero() {
+  return useQuery({
+    queryKey: ['reservas', 'admin', 'tablero'],
+    queryFn: async () => (await api.get<Tablero>('/admin/estadisticas/tablero')).data,
+    refetchInterval: 60_000,
+  })
+}

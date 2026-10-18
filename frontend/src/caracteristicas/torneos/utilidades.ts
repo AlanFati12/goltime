@@ -1,4 +1,4 @@
-import type { Lado, Partido } from './tipos'
+import type { DetallePartido, Lado, Partido } from './tipos'
 
 export function nombreLado(lado: Lado | null): string {
   return lado?.nombre ?? lado?.etiqueta ?? 'Por definir'
@@ -33,4 +33,19 @@ export function agruparPor<T, K extends string | number>(
     mapa.set(k, [...(mapa.get(k) ?? []), x])
   }
   return mapa
+}
+
+/** Goles de [local, visitante] según la planilla: el autogol suma al rival de quien lo hizo. */
+export function golesDePlanilla(detalle: DetallePartido): [number, number] {
+  const localId = detalle.partido.local?.inscripcionId
+  let local = 0
+  let visitante = 0
+  for (const e of detalle.eventos) {
+    if (e.tipo !== 'GOL' && e.tipo !== 'GOL_PENAL' && e.tipo !== 'AUTOGOL') continue
+    const deLocal = e.inscripcionId === localId
+    const paraLocal = e.tipo === 'AUTOGOL' ? !deLocal : deLocal
+    if (paraLocal) local++
+    else visitante++
+  }
+  return [local, visitante]
 }
