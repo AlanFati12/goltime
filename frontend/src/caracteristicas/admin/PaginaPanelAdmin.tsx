@@ -117,13 +117,17 @@ function Atencion({ t, pendientes }: { t: Tablero; pendientes: number }) {
   if (t.torneos.solicitudesPendientes > 0)
     avisos.push(
       <Pendiente key="s" a="/admin/torneos" icono={Trophy} tono="ambar">
-        {t.torneos.solicitudesPendientes} solicitudes de inscripción a torneos
+        {t.torneos.solicitudesPendientes === 1
+          ? '1 solicitud de inscripción a torneos'
+          : `${t.torneos.solicitudesPendientes} solicitudes de inscripción a torneos`}
       </Pendiente>,
     )
   if (t.torneos.partidosSinResultado > 0)
     avisos.push(
       <Pendiente key="p" a="/admin/torneos" icono={Trophy} tono="azul">
-        {t.torneos.partidosSinResultado} partidos jugados sin resultado
+        {t.torneos.partidosSinResultado === 1
+          ? '1 partido jugado sin resultado'
+          : `${t.torneos.partidosSinResultado} partidos jugados sin resultado`}
       </Pendiente>,
     )
   if (t.cobros.reembolsosPendientes > 0)
@@ -354,7 +358,7 @@ export function PaginaPanelAdmin() {
     <div className="flex flex-col gap-6">
       <EncabezadoPagina
         titulo={`${saludo()}, ${usuario.nombres.split(' ')[0] || nombreCompleto(usuario)}`}
-        descripcion={<span className="capitalize">{fechaLarga()}</span>}
+        descripcion={<span className="inline-block first-letter:uppercase">{fechaLarga()}</span>}
         acciones={
           <>
             <EnlaceBoton to="/admin/agenda" variante="secundario">
