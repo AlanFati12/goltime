@@ -52,7 +52,7 @@ public final class Modelos {
     public record Grupo(long id, long faseId, String nombre, List<Long> inscripcionIds) {
     }
 
-    public record EventoPartido(Long id, long partidoId, long inscripcionId, long jugadorId, TipoEvento tipo, int minuto, Long eventoRelacionadoId,
+    public record EventoPartido(Long id, long partidoId, long inscripcionId, long jugadorId, TipoEvento tipo, Integer minuto, Long eventoRelacionadoId,
             String observacion) {
     }
 
@@ -69,7 +69,7 @@ public final class Modelos {
     }
 
     public record VistaEvento(long id, long partidoId, long inscripcionId, String equipoNombre, long jugadorId, String jugadorNombre, Integer dorsal,
-            TipoEvento tipo, int minuto, Long eventoRelacionadoId, String observacion) {
+            TipoEvento tipo, Integer minuto, Long eventoRelacionadoId, String observacion) {
     }
 
     public record FilaGoleador(long jugadorId, String jugador, long equipoId, String equipo, int goles, int penales, int partidos) {

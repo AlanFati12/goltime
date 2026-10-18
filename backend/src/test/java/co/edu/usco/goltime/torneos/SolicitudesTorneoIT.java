@@ -150,6 +150,23 @@ class SolicitudesTorneoIT extends BaseTorneosIT {
         esperarEstado(delete("/api/v1/me/solicitudes-torneo/" + retirable, otro.token()), 409); // ya no está pendiente
     }
 
+    @Test
+    void elAdminVeElEquipoSuResponsableYSuPlantillaAntesDeResolver() throws Exception {
+        String equipo = nombre("Los Revisados");
+        long inscripcionId = idDe(solicitar(cliente, equipo, 3));
+
+        MvcResult r = obtener("/api/v1/admin/torneos/" + torneoId + "/solicitudes/" + inscripcionId, admin);
+
+        esperarEstado(r, 200);
+        assertThat((String) leer(r, "$.estado")).isEqualTo("SOLICITADA");
+        assertThat((String) leer(r, "$.equipo.nombre")).isEqualTo(equipo);
+        assertThat(((Number) leer(r, "$.responsable.id")).longValue()).isEqualTo(cliente.id());
+        assertThat((String) leer(r, "$.responsable.correo")).contains("@");
+        assertThat((List<?>) leer(r, "$.jugadores")).hasSize(3);
+        // un cliente no puede verla por la ruta de administración
+        esperarEstado(obtener("/api/v1/admin/torneos/" + torneoId + "/solicitudes/" + inscripcionId, cliente.token()), 403);
+    }
+
     private MvcResult delete(String url, String token) throws Exception {
         return borrar(url, token);
     }
