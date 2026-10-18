@@ -4,6 +4,21 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 
 const accesos = [
   {
+    a: '/admin/sedes',
+    titulo: 'Sedes',
+    texto: 'Crea sedes, define su horario de operación y sube fotos.',
+  },
+  {
+    a: '/admin/canchas',
+    titulo: 'Canchas',
+    texto: 'Modalidades, precios, tarifas por franja, dependencias entre canchas y estado.',
+  },
+  {
+    a: '/admin/festivos',
+    titulo: 'Festivos',
+    texto: 'Festivos de Colombia que activan las tarifas especiales.',
+  },
+  {
     a: '/admin/clientes',
     titulo: 'Clientes',
     texto: 'Busca, desactiva o reactiva clientes y habilita la inscripción de equipos.',

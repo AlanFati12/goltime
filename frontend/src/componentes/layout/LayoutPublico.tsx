@@ -25,6 +25,9 @@ export function LayoutPublico() {
             <img src="/logo.svg" alt="Goltime" className="h-9" />
           </Link>
           <nav aria-label="Principal" className="flex items-center gap-3 text-sm font-medium">
+            <Link to="/sedes" className="text-texto-suave hover:text-primario">
+              Sedes
+            </Link>
             {usuario ? (
               <>
                 {usuario.rol === 'ADMIN' && (

@@ -76,6 +76,8 @@ goltime:
   administrador-inicial:
     correo: ${ADMIN_CORREO:}
     clave: ${ADMIN_CLAVE:}
+  almacenamiento:
+    directorio: ${DIRECTORIO_ARCHIVOS:./uploads}
   swagger:
     habilitado: false
 
