@@ -14,6 +14,8 @@ const enlaces = [
   { a: '/admin/estadisticas', texto: 'Estadísticas' },
   { a: '/admin/bloqueos', texto: 'Bloqueos' },
   { a: '/admin/torneos', texto: 'Torneos' },
+  { a: '/admin/promociones', texto: 'Promociones' },
+  { a: '/admin/premios', texto: 'Premios' },
   { a: '/admin/equipos', texto: 'Equipos' },
   { a: '/admin/sedes', texto: 'Sedes' },
   { a: '/admin/canchas', texto: 'Canchas' },

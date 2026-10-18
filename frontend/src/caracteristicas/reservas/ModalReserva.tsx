@@ -10,6 +10,10 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Modal } from '@/componentes/ui/Modal'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
+import {
+  SeccionDescuento,
+  type SeleccionDescuento,
+} from '@/caracteristicas/promociones/SeccionDescuento'
 import { useCotizacion } from '@/caracteristicas/sedes/consultas'
 
 import { useSolicitarReserva } from './consultas'
@@ -31,6 +35,10 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
   const [equipo, setEquipo] = useState('')
   const [notas, setNotas] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [descuento, setDescuento] = useState<{ seleccion: SeleccionDescuento; valida: boolean }>({
+    seleccion: {},
+    valida: true,
+  })
   // Una clave por apertura del diálogo: si el usuario pulsa dos veces, el servidor devuelve la misma reserva.
   const clave = useRef(crypto.randomUUID())
 
@@ -52,6 +60,8 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
           fin,
           nombreEquipo: equipo || undefined,
           notas: notas || undefined,
+          codigoPromocion: descuento.seleccion.codigo,
+          premioId: descuento.seleccion.premioId,
         },
         clave: clave.current,
       },
@@ -110,6 +120,13 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
           )}
         </div>
 
+        <SeccionDescuento
+          canchaId={cancha.canchaId}
+          inicio={slot.inicio}
+          fin={fin}
+          alCambiar={(seleccion, valida) => setDescuento({ seleccion, valida })}
+        />
+
         <Campo
           etiqueta="Nombre del equipo (opcional)"
           value={equipo}
@@ -135,7 +152,13 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
           </Boton>
           <Boton
             onClick={enviar}
-            disabled={solicitar.isPending || isFetching || !cotizacion || duraciones.length === 0}
+            disabled={
+              solicitar.isPending ||
+              isFetching ||
+              !cotizacion ||
+              duraciones.length === 0 ||
+              !descuento.valida
+            }
           >
             {solicitar.isPending ? 'Enviando…' : 'Solicitar reserva'}
           </Boton>

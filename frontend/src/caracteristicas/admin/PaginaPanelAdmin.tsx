@@ -35,6 +35,16 @@ const accesos = [
       'Crea ligas, eliminatorias y grupos, genera el fixture, programa partidos y registra resultados.',
   },
   {
+    a: '/admin/promociones',
+    titulo: 'Promociones',
+    texto: 'Descuentos por código o automáticos, con vigencia, franjas y cupos.',
+  },
+  {
+    a: '/admin/premios',
+    titulo: 'Premios',
+    texto: 'Reglas de fidelidad: cada N reservas completadas, un descuento.',
+  },
+  {
     a: '/admin/equipos',
     titulo: 'Equipos',
     texto: 'Equipos y jugadores reutilizables entre torneos.',
