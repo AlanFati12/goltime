@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 1 (autenticación y usuarios)** completada, sobre la Fase 0 (base). Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 2 (sedes, canchas, tarifas, horarios y festivos)** completada, sobre las Fases 0 y 1. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,18 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Catálogo (Fase 2)
+
+| Qué | Dónde |
+|---|---|
+| Ver sedes, canchas, tarifas, horarios y precio de un intervalo | Web pública: `/sedes`, `/sedes/:id`, `/canchas/:id` (con calculadora de precio) |
+| Administrar sedes, canchas, tarifas, horarios, fotos y festivos | Panel `/admin/sedes`, `/admin/canchas`, `/admin/festivos` |
+| API pública | `GET /api/v1/publico/sedes`, `/canchas`, `/canchas/{id}/cotizacion`, `/festivos`, `/archivos/{nombre}` |
+| API de administración | `/api/v1/admin/sedes`, `/admin/canchas`, `/admin/tarifas`, `/admin/festivos` |
+| Fotos | Se guardan en el volumen `datos_archivos` (`DIRECTORIO_ARCHIVOS`, por defecto `/app/uploads` en Docker) |
+
+Las reglas de precio, horarios y canchas dependientes están en [ADR 0006](docs/decisiones/0006-catalogo-sedes-canchas-precios.md).
 
 ## Autenticación (Fase 1)
 

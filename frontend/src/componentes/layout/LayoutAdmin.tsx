@@ -8,6 +8,9 @@ import { cn } from '@/lib/utils'
 
 const enlaces = [
   { a: '/admin', texto: 'Inicio', fin: true },
+  { a: '/admin/sedes', texto: 'Sedes' },
+  { a: '/admin/canchas', texto: 'Canchas' },
+  { a: '/admin/festivos', texto: 'Festivos' },
   { a: '/admin/clientes', texto: 'Clientes' },
   { a: '/admin/administradores', texto: 'Administradores' },
 ]
