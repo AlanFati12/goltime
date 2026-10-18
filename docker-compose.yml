@@ -46,6 +46,8 @@ services:
       SMTP_AUTENTICACION: ${SMTP_AUTENTICACION:-false}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       CORREO_REMITENTE: ${CORREO_REMITENTE:-no-responder@goltime.local}
+      URL_PUBLICA: ${URL_PUBLICA:-http://localhost:8081}
+      VERIFICACION_CORREO_OBLIGATORIA: ${VERIFICACION_CORREO_OBLIGATORIA:-false}
       TZ: UTC
     ports:
       - "8080:8080" # Swagger UI en desarrollo: http://localhost:8080/swagger-ui.html

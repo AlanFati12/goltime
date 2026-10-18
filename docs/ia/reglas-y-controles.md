@@ -23,3 +23,4 @@ Listadas en las reglas de trabajo del proyecto (solapamiento imposible, aprobaci
 
 - Fase 0: import de Jackson 3 incorrecto para Spring Boot 3.5; limpieza de DOM faltante en pruebas del front. Ambos se detectaron con compilación y pruebas.
 - El entorno local no tiene JDK 21; las pruebas corren con JDK 26 y `--release 21`. La imagen Docker y el CI usan Java 21 real.
+- Fase 1: varios fallos de las propias pruebas y un problema de configuración de Spring Data (ver bitácora de `docs/ia/README.md`); todos los detectó la ejecución de pruebas y se corrigieron antes de cerrar la fase.

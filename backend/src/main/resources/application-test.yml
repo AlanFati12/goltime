@@ -1,6 +1,13 @@
 goltime:
+  limite-tasa:
+    ingreso-por-minuto: 100000
+    registro-por-hora: 100000
+    recuperacion-por-hora: 100000
   seguridad:
     jwt-secreto: secreto-solo-para-pruebas-automaticas-0123456789
     cookie-segura: false
   swagger:
     habilitado: true
+  administrador-inicial:
+    correo: admin-pruebas@goltime.test
+    clave: ClaveAdmin2026
