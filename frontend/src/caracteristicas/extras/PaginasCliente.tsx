@@ -39,8 +39,8 @@ const ACCESOS = [
 
 export function PaginaMiCuenta() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Mi cuenta</h1>
+    <div className="flex max-w-4xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Mi cuenta</h1>
       <ul className="grid gap-3 sm:grid-cols-2">
         {ACCESOS.map((x) => (
           <li key={x.a}>
@@ -60,8 +60,8 @@ export function PaginaMiCuenta() {
 export function PaginaFavoritos() {
   const { data, isPending, isError, error } = useFavoritas()
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Canchas favoritas</h1>
+    <div className="flex max-w-4xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Canchas favoritas</h1>
       {isPending && <Cargando texto="Cargando favoritas…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
@@ -105,8 +105,8 @@ export function PaginaListaEspera() {
   const { data, isPending, isError, error } = useMisEsperas()
   const { salir } = useAccionesEspera()
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Lista de espera</h1>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Lista de espera</h1>
       <p className="text-texto-suave text-sm">
         Te avisamos en la app y por correo cuando uno de estos horarios se libere. El primero en
         solicitarlo se lo queda.
@@ -172,8 +172,8 @@ export function PaginaMisSolicitudes() {
   const { data, isPending, isError, error } = useMisSolicitudes()
   const { retirar } = useAccionesSolicitud()
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Inscripciones a torneos</h1>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Inscripciones a torneos</h1>
       {isPending && <Cargando texto="Cargando…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && !data.habilitado && (

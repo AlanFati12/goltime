@@ -105,3 +105,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: las cuentas de demostración fallaban al ingresar porque la clave debía llevar el prefijo `{bcrypt}` del codificador delegante (error 500 que destapó la carga real); el cuerpo de una reserva para cliente de mostrador anida los datos; los comandos `docker compose run` se quedaban esperando en esta máquina (problema local de Docker Desktop con contenedores adjuntos).
 - Pendiente fuera del alcance de las fases: HTTPS y respaldos en el despliegue real (documentado en `docs/seguridad.md`), pasarela de pagos en línea, y un flujo E2E con Playwright (opcional en el prompt maestro).
 
+### Mejora de UX (18/oct/2026)
+
+- Petición: tras probar la aplicación, la persona pidió que se vea más limpia, fácil de interactuar y menos llena de información.
+- Cambios (solo frontend, ver ADR 0013): menú de administración agrupado, inicio de administración convertido en tablero, encabezado público con menú de cuenta, filtros y métricas secundarias plegables, pestañas en la gestión y la lista de torneos, tarjetas de sedes más sobrias y piezas comunes nuevas (`EncabezadoPagina`, `Plegable`, `Pestanas`, `MenuDesplegable`).
+- Pruebas: 66 en frontend (4 nuevas para `Pestanas` y `Plegable`); lint, tipos y build limpios. Revisado en el navegador en escritorio y en móvil.
+- Qué se corrigió: el detalle de sede desbordaba el ancho a 1024 px (columnas de la cuadrícula sin `minmax(0, …)`); varias páginas tenían doble relleno.
+- Pendiente: revisar con usuarios reales el resto de formularios largos (canchas, sedes, bloqueos) para plegarlos igual.
+

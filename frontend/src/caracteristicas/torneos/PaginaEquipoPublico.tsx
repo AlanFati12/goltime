@@ -13,7 +13,7 @@ export function PaginaEquipoPublico() {
   const id = Number(useParams().id)
   const { data, isPending, isError, error } = usePerfilEquipo(id)
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-4 sm:p-6">
+    <div className="flex max-w-4xl flex-col gap-6">
       {isPending && <Cargando texto="Cargando equipo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (

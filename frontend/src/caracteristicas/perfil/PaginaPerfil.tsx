@@ -159,7 +159,7 @@ export function PaginaPerfil() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mi perfil</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Mi perfil</h1>
         <Insignia tono={usuario.correoVerificado ? 'verde' : 'ambar'}>
           {usuario.correoVerificado ? 'Correo verificado' : 'Correo sin verificar'}
         </Insignia>

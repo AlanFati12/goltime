@@ -73,7 +73,7 @@ export function PaginaTorneoDetalle() {
       (x) => x.torneoId === id && (x.estado === 'SOLICITADA' || x.estado === 'APROBADA'),
     ) ?? false
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 sm:p-6">
+    <div className="flex max-w-6xl flex-col gap-6">
       <Link to="/torneos" className="text-primario text-sm hover:underline">
         ← Todos los torneos
       </Link>
@@ -81,7 +81,7 @@ export function PaginaTorneoDetalle() {
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="text-3xl font-bold">{data.torneo.nombre}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{data.torneo.nombre}</h1>
           <ResumenTorneo t={data.torneo} />
           {puedeSolicitar && (
             <div>

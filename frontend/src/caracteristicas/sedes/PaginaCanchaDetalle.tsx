@@ -55,7 +55,7 @@ export function PaginaCanchaDetalle() {
         <Galeria fotos={c.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-2">
-            <h1 className="text-2xl font-bold">{c.nombre}</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{c.nombre}</h1>
             <span className="flex items-center gap-2">
               <Insignia tono="verde">{c.modalidad}</Insignia>
               <BotonFavorito canchaId={c.id} />

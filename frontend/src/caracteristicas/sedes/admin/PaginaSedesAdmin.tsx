@@ -22,7 +22,7 @@ export function PaginaSedesAdmin() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Sedes</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Sedes</h1>
         <EnlaceBoton to="/admin/sedes/nueva">Nueva sede</EnlaceBoton>
       </div>
       {isPending && <Cargando texto="Cargando sedes…" />}

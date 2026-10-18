@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
 import { Alerta } from '@/componentes/ui/Alerta'
-import { Boton } from '@/componentes/ui/Boton'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -35,7 +35,7 @@ export function PanelTorneo({
     { id: 'llaves', texto: 'Llaves', visible: hayLlaves },
     { id: 'calendario', texto: 'Calendario', visible: true },
     { id: 'estadisticas', texto: 'Estadísticas', visible: true },
-    { id: 'equipos', texto: 'Equipos', visible: true },
+    { id: 'equipos', texto: 'Equipos', visible: !admin },
   ]
   const visibles = pestanas.filter((p) => p.visible)
   const [elegida, setElegida] = useState<Pestana | null>(null)
@@ -43,21 +43,13 @@ export function PanelTorneo({
   const rutaPartido = (id: number) => (admin ? `/admin/partidos/${id}` : `/torneos/partidos/${id}`)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div role="tablist" aria-label="Secciones del torneo" className="flex flex-wrap gap-2">
-        {visibles.map((p) => (
-          <Boton
-            key={p.id}
-            role="tab"
-            aria-selected={actual === p.id}
-            variante={actual === p.id ? 'primario' : 'secundario'}
-            tamano="sm"
-            onClick={() => setElegida(p.id)}
-          >
-            {p.texto}
-          </Boton>
-        ))}
-      </div>
+    <div className="flex flex-col gap-6">
+      <Pestanas
+        etiqueta="Secciones del torneo"
+        pestanas={visibles}
+        actual={actual ?? 'calendario'}
+        alCambiar={setElegida}
+      />
 
       {(posiciones.isPending || partidos.isPending) && <Cargando texto="Cargando torneo…" />}
       {partidos.isError && <Alerta tipo="error">{mensajeDeError(partidos.error)}</Alerta>}

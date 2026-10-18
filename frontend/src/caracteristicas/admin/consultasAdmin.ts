@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
+import type { Reserva } from '@/caracteristicas/reservas/tipos'
 import { api, type Pagina } from '@/lib/api'
 
 export interface FiltrosClientes {
@@ -90,5 +91,33 @@ export function useCrearAdministrador() {
       clave: string
     }) => (await api.post<Usuario>('/admin/administradores', datos)).data,
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['admin', 'administradores'] }),
+  })
+}
+
+/** Solicitudes de reserva por aprobar: la lista corta del inicio y el contador del menú lateral. */
+export function useSolicitudesPendientes() {
+  return useQuery({
+    queryKey: ['reservas', 'admin', 'pendientes-lista'],
+    queryFn: async () =>
+      (
+        await api.get<Pagina<Reserva>>('/admin/reservas', {
+          params: { estado: 'PENDIENTE', pagina: 0, tamano: 5 },
+        })
+      ).data,
+    refetchInterval: 30_000,
+  })
+}
+
+/** Reservas confirmadas de un día (para "Hoy" en el inicio). */
+export function useReservasDelDia(fecha: string) {
+  return useQuery({
+    queryKey: ['reservas', 'admin', 'dia', fecha],
+    queryFn: async () =>
+      (
+        await api.get<Pagina<Reserva>>('/admin/reservas', {
+          params: { estado: 'CONFIRMADA', desde: fecha, hasta: fecha, pagina: 0, tamano: 50 },
+        })
+      ).data,
+    refetchInterval: 60_000,
   })
 }

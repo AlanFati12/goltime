@@ -272,8 +272,8 @@ export function PaginaSeries() {
   const [aCancelar, setACancelar] = useState<number | null>(null)
 
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
-      <h1 className="text-2xl font-bold">Reservas recurrentes</h1>
+    <div className="flex max-w-4xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Reservas recurrentes</h1>
       <p className="text-texto-suave max-w-3xl text-sm">
         La misma reserva todas las semanas, confirmada de una vez. Primero se revisa cada fecha
         (horario, ocupación y precio) y puedes omitir las que no estén disponibles.

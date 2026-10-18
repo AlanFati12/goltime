@@ -148,7 +148,7 @@ export function PaginaAgenda() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Agenda</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Agenda</h1>
         <div role="tablist" aria-label="Vista" className="flex gap-1">
           {(['dia', 'semana'] as const).map((v) => (
             <Boton
