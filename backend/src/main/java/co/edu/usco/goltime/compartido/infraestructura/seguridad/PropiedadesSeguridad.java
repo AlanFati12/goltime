@@ -9,11 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * llega siempre por variable de entorno (nunca queda en el código).
  */
 @ConfigurationProperties("goltime.seguridad")
-public record PropiedadesSeguridad(
-        String jwtSecreto,
-        int accesoMinutos,
-        int refrescoDias,
-        boolean cookieSegura) {
+public record PropiedadesSeguridad(String jwtSecreto, boolean cookieSegura) {
 
     private static final int MINIMO_BYTES_SECRETO = 32;
 
