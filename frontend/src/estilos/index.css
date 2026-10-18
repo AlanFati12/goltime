@@ -1,30 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 @import 'tailwindcss';
 
 /*
  * Tokens de diseño de Goltime. Para cambiar la identidad visual basta con editar estas variables;
- * los componentes solo usan clases semánticas (bg-primario, text-acento, etc.).
+ * los componentes solo usan clases semánticas (bg-primario, text-texto-suave, etc.).
+ * Paleta neutra con un solo color de marca: el verde se reserva para acciones y estados.
  */
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-titulo: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-titulo: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
 
-  --color-primario: #16a34a;
-  --color-primario-oscuro: #166534;
-  --color-primario-claro: #dcfce7;
-  --color-acento: #facc15;
-  --color-fondo: #f6f7f9;
+  --color-primario: #059669;
+  --color-primario-oscuro: #065f46;
+  --color-primario-claro: #ecfdf5;
+  --color-acento: #f59e0b;
+  --color-fondo: #f7f8fa;
   --color-superficie: #ffffff;
-  --color-texto: #0f172a;
-  --color-texto-suave: #475569;
-  --color-borde: #e6e9ee;
+  --color-tenue: #f2f4f7;
+  --color-texto: #101828;
+  --color-texto-suave: #667085;
+  --color-borde: #e4e7ec;
 
-  --color-exito: #16a34a;
-  --color-alerta: #d97706;
+  --color-exito: #059669;
+  --color-alerta: #b45309;
   --color-peligro: #dc2626;
+  --color-info: #2563eb;
 
-  --radius-tarjeta: 1rem;
-  --radius-boton: 0.625rem;
+  --radius-tarjeta: 0.875rem;
+  --radius-boton: 0.5rem;
+
+  --shadow-suave: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.04);
+  --shadow-flotante: 0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.06);
 }
 
 @layer base {
@@ -32,18 +38,9 @@
     color-scheme: light;
   }
 
-  :root.oscuro {
-    color-scheme: dark;
-    --color-fondo: #0f172a;
-    --color-superficie: #1e293b;
-    --color-texto: #f1f5f9;
-    --color-texto-suave: #94a3b8;
-    --color-borde: #334155;
-    --color-primario-claro: #14532d;
-  }
-
   body {
     @apply bg-fondo text-texto font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
   }
 
   h1,
@@ -54,5 +51,33 @@
 
   :focus-visible {
     @apply outline-primario outline-2 outline-offset-2;
+  }
+
+  ::selection {
+    @apply bg-primario/20;
+  }
+}
+
+@layer components {
+  /* Tabla de datos: cabecera discreta, filas separadas por líneas finas y resaltado al pasar. */
+  .tabla {
+    @apply w-full text-left text-sm;
+  }
+  .tabla thead th {
+    @apply text-texto-suave bg-tenue/60 border-borde border-b px-4 py-2.5 text-xs font-medium whitespace-nowrap;
+  }
+  .tabla tbody td {
+    @apply border-borde border-b px-4 py-3 align-middle;
+  }
+  .tabla tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .tabla tbody tr {
+    @apply hover:bg-tenue/50 transition-colors;
+  }
+
+  /* Enlace de texto dentro de párrafos. */
+  .enlace {
+    @apply text-primario hover:text-primario-oscuro font-medium underline-offset-4 hover:underline;
   }
 }

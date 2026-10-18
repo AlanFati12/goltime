@@ -1,10 +1,16 @@
+import { Heart, Hourglass, Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
+
+import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
+import { SECCIONES_CUENTA } from '@/componentes/layout/LayoutCuenta'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
@@ -19,35 +25,26 @@ import {
   useMisSolicitudes,
 } from './consultas'
 
-const ACCESOS = [
-  { a: '/mis-reservas', titulo: 'Mis reservas', texto: 'Próximas, historial y canceladas.' },
-  {
-    a: '/favoritos',
-    titulo: 'Canchas favoritas',
-    texto: 'Vuelve a reservar tus canchas preferidas.',
-  },
-  { a: '/lista-espera', titulo: 'Lista de espera', texto: 'Horarios ocupados que esperas.' },
-  {
-    a: '/mis-premios',
-    titulo: 'Mis premios',
-    texto: 'Tu progreso de fidelidad y premios ganados.',
-  },
-  { a: '/mis-torneos', titulo: 'Inscripciones a torneos', texto: 'Solicitudes de tus equipos.' },
-  { a: '/notificaciones', titulo: 'Notificaciones', texto: 'Avisos sobre tus reservas.' },
-  { a: '/perfil', titulo: 'Mi perfil', texto: 'Tus datos y contraseña.' },
-]
-
 export function PaginaMiCuenta() {
+  const usuario = useSesion((u) => u.usuario)
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Mi cuenta</h1>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {ACCESOS.map((x) => (
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo={`Hola, ${usuario?.nombres.split(' ')[0] ?? ''}`}
+        descripcion="Desde aquí gestionas tus reservas, premios y datos."
+      />
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {SECCIONES_CUENTA.filter((x) => x.a !== '/mi-cuenta').map((x) => (
           <li key={x.a}>
-            <Link to={x.a} className="block h-full">
-              <Tarjeta className="hover:border-primario h-full">
-                <h2 className="font-semibold">{x.titulo}</h2>
-                <p className="text-texto-suave text-sm">{x.texto}</p>
+            <Link to={x.a} className="group block h-full">
+              <Tarjeta className="flex h-full items-start gap-4 p-5 transition-all group-hover:shadow-md sm:p-5">
+                <span className="bg-primario-claro text-primario flex size-10 shrink-0 items-center justify-center rounded-xl">
+                  <x.icono className="size-5" aria-hidden />
+                </span>
+                <span>
+                  <span className="block font-semibold">{x.texto}</span>
+                  <span className="text-texto-suave block text-sm">{x.descripcion}</span>
+                </span>
               </Tarjeta>
             </Link>
           </li>
@@ -60,27 +57,41 @@ export function PaginaMiCuenta() {
 export function PaginaFavoritos() {
   const { data, isPending, isError, error } = useFavoritas()
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Canchas favoritas</h1>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Canchas favoritas"
+        descripcion="Tus canchas preferidas, a un toque de reservar."
+      />
       {isPending && <Cargando texto="Cargando favoritas…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-sm">
-          Aún no tienes favoritas. Toca el corazón en la página de una cancha para guardarla aquí.
-        </Tarjeta>
+        <EstadoVacio
+          icono={Heart}
+          titulo="Aún no tienes favoritas"
+          descripcion="Toca el corazón en la página de una cancha para guardarla aquí."
+          accion={
+            <EnlaceBoton to="/sedes" tamano="sm" variante="secundario">
+              Explorar canchas
+            </EnlaceBoton>
+          }
+        />
       )}
       <ul className="grid gap-3 sm:grid-cols-2">
         {data?.map((f) => (
           <li key={f.canchaId}>
             <Tarjeta className="flex items-center justify-between gap-3">
               <div>
-                <Link to={`/canchas/${f.canchaId}`} className="font-semibold hover:underline">
+                <Link to={`/canchas/${f.canchaId}`} className="hover:text-primario font-semibold">
                   {f.cancha}
                 </Link>
                 <p className="text-texto-suave text-sm">
                   {f.sede} · {f.modalidad} · desde {formatearCOP(f.precioBaseHora)}/h
                 </p>
-                {!f.activa && <Insignia tono="ambar">No disponible por ahora</Insignia>}
+                {!f.activa && (
+                  <Insignia tono="ambar" className="mt-1.5">
+                    No disponible por ahora
+                  </Insignia>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {f.activa && (
@@ -105,16 +116,19 @@ export function PaginaListaEspera() {
   const { data, isPending, isError, error } = useMisEsperas()
   const { salir } = useAccionesEspera()
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Lista de espera</h1>
-      <p className="text-texto-suave text-sm">
-        Te avisamos en la app y por correo cuando uno de estos horarios se libere. El primero en
-        solicitarlo se lo queda.
-      </p>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Lista de espera"
+        descripcion="Te avisamos en la app y por correo cuando uno de estos horarios se libere. El primero en solicitarlo se lo queda."
+      />
       {isPending && <Cargando texto="Cargando…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-sm">No estás esperando ningún horario.</Tarjeta>
+        <EstadoVacio
+          icono={Hourglass}
+          titulo="No estás esperando ningún horario"
+          descripcion="Cuando un horario esté ocupado, toca «Avisarme» para entrar a la lista."
+        />
       )}
       <ul className="flex flex-col gap-3">
         {data?.map((e) => (
@@ -126,9 +140,11 @@ export function PaginaListaEspera() {
                   {e.cancha} · {e.sede}
                 </p>
                 {e.estado === 'NOTIFICADA' ? (
-                  <Insignia tono="verde">¡Se liberó! Reserva ya</Insignia>
+                  <Insignia tono="verde" className="mt-1.5">
+                    ¡Se liberó! Reserva ya
+                  </Insignia>
                 ) : (
-                  <Insignia>Esperando</Insignia>
+                  <Insignia className="mt-1.5">Esperando</Insignia>
                 )}
               </div>
               <div className="flex gap-2">
@@ -172,8 +188,18 @@ export function PaginaMisSolicitudes() {
   const { data, isPending, isError, error } = useMisSolicitudes()
   const { retirar } = useAccionesSolicitud()
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Inscripciones a torneos</h1>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Mis torneos"
+        descripcion="Solicitudes de inscripción de tus equipos."
+        acciones={
+          data?.habilitado && (
+            <EnlaceBoton to="/torneos" variante="secundario">
+              Ver torneos
+            </EnlaceBoton>
+          )
+        }
+      />
       {isPending && <Cargando texto="Cargando…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && !data.habilitado && (
@@ -182,27 +208,25 @@ export function PaginaMisSolicitudes() {
           habilite.
         </Alerta>
       )}
-      {data && data.habilitado && (
-        <p className="text-texto-suave text-sm">
-          Elige un torneo con inscripciones abiertas y toca «Solicitar inscripción».{' '}
-          <Link to="/torneos" className="text-primario underline">
-            Ver torneos
-          </Link>
-        </p>
-      )}
       {data?.solicitudes.length === 0 && data.habilitado && (
-        <Tarjeta className="text-texto-suave text-sm">Aún no has pedido inscribir equipos.</Tarjeta>
+        <EstadoVacio
+          icono={Trophy}
+          titulo="Aún no has pedido inscribir equipos"
+          descripcion="Elige un torneo con inscripciones abiertas y toca «Solicitar inscripción»."
+        />
       )}
       <ul className="flex flex-col gap-3">
         {data?.solicitudes.map((s) => (
           <li key={s.inscripcionId}>
             <Tarjeta className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <Link to={`/torneos/${s.torneoId}`} className="font-semibold hover:underline">
+                <Link to={`/torneos/${s.torneoId}`} className="hover:text-primario font-semibold">
                   {s.equipo}
                 </Link>
                 <p className="text-texto-suave text-sm">{s.torneo}</p>
-                <Insignia tono={TONO[s.estado]}>{TEXTO[s.estado]}</Insignia>
+                <Insignia tono={TONO[s.estado]} className="mt-1.5">
+                  {TEXTO[s.estado]}
+                </Insignia>
               </div>
               {s.estado === 'SOLICITADA' && (
                 <Boton

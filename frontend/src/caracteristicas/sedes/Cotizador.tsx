@@ -5,7 +5,7 @@ import { Alerta } from '@/componentes/ui/Alerta'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearHora, ZONA_HORARIA } from '@/lib/formato'
 
@@ -42,12 +42,11 @@ export function Cotizador({ cancha }: { cancha: Cancha }) {
 
   return (
     <Tarjeta className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold">¿Cuánto cuesta?</h2>
-        <p className="text-texto-suave text-sm">
-          Elige fecha, hora y duración para ver el precio con su desglose.
-        </p>
-      </div>
+      <TituloTarjeta
+        className="mb-0"
+        titulo="¿Cuánto cuesta?"
+        descripcion="Elige fecha, hora y duración para ver el precio con su desglose."
+      />
       <div className="grid gap-3 sm:grid-cols-3">
         <Campo
           etiqueta="Fecha"
@@ -80,8 +79,14 @@ export function Cotizador({ cancha }: { cancha: Cancha }) {
       {isFetching && <Cargando texto="Calculando…" className="py-2" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && !isFetching && (
-        <div aria-live="polite" className="flex flex-col gap-2">
-          <p className="text-primario-oscuro text-2xl font-bold">{formatearCOP(data.total)}</p>
+        <div
+          aria-live="polite"
+          className="bg-primario-claro/60 rounded-boton flex flex-col gap-2 p-4"
+        >
+          <p className="text-texto-suave text-xs font-medium">Total estimado</p>
+          <p className="text-primario-oscuro font-titulo text-3xl font-bold">
+            {formatearCOP(data.total)}
+          </p>
           <ul className="text-texto-suave text-sm">
             {data.tramos.map((t) => (
               <li key={t.inicio}>

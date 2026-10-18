@@ -2,8 +2,10 @@ import { useId, type InputHTMLAttributes, type Ref, type TextareaHTMLAttributes 
 
 import { cn } from '@/lib/utils'
 
-const estiloEntrada =
-  'border-borde bg-superficie text-texto placeholder:text-texto-suave/70 focus-visible:outline-primario w-full rounded-boton border px-3 py-2 text-sm aria-[invalid=true]:border-peligro'
+export const estiloEntrada =
+  'border-borde bg-superficie text-texto placeholder:text-texto-suave/60 shadow-suave w-full rounded-boton border px-3 py-2 text-sm transition-colors hover:border-texto-suave/40 focus-visible:border-primario focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primario/10 disabled:bg-tenue disabled:text-texto-suave aria-[invalid=true]:border-peligro aria-[invalid=true]:focus-visible:ring-peligro/10'
+
+const estiloEtiqueta = 'text-texto text-sm font-medium'
 
 interface PropsBase {
   etiqueta: string
@@ -21,14 +23,14 @@ export function Campo({
 }: PropsBase & InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
   const id = useId()
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <label htmlFor={id} className={estiloEtiqueta}>
         {etiqueta}
       </label>
       <input
         id={id}
         ref={ref}
-        className={estiloEntrada}
+        className={cn(estiloEntrada, 'h-10')}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : ayuda ? `${id}-ayuda` : undefined}
         {...resto}
@@ -56,8 +58,8 @@ export function CampoTexto({
 }: PropsBase & TextareaHTMLAttributes<HTMLTextAreaElement> & { ref?: Ref<HTMLTextAreaElement> }) {
   const id = useId()
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <label htmlFor={id} className={estiloEtiqueta}>
         {etiqueta}
       </label>
       <textarea
@@ -92,12 +94,12 @@ export function Casilla({
   const id = useId()
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="flex items-start gap-2 text-sm">
+      <label htmlFor={id} className="flex cursor-pointer items-start gap-2.5 text-sm">
         <input
           id={id}
           ref={ref}
           type="checkbox"
-          className="accent-primario mt-0.5 size-4"
+          className="accent-primario mt-0.5 size-4 cursor-pointer"
           {...resto}
         />
         <span>{etiqueta}</span>

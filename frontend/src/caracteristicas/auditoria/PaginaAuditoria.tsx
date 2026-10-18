@@ -12,6 +12,7 @@ import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Paginacion } from '@/componentes/ui/Paginacion'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 
@@ -160,30 +161,14 @@ export function PaginaAuditoria() {
         </Tarjeta>
       )}
 
-      {data && data.totalPaginas > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-texto-suave">
-            Página {data.pagina + 1} de {data.totalPaginas} · {data.totalElementos} registros
-          </span>
-          <div className="flex gap-2">
-            <Boton
-              tamano="sm"
-              variante="secundario"
-              disabled={data.pagina === 0}
-              onClick={() => setFiltros((f) => ({ ...f, pagina: f.pagina - 1 }))}
-            >
-              Anterior
-            </Boton>
-            <Boton
-              tamano="sm"
-              variante="secundario"
-              disabled={data.pagina + 1 >= data.totalPaginas}
-              onClick={() => setFiltros((f) => ({ ...f, pagina: f.pagina + 1 }))}
-            >
-              Siguiente
-            </Boton>
-          </div>
-        </div>
+      {data && (
+        <Paginacion
+          pagina={data.pagina}
+          totalPaginas={data.totalPaginas}
+          totalElementos={data.totalElementos}
+          unidad="registros"
+          alCambiar={(pagina) => setFiltros((f) => ({ ...f, pagina }))}
+        />
       )}
     </div>
   )

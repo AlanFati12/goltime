@@ -44,7 +44,6 @@ import {
 import { PaginaSeries } from '@/caracteristicas/extras/PaginaSeries'
 import { PaginaConfiguracion } from '@/caracteristicas/configuracion/PaginaConfiguracion'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
-;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
 import { PaginaPanelAdmin } from '@/caracteristicas/admin/PaginaPanelAdmin'
 import { PaginaIngresar } from '@/caracteristicas/autenticacion/PaginaIngresar'
@@ -56,6 +55,7 @@ import { ProveedorSesion } from '@/caracteristicas/autenticacion/ProveedorSesion
 import { RutaProtegida } from '@/caracteristicas/autenticacion/RutaProtegida'
 import { PaginaPerfil } from '@/caracteristicas/perfil/PaginaPerfil'
 import { LayoutAdmin } from '@/componentes/layout/LayoutAdmin'
+import { LayoutCuenta } from '@/componentes/layout/LayoutCuenta'
 import { LayoutPublico } from '@/componentes/layout/LayoutPublico'
 import { ContenedorAvisos } from '@/componentes/ui/ContenedorAvisos'
 import { PaginaInicio } from '@/paginas/PaginaInicio'
@@ -89,15 +89,17 @@ export default function App() {
               <Route path="restablecer-clave" element={<PaginaRestablecerClave />} />
               <Route path="verificar-correo" element={<PaginaVerificarCorreo />} />
               <Route element={<RutaProtegida />}>
-                <Route path="perfil" element={<PaginaPerfil />} />
-                <Route path="mis-reservas" element={<PaginaMisReservas />} />
                 <Route path="mis-reservas/:id" element={<PaginaReservaDetalle />} />
-                <Route path="notificaciones" element={<PaginaNotificaciones />} />
-                <Route path="mis-premios" element={<PaginaMisPremios />} />
-                <Route path="mi-cuenta" element={<PaginaMiCuenta />} />
-                <Route path="favoritos" element={<PaginaFavoritos />} />
-                <Route path="lista-espera" element={<PaginaListaEspera />} />
-                <Route path="mis-torneos" element={<PaginaMisSolicitudes />} />
+                <Route element={<LayoutCuenta />}>
+                  <Route path="perfil" element={<PaginaPerfil />} />
+                  <Route path="mis-reservas" element={<PaginaMisReservas />} />
+                  <Route path="notificaciones" element={<PaginaNotificaciones />} />
+                  <Route path="mis-premios" element={<PaginaMisPremios />} />
+                  <Route path="mi-cuenta" element={<PaginaMiCuenta />} />
+                  <Route path="favoritos" element={<PaginaFavoritos />} />
+                  <Route path="lista-espera" element={<PaginaListaEspera />} />
+                  <Route path="mis-torneos" element={<PaginaMisSolicitudes />} />
+                </Route>
               </Route>
               <Route path="*" element={<PaginaNoEncontrada />} />
             </Route>

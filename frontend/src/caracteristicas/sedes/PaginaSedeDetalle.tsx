@@ -1,8 +1,11 @@
+import { MapPin, MessageCircle, Phone } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { Insignia } from '@/componentes/ui/Insignia'
+import { Migas } from '@/componentes/ui/Migas'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 
@@ -24,7 +27,7 @@ export function PaginaSedeDetalle() {
             ? 'Esta sede no existe o no está disponible.'
             : mensajeDeError(error)}
         </Alerta>
-        <Link to="/sedes" className="text-primario text-sm underline">
+        <Link to="/sedes" className="enlace text-sm">
           Ver todas las sedes
         </Link>
       </div>
@@ -33,59 +36,61 @@ export function PaginaSedeDetalle() {
 
   return (
     <div className="flex flex-col gap-6">
-      <nav aria-label="Ruta" className="text-texto-suave text-sm">
-        <Link to="/sedes" className="hover:underline">
-          Sedes
-        </Link>{' '}
-        / {sede.nombre}
-      </nav>
+      <Migas items={[{ texto: 'Sedes', a: '/sedes' }, { texto: sede.nombre }]} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Galeria fotos={sede.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div>
             <h1 className="text-2xl font-bold sm:text-3xl">{sede.nombre}</h1>
-            <p className="text-texto-suave text-sm">
+            <p className="text-texto-suave mt-1 flex items-center gap-1.5 text-sm">
+              <MapPin className="size-4 shrink-0" aria-hidden />
               {sede.direccion} · {sede.ciudad}
             </p>
           </div>
-          {sede.descripcion && <p className="text-sm">{sede.descripcion}</p>}
-          <div className="flex flex-wrap gap-1">
+          {sede.descripcion && <p className="text-texto-suave text-sm">{sede.descripcion}</p>}
+          <div className="flex flex-wrap gap-1.5">
             {sede.servicios.map((s) => (
               <Insignia key={s} tono="verde">
                 {s}
               </Insignia>
             ))}
           </div>
-          <div className="text-sm">
-            {sede.telefono && <p>Teléfono: {sede.telefono}</p>}
-            {sede.whatsapp && (
-              <p>
-                WhatsApp:{' '}
+          {(sede.telefono || sede.whatsapp) && (
+            <div className="flex flex-wrap gap-2">
+              {sede.telefono && (
                 <a
-                  className="text-primario underline"
+                  href={`tel:${sede.telefono}`}
+                  className="border-borde hover:bg-tenue rounded-boton inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
+                >
+                  <Phone className="text-texto-suave size-4" aria-hidden />
+                  {sede.telefono}
+                </a>
+              )}
+              {sede.whatsapp && (
+                <a
+                  className="border-borde hover:bg-tenue rounded-boton inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
                   href={`https://wa.me/${sede.whatsapp.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {sede.whatsapp}
+                  <MessageCircle className="size-4 text-emerald-600" aria-hidden />
+                  WhatsApp
                 </a>
-              </p>
-            )}
-          </div>
-          <div>
+              )}
+            </div>
+          )}
+          <div className="border-borde border-t pt-4">
             <h2 className="mb-2 text-sm font-semibold">Horario de atención</h2>
             <HorarioTabla dias={sede.horario} />
           </div>
         </Tarjeta>
       </div>
       <section aria-labelledby="titulo-canchas">
-        <h2 id="titulo-canchas" className="mb-3 text-xl font-semibold">
-          Canchas
+        <h2 id="titulo-canchas" className="mb-4 text-xl font-bold">
+          Canchas <span className="text-texto-suave font-normal">({sede.canchas.length})</span>
         </h2>
         {sede.canchas.length === 0 && (
-          <Tarjeta className="text-texto-suave text-center text-sm">
-            Esta sede aún no tiene canchas disponibles.
-          </Tarjeta>
+          <EstadoVacio titulo="Esta sede aún no tiene canchas disponibles" />
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sede.canchas.map((c) => (

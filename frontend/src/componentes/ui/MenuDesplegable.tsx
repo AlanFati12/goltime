@@ -38,7 +38,7 @@ export function MenuDesplegable({
         aria-expanded={abierto}
         aria-haspopup="menu"
         onClick={() => setAbierto((a) => !a)}
-        className="hover:bg-primario-claro rounded-boton flex items-center gap-2 px-2 py-1.5"
+        className="hover:bg-tenue flex items-center gap-2 rounded-full py-1 pr-2 pl-1"
       >
         {boton}
       </button>
@@ -47,7 +47,7 @@ export function MenuDesplegable({
           role="menu"
           onClick={() => setAbierto(false)}
           className={cn(
-            'border-borde bg-superficie rounded-tarjeta absolute right-0 z-40 mt-2 w-60 border p-1.5 shadow-lg',
+            'border-borde bg-superficie rounded-tarjeta shadow-flotante absolute right-0 z-40 mt-2 w-64 border p-1.5',
             className,
           )}
         >

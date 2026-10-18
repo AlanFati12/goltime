@@ -6,11 +6,11 @@ import { Link } from 'react-router-dom'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { esquemaOlvideClave, type DatosOlvideClave } from '@/lib/validaciones'
 
 import { solicitarRecuperacion } from './servicioAutenticacion'
+import { TarjetaAcceso } from './TarjetaAcceso'
 
 export function PaginaOlvideClave() {
   const [enviado, setEnviado] = useState(false)
@@ -32,23 +32,24 @@ export function PaginaOlvideClave() {
   })
 
   return (
-    <Tarjeta className="mx-auto w-full max-w-md">
-      <h1 className="mb-1 text-2xl font-bold">Recuperar contraseña</h1>
+    <TarjetaAcceso
+      titulo="Recuperar contraseña"
+      descripcion="Escribe tu correo y te enviaremos un enlace para restablecerla."
+      pie={
+        <Link to="/ingresar" className="enlace">
+          Volver a ingresar
+        </Link>
+      }
+    >
       {enviado ? (
         <>
-          <Alerta tipo="exito" className="my-4">
+          <Alerta tipo="exito">
             Si el correo está registrado, te enviamos un enlace para crear una contraseña nueva.
             Vence en 30 minutos.
           </Alerta>
-          <Link to="/ingresar" className="text-primario text-sm underline">
-            Volver a ingresar
-          </Link>
         </>
       ) : (
         <>
-          <p className="text-texto-suave mb-5 text-sm">
-            Escribe tu correo y te enviaremos un enlace para restablecerla.
-          </p>
           <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
             {error && <Alerta tipo="error">{error}</Alerta>}
             <Campo
@@ -58,12 +59,12 @@ export function PaginaOlvideClave() {
               error={errors.correo?.message}
               {...register('correo')}
             />
-            <Boton type="submit" disabled={isSubmitting}>
+            <Boton type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? 'Enviando…' : 'Enviar enlace'}
             </Boton>
           </form>
         </>
       )}
-    </Tarjeta>
+    </TarjetaAcceso>
   )
 }
