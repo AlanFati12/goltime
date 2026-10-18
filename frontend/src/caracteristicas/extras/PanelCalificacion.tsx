@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react'
 import { useState } from 'react'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
@@ -23,7 +24,7 @@ export function PanelCalificacion({ reservaId }: { reservaId: number }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3 print:hidden">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-base font-semibold">
         {actual ? 'Tu calificación' : '¿Cómo estuvo la cancha?'}
       </h2>
       <div role="radiogroup" aria-label="Calificación en estrellas" className="flex gap-1">
@@ -35,9 +36,15 @@ export function PanelCalificacion({ reservaId }: { reservaId: number }) {
             aria-checked={valor === i}
             aria-label={`${i} ${i === 1 ? 'estrella' : 'estrellas'}`}
             onClick={() => setEstrellas(i)}
-            className={cn('text-3xl', i <= valor ? 'text-acento' : 'text-borde')}
+            className="rounded-md p-0.5 transition-transform hover:scale-110"
           >
-            ★
+            <Star
+              className={cn(
+                'size-7',
+                i <= valor ? 'fill-acento text-acento' : 'text-borde fill-transparent',
+              )}
+              aria-hidden
+            />
           </button>
         ))}
       </div>

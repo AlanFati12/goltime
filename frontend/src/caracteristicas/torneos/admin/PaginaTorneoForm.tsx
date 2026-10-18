@@ -338,7 +338,7 @@ export function PaginaTorneoForm() {
   const { data, isPending, isError, error } = useTorneo(torneoId ?? 0, true)
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">
+      <h1 className="text-2xl font-bold sm:text-[1.75rem]">
         {torneoId ? 'Editar torneo' : 'Nuevo torneo'}
       </h1>
       {torneoId && isPending && <Cargando texto="Cargando torneo…" />}

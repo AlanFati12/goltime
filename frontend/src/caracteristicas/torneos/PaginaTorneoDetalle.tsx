@@ -1,7 +1,8 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
@@ -36,24 +37,24 @@ export function ResumenTorneo({ t }: { t: Torneo }) {
         )}
         {t.valorInscripcion > 0 && ` · Inscripción ${formatearCOP(t.valorInscripcion)}`}
       </p>
-      {t.descripcion && <p className="text-sm">{t.descripcion}</p>}
+      {t.descripcion && <p className="text-texto-suave text-sm">{t.descripcion}</p>}
       {t.estado === 'FINALIZADO' && t.campeon && (
-        <div className="bg-primario-claro rounded-boton flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm">
+        <div className="rounded-boton flex flex-wrap gap-x-6 gap-y-1 bg-amber-50 px-4 py-3 text-sm ring-1 ring-amber-200/70 ring-inset">
           <span className="font-bold">🏆 Campeón: {t.campeon}</span>
           {t.subcampeon && <span>🥈 Subcampeón: {t.subcampeon}</span>}
           {t.tercero && <span>🥉 Tercero: {t.tercero}</span>}
         </div>
       )}
       {t.premiosTexto && (
-        <details className="text-sm">
+        <details className="border-borde group rounded-boton border px-4 py-3 text-sm">
           <summary className="cursor-pointer font-medium">Premios</summary>
-          <p className="mt-1 whitespace-pre-line">{t.premiosTexto}</p>
+          <p className="text-texto-suave mt-2 whitespace-pre-line">{t.premiosTexto}</p>
         </details>
       )}
       {t.reglamento && (
-        <details className="text-sm">
+        <details className="border-borde group rounded-boton border px-4 py-3 text-sm">
           <summary className="cursor-pointer font-medium">Reglamento</summary>
-          <p className="mt-1 whitespace-pre-line">{t.reglamento}</p>
+          <p className="text-texto-suave mt-2 whitespace-pre-line">{t.reglamento}</p>
         </details>
       )}
     </Tarjeta>
@@ -73,27 +74,24 @@ export function PaginaTorneoDetalle() {
       (x) => x.torneoId === id && (x.estado === 'SOLICITADA' || x.estado === 'APROBADA'),
     ) ?? false
   return (
-    <div className="flex max-w-6xl flex-col gap-6">
-      <Link to="/torneos" className="text-primario text-sm hover:underline">
-        ← Todos los torneos
-      </Link>
+    <div className="flex flex-col gap-6">
       {isPending && <Cargando texto="Cargando torneo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="text-2xl font-bold sm:text-3xl">{data.torneo.nombre}</h1>
-          <ResumenTorneo t={data.torneo} />
-          {puedeSolicitar && (
-            <div>
-              {yaSolicito ? (
-                <p className="text-primario-oscuro text-sm font-medium">
-                  Ya enviaste una solicitud para este torneo. Revisa su estado en «Mi cuenta».
-                </p>
+          <EncabezadoPagina
+            titulo={data.torneo.nombre}
+            volver={{ a: '/torneos', texto: 'Todos los torneos' }}
+            acciones={
+              puedeSolicitar &&
+              (yaSolicito ? (
+                <Insignia tono="verde">Solicitud enviada · revisa «Mis torneos»</Insignia>
               ) : (
                 <Boton onClick={() => setSolicitando(true)}>Solicitar inscripción</Boton>
-              )}
-            </div>
-          )}
+              ))
+            }
+          />
+          <ResumenTorneo t={data.torneo} />
           <PanelTorneo detalle={data} />
           {solicitando && (
             <ModalSolicitarInscripcion

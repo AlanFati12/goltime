@@ -301,7 +301,7 @@ export function PaginaCanchaForm() {
         <Link to="/admin/canchas" className="text-texto-suave text-sm hover:underline">
           ← Canchas
         </Link>
-        <h1 className="text-2xl font-bold sm:text-3xl">
+        <h1 className="text-2xl font-bold sm:text-[1.75rem]">
           {cancha ? cancha.nombre : 'Nueva cancha'}
         </h1>
         {cancha && <p className="text-texto-suave text-sm">{cancha.sedeNombre}</p>}

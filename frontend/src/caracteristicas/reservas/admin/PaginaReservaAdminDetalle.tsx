@@ -45,7 +45,7 @@ export function PaginaReservaAdminDetalle() {
             ? 'Esta reserva no existe.'
             : mensajeDeError(error)}
         </Alerta>
-        <Link to="/admin/reservas" className="text-primario text-sm underline">
+        <Link to="/admin/reservas" className="enlace text-sm">
           Volver a reservas
         </Link>
       </div>

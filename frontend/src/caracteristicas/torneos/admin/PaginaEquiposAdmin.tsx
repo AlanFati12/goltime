@@ -1,3 +1,4 @@
+import { Plus, Shirt } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -9,6 +10,8 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Modal } from '@/componentes/ui/Modal'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 
 import { useAccionesEquipo, useEquipos } from '../consultas'
@@ -40,7 +43,7 @@ function ModalNuevoEquipo({ alCerrar }: { alCerrar: () => void }) {
 
   return (
     <Modal abierto titulo="Nuevo equipo" alCerrar={alCerrar}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <Campo
           etiqueta="Nombre del equipo"
           value={nombre}
@@ -86,14 +89,17 @@ export function PaginaEquiposAdmin() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Equipos</h1>
-        <Boton onClick={() => setNuevo(true)}>Nuevo equipo</Boton>
-      </div>
-      <p className="text-texto-suave max-w-3xl text-sm">
-        Los equipos y sus jugadores se crean una vez y se reutilizan en todos los torneos.
-      </p>
-      <Tarjeta className="flex flex-wrap items-end gap-4">
+      <EncabezadoPagina
+        titulo="Equipos"
+        descripcion="Los equipos y sus jugadores se crean una vez y se reutilizan en todos los torneos."
+        acciones={
+          <Boton onClick={() => setNuevo(true)}>
+            <Plus aria-hidden />
+            Nuevo equipo
+          </Boton>
+        }
+      />
+      <Tarjeta className="flex flex-wrap items-end gap-4 p-4 sm:p-4">
         <Campo
           className="min-w-56"
           etiqueta="Buscar por nombre"
@@ -112,22 +118,20 @@ export function PaginaEquiposAdmin() {
       </Tarjeta>
       {isPending && <Cargando texto="Cargando equipos…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
-      {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">No hay equipos.</Tarjeta>
-      )}
+      {data?.length === 0 && <EstadoVacio icono={Shirt} titulo="No hay equipos" />}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {data?.map((r) => (
           <li key={r.equipo.id}>
-            <Tarjeta className="flex flex-col gap-2 p-4">
-              <div className="flex items-center gap-2">
+            <Tarjeta className="flex flex-col gap-2 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5">
                 <span
-                  className="size-4 rounded-full border"
+                  className="ring-borde size-5 shrink-0 rounded-md ring-1"
                   style={{ backgroundColor: r.equipo.color ?? 'transparent' }}
                   aria-hidden="true"
                 />
                 <Link
                   to={`/admin/equipos/${r.equipo.id}`}
-                  className="font-semibold hover:underline"
+                  className="hover:text-primario font-semibold"
                 >
                   {r.equipo.nombre}
                 </Link>

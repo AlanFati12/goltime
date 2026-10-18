@@ -102,7 +102,7 @@ export function PaginaNuevaReservaAdmin() {
         <Link to="/admin/reservas" className="text-texto-suave text-sm hover:underline">
           ← Reservas
         </Link>
-        <h1 className="text-2xl font-bold sm:text-3xl">Nueva reserva</h1>
+        <h1 className="text-2xl font-bold sm:text-[1.75rem]">Nueva reserva</h1>
         <p className="text-texto-suave text-sm">
           Queda confirmada de inmediato. Puedes reservar con poca antelación y sin el límite de
           reservas por cliente.
@@ -248,7 +248,7 @@ export function PaginaNuevaReservaAdmin() {
                     onClick={() => setClienteId(c.id)}
                     aria-pressed={clienteId === c.id}
                     className={cn(
-                      'hover:bg-primario-claro w-full px-3 py-2 text-left',
+                      'hover:bg-tenue w-full px-3 py-2 text-left',
                       clienteId === c.id && 'bg-primario-claro font-medium',
                     )}
                   >
@@ -292,7 +292,7 @@ export function PaginaNuevaReservaAdmin() {
                     <button
                       key={m.id}
                       type="button"
-                      className="border-borde hover:bg-primario-claro rounded-full border px-3 py-1 text-xs"
+                      className="border-borde hover:bg-tenue rounded-full border px-3 py-1 text-xs"
                       onClick={() => (setNombre(m.nombre), setTelefono(m.telefono ?? ''))}
                     >
                       {m.nombre} · {m.telefono}

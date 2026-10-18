@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { nombreCompleto, type Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
@@ -9,6 +10,10 @@ import { Insignia } from '@/componentes/ui/Insignia'
 import { Interruptor } from '@/componentes/ui/Interruptor'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { Paginacion } from '@/componentes/ui/Paginacion'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
+import { Campo } from '@/componentes/ui/Campo'
+import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
 
@@ -49,68 +54,65 @@ export function PaginaClientes() {
     )
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold sm:text-3xl">Clientes</h1>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Clientes"
+        descripcion="Busca clientes, desactiva cuentas y habilita la inscripción de equipos."
+      />
 
-      <Tarjeta className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium">
-          Buscar
-          <input
-            type="search"
-            value={filtros.busqueda}
-            onChange={(e) => cambiarFiltro({ busqueda: e.target.value })}
-            placeholder="Nombre, correo, celular o documento"
-            className="border-borde bg-superficie rounded-boton border px-3 py-2 font-normal"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          Estado
-          <select
-            value={filtros.activo}
-            onChange={(e) => cambiarFiltro({ activo: e.target.value as FiltrosClientes['activo'] })}
-            className="border-borde bg-superficie rounded-boton border px-3 py-2 font-normal"
-          >
-            <option value="todos">Todos</option>
-            <option value="activos">Activos</option>
-            <option value="inactivos">Desactivados</option>
-          </select>
-        </label>
+      <Tarjeta className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end sm:p-4">
+        <Campo
+          className="flex-1"
+          etiqueta="Buscar"
+          type="search"
+          value={filtros.busqueda}
+          onChange={(e) => cambiarFiltro({ busqueda: e.target.value })}
+          placeholder="Nombre, correo, celular o documento"
+        />
+        <CampoSelect
+          className="sm:w-48"
+          etiqueta="Estado"
+          value={filtros.activo}
+          onChange={(e) => cambiarFiltro({ activo: e.target.value as FiltrosClientes['activo'] })}
+        >
+          <option value="todos">Todos</option>
+          <option value="activos">Activos</option>
+          <option value="inactivos">Desactivados</option>
+        </CampoSelect>
       </Tarjeta>
 
       {isPending && <Cargando texto="Cargando clientes…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && data.contenido.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          No hay clientes que coincidan con la búsqueda.
-        </Tarjeta>
+        <EstadoVacio icono={Users} titulo="No hay clientes que coincidan con la búsqueda" />
       )}
 
       {data && data.contenido.length > 0 && (
-        <Tarjeta className="overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead className="border-borde text-texto-suave border-b text-xs uppercase">
+        <Tarjeta className="overflow-x-auto p-0 sm:p-0">
+          <table className="tabla">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Contacto</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Inscribe equipos</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th>Cliente</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+                <th>Inscribe equipos</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className={isFetching ? 'opacity-60' : undefined}>
               {data.contenido.map((c) => (
-                <tr key={c.id} className="border-borde border-b last:border-0">
-                  <td className="px-4 py-3">
+                <tr key={c.id}>
+                  <td>
                     <div className="font-medium">{nombreCompleto(c)}</div>
                     <div className="text-texto-suave text-xs">
                       Registro: {formatearFechaHora(c.creadoEn)}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div>{c.correo}</div>
                     <div className="text-texto-suave text-xs">{c.telefono ?? '—'}</div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {c.activo ? (
                       <Insignia tono="verde">Activo</Insignia>
                     ) : (
@@ -124,7 +126,7 @@ export function PaginaClientes() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <Interruptor
                       activo={c.puedeInscribirEquipos}
                       etiqueta={`Permitir a ${nombreCompleto(c)} inscribir equipos a torneos`}
@@ -132,7 +134,7 @@ export function PaginaClientes() {
                       alCambiar={(valor) => alternarInscripcion(c, valor)}
                     />
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     {c.activo ? (
                       <Boton tamano="sm" variante="secundario" onClick={() => setADesactivar(c)}>
                         Desactivar

@@ -16,22 +16,39 @@ export function PaginaJugadorPublico() {
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="text-2xl font-bold sm:text-3xl">{data.nombre}</h1>
-          {data.posicion && <p className="text-texto-suave">{data.posicion}</p>}
+          <div className="flex items-center gap-4">
+            <span className="bg-primario flex size-14 items-center justify-center rounded-full text-xl font-bold text-white">
+              {data.nombre.charAt(0)}
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold sm:text-[1.75rem]">{data.nombre}</h1>
+              {data.posicion && <p className="text-texto-suave">{data.posicion}</p>}
+            </div>
+          </div>
           <ul className="flex flex-col gap-3">
             {data.torneos.map((t) => (
               <li key={t.torneoId}>
                 <Tarjeta className="flex flex-col gap-2">
-                  <Link to={`/torneos/${t.torneoId}`} className="font-semibold hover:underline">
+                  <Link to={`/torneos/${t.torneoId}`} className="hover:text-primario font-semibold">
                     {t.torneo}
                   </Link>
                   <p className="text-texto-suave text-sm">{t.equipo}</p>
-                  <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                    <span>⚽ {t.goles} goles</span>
-                    <span>👟 {t.asistencias} asistencias</span>
-                    <span>🟨 {t.amarillas}</span>
-                    <span>🟥 {t.rojas}</span>
-                  </p>
+                  <dl className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      ['Goles', t.goles],
+                      ['Asistencias', t.asistencias],
+                      ['Amarillas', t.amarillas],
+                      ['Rojas', t.rojas],
+                    ].map(([etiqueta, valor]) => (
+                      <div
+                        key={etiqueta}
+                        className="bg-tenue/70 rounded-boton flex flex-col-reverse px-2 py-2"
+                      >
+                        <dt className="text-texto-suave text-xs">{etiqueta}</dt>
+                        <dd className="font-titulo text-lg font-bold">{valor}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </Tarjeta>
               </li>
             ))}

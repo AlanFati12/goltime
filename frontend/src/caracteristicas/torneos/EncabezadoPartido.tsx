@@ -20,16 +20,18 @@ export function EncabezadoPartido({
   const torneoRuta = admin ? `/admin/torneos/${p.torneoId}` : `/torneos/${p.torneoId}`
   return (
     <div className="flex flex-col gap-4">
-      <Tarjeta className="flex flex-col items-center gap-3 text-center">
-        <Link to={torneoRuta} className="text-primario text-sm hover:underline">
+      <Tarjeta className="flex flex-col items-center gap-4 py-8 text-center sm:py-10">
+        <Link to={torneoRuta} className="enlace text-sm">
           {p.torneo} · {textoRonda(p)}
         </Link>
         <div className="grid w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <span className="text-lg font-semibold">{nombreLado(p.local)}</span>
-          <span className="bg-primario-claro rounded-boton px-4 py-2 text-3xl font-bold">
+          <span className="font-titulo text-lg font-bold sm:text-xl">{nombreLado(p.local)}</span>
+          <span className="bg-texto font-titulo rounded-xl px-5 py-2.5 text-3xl font-extrabold text-white tabular-nums sm:text-4xl">
             {marcador(p)}
           </span>
-          <span className="text-lg font-semibold">{nombreLado(p.visitante)}</span>
+          <span className="font-titulo text-lg font-bold sm:text-xl">
+            {nombreLado(p.visitante)}
+          </span>
         </div>
         {textoPenales(p) && (
           <p className="text-sm font-medium">Definido por penales {textoPenales(p)}</p>
@@ -46,9 +48,9 @@ export function EncabezadoPartido({
       </Tarjeta>
 
       <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Eventos del partido</h2>
+        <h2 className="text-base font-semibold">Eventos del partido</h2>
         {detalle.eventos.length === 0 ? (
-          <p className="text-texto-suave text-sm">No hay eventos registrados.</p>
+          <p className="text-texto-suave py-4 text-center text-sm">No hay eventos registrados.</p>
         ) : (
           <ol className="flex flex-col gap-2 text-sm">
             {detalle.eventos.map((e) => {
@@ -58,12 +60,15 @@ export function EncabezadoPartido({
                   key={e.id}
                   className={`flex items-center gap-3 ${esLocal ? '' : 'flex-row-reverse text-right'}`}
                 >
-                  <span className="bg-borde rounded-full px-2 py-0.5 text-xs font-semibold">
+                  <span className="bg-tenue rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
                     {e.minuto}'
                   </span>
                   <span aria-hidden="true">{ICONO_EVENTO[e.tipo]}</span>
                   <span>
-                    <Link to={`/jugadores/${e.jugadorId}`} className="font-medium hover:underline">
+                    <Link
+                      to={`/jugadores/${e.jugadorId}`}
+                      className="hover:text-primario font-medium"
+                    >
                       {e.dorsal != null && `${e.dorsal} · `}
                       {e.jugador}
                     </Link>

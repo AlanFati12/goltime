@@ -187,7 +187,7 @@ function FormularioSerie() {
                   aria-pressed={clienteId === c.id}
                   onClick={() => setClienteId(c.id)}
                   className={cn(
-                    'hover:bg-primario-claro rounded-boton w-full px-2 py-1 text-left',
+                    'hover:bg-tenue rounded-boton w-full px-2 py-1 text-left',
                     clienteId === c.id && 'bg-primario-claro font-medium',
                   )}
                 >
@@ -273,7 +273,7 @@ export function PaginaSeries() {
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">Reservas recurrentes</h1>
+      <h1 className="text-2xl font-bold sm:text-[1.75rem]">Reservas recurrentes</h1>
       <p className="text-texto-suave max-w-3xl text-sm">
         La misma reserva todas las semanas, confirmada de una vez. Primero se revisa cada fecha
         (horario, ocupación y precio) y puedes omitir las que no estén disponibles.

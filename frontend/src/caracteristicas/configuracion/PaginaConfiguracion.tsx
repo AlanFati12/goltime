@@ -121,7 +121,7 @@ export function PaginaConfiguracion() {
   const porClave = new Map(data?.map((p) => [p.clave, p]))
   return (
     <div className="flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold sm:text-3xl">Configuración</h1>
+      <h1 className="text-2xl font-bold sm:text-[1.75rem]">Configuración</h1>
       <Alerta tipo="info">
         Los cambios aplican a las reservas nuevas desde el momento de guardarlos; las que ya existen
         conservan lo que se les prometió. Cada cambio queda en la auditoría.

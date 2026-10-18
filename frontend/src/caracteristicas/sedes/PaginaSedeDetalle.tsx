@@ -41,7 +41,7 @@ export function PaginaSedeDetalle() {
         <Galeria fotos={sede.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl font-bold sm:text-3xl">{sede.nombre}</h1>
+            <h1 className="text-2xl font-bold sm:text-[1.75rem]">{sede.nombre}</h1>
             <p className="text-texto-suave mt-1 flex items-center gap-1.5 text-sm">
               <MapPin className="size-4 shrink-0" aria-hidden />
               {sede.direccion} · {sede.ciudad}

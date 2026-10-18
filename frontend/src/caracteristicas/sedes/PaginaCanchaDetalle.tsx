@@ -88,7 +88,7 @@ export function PaginaCanchaDetalle() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-texto-suave text-sm">{c.sedeNombre}</p>
-              <h1 className="text-2xl font-bold sm:text-3xl">{c.nombre}</h1>
+              <h1 className="text-2xl font-bold sm:text-[1.75rem]">{c.nombre}</h1>
             </div>
             <span className="flex items-center gap-2">
               <Insignia tono="verde">{c.modalidad}</Insignia>

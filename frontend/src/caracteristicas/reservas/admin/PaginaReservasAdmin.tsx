@@ -1,3 +1,4 @@
+import { CircleCheck, Download, Plus, SearchX } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -15,6 +16,7 @@ import { Plegable } from '@/componentes/ui/Plegable'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { Paginacion } from '@/componentes/ui/Paginacion'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
 
@@ -77,9 +79,13 @@ export function PaginaReservasAdmin() {
         acciones={
           <>
             <Boton variante="secundario" onClick={exportar} disabled={exportando}>
+              <Download aria-hidden />
               {exportando ? 'Exportando…' : 'Exportar CSV'}
             </Boton>
-            <EnlaceBoton to="/admin/reservas/nueva">Nueva reserva</EnlaceBoton>
+            <EnlaceBoton to="/admin/reservas/nueva">
+              <Plus aria-hidden />
+              Nueva reserva
+            </EnlaceBoton>
           </>
         }
       />
@@ -165,7 +171,7 @@ export function PaginaReservasAdmin() {
           {hayFiltros && (
             <button
               type="button"
-              className="text-primario shrink-0 self-start text-sm font-medium"
+              className="text-texto-suave hover:text-texto inline-flex shrink-0 items-center gap-1 self-start text-sm font-medium"
               onClick={() => setFiltros({ ...FILTROS_RESERVAS_INICIALES, estado: '' })}
             >
               Quitar filtros
@@ -177,33 +183,36 @@ export function PaginaReservasAdmin() {
       {isPending && <Cargando texto="Cargando reservas…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          {filtros.estado === 'PENDIENTE' && !filtros.busqueda
-            ? 'No hay solicitudes pendientes. ¡Todo al día!'
-            : 'No hay reservas con esos filtros.'}
-        </Tarjeta>
+        <EstadoVacio
+          icono={filtros.estado === 'PENDIENTE' && !filtros.busqueda ? CircleCheck : SearchX}
+          titulo={
+            filtros.estado === 'PENDIENTE' && !filtros.busqueda
+              ? 'No hay solicitudes pendientes. ¡Todo al día!'
+              : 'No hay reservas con esos filtros.'
+          }
+        />
       )}
 
       {data && data.contenido.length > 0 && (
-        <Tarjeta className="overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead className="border-borde text-texto-suave border-b text-xs uppercase">
+        <Tarjeta className="overflow-x-auto p-0 sm:p-0">
+          <table className="tabla">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Reserva</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Horario</th>
-                <th className="px-4 py-3">Valor</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th>Reserva</th>
+                <th>Cliente</th>
+                <th>Horario</th>
+                <th>Valor</th>
+                <th>Estado</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className={isFetching ? 'opacity-60' : undefined}>
               {data.contenido.map((r) => (
-                <tr key={r.id} className="border-borde border-b align-top last:border-0">
-                  <td className="px-4 py-3">
+                <tr key={r.id} className="align-top">
+                  <td>
                     <Link
                       to={`/admin/reservas/${r.id}`}
-                      className="text-primario font-mono font-medium hover:underline"
+                      className="hover:text-primario font-mono font-semibold"
                     >
                       {r.codigo}
                     </Link>
@@ -211,23 +220,23 @@ export function PaginaReservasAdmin() {
                       {r.sede.nombre} · {r.cancha.nombre}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div>{r.cliente.nombre}</div>
                     <div className="text-texto-suave text-xs">
                       {r.cliente.telefono ?? r.cliente.correo}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="capitalize">{formatearFechaHora(r.inicio)}</div>
                     <div className="text-texto-suave text-xs">{rangoHorario(r.inicio, r.fin)}</div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div>{formatearCOP(r.precioFinal)}</div>
                     <div className="text-texto-suave text-xs">
                       {ETIQUETA_PAGO[r.estadoPago] ?? r.estadoPago}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <InsigniaEstadoReserva estado={r.estado} />
                     {r.origen === 'ADMIN' && <Insignia className="ml-1">Admin</Insignia>}
                     {r.estado === 'PENDIENTE' && r.expiraEn && (
@@ -236,7 +245,7 @@ export function PaginaReservasAdmin() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="flex justify-end gap-2">
                       {r.estado === 'PENDIENTE' && (
                         <>

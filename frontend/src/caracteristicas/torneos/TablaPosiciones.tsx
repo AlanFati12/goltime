@@ -14,11 +14,13 @@ const COLOR_FORMA: Record<string, string> = {
 export function TablaPosiciones({ tabla, clasifican = 0 }: { tabla: Tabla; clasifican?: number }) {
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold">{tabla.grupo ? `Grupo ${tabla.grupo}` : tabla.fase}</h3>
-      <div className="border-borde bg-superficie rounded-tarjeta overflow-x-auto border">
+      <h3 className="text-base font-semibold">
+        {tabla.grupo ? `Grupo ${tabla.grupo}` : tabla.fase}
+      </h3>
+      <div className="border-borde bg-superficie rounded-tarjeta shadow-suave overflow-x-auto border">
         <table className="w-full min-w-[34rem] text-sm">
           <caption className="sr-only">Tabla de posiciones {tabla.grupo ?? tabla.fase}</caption>
-          <thead className="bg-primario-claro text-left">
+          <thead className="bg-tenue/70 text-texto-suave border-borde border-b text-left text-xs">
             <tr>
               <th className="px-3 py-2">#</th>
               <th className="px-3 py-2">Equipo</th>

@@ -1,3 +1,4 @@
+import { Download, TrendingDown, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 
 import { useSedesAdmin } from '@/caracteristicas/sedes/consultas'
@@ -8,6 +9,7 @@ import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { Segmentado } from '@/componentes/ui/Pestanas'
 import { Plegable } from '@/componentes/ui/Plegable'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
@@ -46,15 +48,27 @@ function Kpi({
 }) {
   const bueno = variacion === undefined ? null : invertir ? variacion <= 0 : variacion >= 0
   return (
-    <Tarjeta className="flex flex-col gap-1 p-4">
-      <p className="text-texto-suave text-xs font-medium tracking-wide uppercase">{titulo}</p>
-      <p className="text-2xl font-bold whitespace-nowrap">{valor}</p>
-      {variacion !== undefined && (
-        <p className={cn('text-xs font-medium', bueno ? 'text-primario-oscuro' : 'text-peligro')}>
-          {variacion > 0 ? '▲' : variacion < 0 ? '▼' : '•'} {Math.abs(variacion)}% vs periodo
-          anterior
-        </p>
-      )}
+    <Tarjeta className="flex flex-col gap-2 p-5 sm:p-5">
+      <p className="text-texto-suave text-sm font-medium">{titulo}</p>
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <p className="font-titulo text-2xl font-bold whitespace-nowrap">{valor}</p>
+        {variacion !== undefined && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold',
+              bueno ? 'bg-primario-claro text-primario-oscuro' : 'text-peligro bg-red-50',
+            )}
+            title="Comparado con el periodo anterior"
+          >
+            {variacion > 0 ? (
+              <TrendingUp className="size-3" aria-hidden />
+            ) : variacion < 0 ? (
+              <TrendingDown className="size-3" aria-hidden />
+            ) : null}
+            {Math.abs(variacion)}%<span className="sr-only"> vs periodo anterior</span>
+          </span>
+        )}
+      </div>
       {ayuda && <p className="text-texto-suave text-xs">{ayuda}</p>}
     </Tarjeta>
   )
@@ -139,6 +153,10 @@ export function PaginaEstadisticas() {
   const sede = sedes.data?.find((s) => s.id === filtro.sedeId)
   const valido = filtro.desde <= filtro.hasta
 
+  const presetActual = PRESETS.find(
+    (p) =>
+      filtro.hasta === hoyEnBogota() && filtro.desde === sumarDias(filtro.hasta, -(p.dias - 1)),
+  )?.id
   const preset = (dias: number) => {
     const hoy = hoyEnBogota()
     setFiltro({ ...filtro, desde: sumarDias(hoy, -(dias - 1)), hasta: hoy })
@@ -157,6 +175,7 @@ export function PaginaEstadisticas() {
               descargarCsv(filtro, agrupacion).catch((e) => avisar.error(mensajeDeError(e)))
             }
           >
+            <Download aria-hidden />
             Exportar CSV
           </Boton>
         }
@@ -164,12 +183,14 @@ export function PaginaEstadisticas() {
 
       <Tarjeta className="flex flex-col gap-4 p-4 sm:p-4">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="flex gap-2 pb-0.5" role="group" aria-label="Periodos rápidos">
-            {PRESETS.map((p) => (
-              <Boton key={p.id} tamano="sm" variante="secundario" onClick={() => preset(p.dias)}>
-                {p.texto}
-              </Boton>
-            ))}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Periodo</span>
+            <Segmentado
+              etiqueta="Periodos rápidos"
+              opciones={PRESETS.map((p) => ({ id: p.id, texto: p.texto }))}
+              actual={presetActual ?? ''}
+              alCambiar={(id) => preset(PRESETS.find((p) => p.id === id)!.dias)}
+            />
           </div>
           <CampoSelect
             className="min-w-44"
@@ -234,17 +255,17 @@ export function PaginaEstadisticas() {
       {valido && (
         <>
           <Tarjeta className="flex flex-col gap-3">
-            <div className="flex justify-end gap-2" role="group" aria-label="Agrupación">
-              {(['DIA', 'SEMANA', 'MES'] as Agrupacion[]).map((g) => (
-                <Boton
-                  key={g}
-                  tamano="sm"
-                  variante={agrupacion === g ? 'primario' : 'secundario'}
-                  onClick={() => setAgrupacion(g)}
-                >
-                  {g === 'DIA' ? 'Día' : g === 'SEMANA' ? 'Semana' : 'Mes'}
-                </Boton>
-              ))}
+            <div className="flex justify-end">
+              <Segmentado
+                etiqueta="Agrupación"
+                opciones={[
+                  { id: 'DIA' as Agrupacion, texto: 'Día' },
+                  { id: 'SEMANA' as Agrupacion, texto: 'Semana' },
+                  { id: 'MES' as Agrupacion, texto: 'Mes' },
+                ]}
+                actual={agrupacion}
+                alCambiar={setAgrupacion}
+              />
             </div>
             {serie.data ? (
               <GraficoIngresos puntos={serie.data} titulo="Ingresos reales" />
@@ -262,7 +283,7 @@ export function PaginaEstadisticas() {
               )}
             </Tarjeta>
             <Tarjeta className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">Clientes frecuentes</h2>
+              <h2 className="text-base font-semibold">Clientes frecuentes</h2>
               {clientes.data?.length === 0 && (
                 <p className="text-texto-suave text-sm">Sin reservas completadas en el periodo.</p>
               )}
@@ -270,7 +291,7 @@ export function PaginaEstadisticas() {
                 {clientes.data?.map((c, i) => (
                   <li
                     key={`${c.nombre}-${i}`}
-                    className="border-borde flex items-center justify-between gap-2 border-b pb-1"
+                    className="border-borde/70 flex items-center justify-between gap-2 border-b pb-2 last:border-0"
                   >
                     <span>
                       <span className="text-texto-suave mr-2">{i + 1}.</span>
@@ -292,37 +313,37 @@ export function PaginaEstadisticas() {
             </Tarjeta>
           </div>
 
-          <Tarjeta className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">Rendimiento por cancha</h2>
+          <Tarjeta className="flex flex-col overflow-hidden p-0 sm:p-0">
+            <h2 className="px-5 pt-5 pb-3 text-base font-semibold">Rendimiento por cancha</h2>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[32rem] text-left text-sm">
+              <table className="tabla min-w-[32rem]">
                 <thead>
-                  <tr className="text-texto-suave">
-                    <th className="py-1">Cancha</th>
-                    <th className="py-1 text-right">Completadas</th>
-                    <th className="py-1 text-right">Horas</th>
-                    <th className="py-1 text-right">Ingresos</th>
-                    <th className="py-1 pl-4">Ocupación</th>
+                  <tr>
+                    <th>Cancha</th>
+                    <th className="text-right">Completadas</th>
+                    <th className="text-right">Horas</th>
+                    <th className="text-right">Ingresos</th>
+                    <th>Ocupación</th>
                   </tr>
                 </thead>
                 <tbody>
                   {canchas.data?.map((c) => (
-                    <tr key={c.canchaId} className="border-borde border-t">
-                      <td className="py-2">
+                    <tr key={c.canchaId}>
+                      <td>
                         <span className="font-medium">{c.cancha}</span>
                         <span className="text-texto-suave block text-xs">{c.sede}</span>
                       </td>
-                      <td className="py-2 text-right">{c.completadas}</td>
-                      <td className="py-2 text-right">{c.horas}</td>
-                      <td className="py-2 text-right">{formatearCOP(c.ingresos)}</td>
-                      <td className="py-2 pl-4">
+                      <td className="text-right tabular-nums">{c.completadas}</td>
+                      <td className="text-right tabular-nums">{c.horas}</td>
+                      <td className="text-right tabular-nums">{formatearCOP(c.ingresos)}</td>
+                      <td>
                         <span className="flex items-center gap-2">
                           <span
-                            className="bg-borde h-2 w-28 overflow-hidden rounded-full"
+                            className="bg-tenue h-2 w-28 overflow-hidden rounded-full"
                             aria-hidden="true"
                           >
                             <span
-                              className="bg-primario block h-full"
+                              className="bg-primario block h-full rounded-full"
                               style={{ width: `${c.ocupacionPct}%` }}
                             />
                           </span>

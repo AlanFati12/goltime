@@ -145,7 +145,9 @@ export function PaginaSedeForm() {
           <Link to="/admin/sedes" className="text-texto-suave text-sm hover:underline">
             ← Sedes
           </Link>
-          <h1 className="text-2xl font-bold sm:text-3xl">{sede ? sede.nombre : 'Nueva sede'}</h1>
+          <h1 className="text-2xl font-bold sm:text-[1.75rem]">
+            {sede ? sede.nombre : 'Nueva sede'}
+          </h1>
         </div>
         {sede && (
           <Insignia tono={sede.activa ? 'verde' : 'rojo'}>
@@ -218,7 +220,7 @@ export function PaginaSedeForm() {
                     <span>
                       {c.nombre} <Insignia tono="verde">{c.modalidad}</Insignia>
                     </span>
-                    <Link to={`/admin/canchas/${c.id}`} className="text-primario underline">
+                    <Link to={`/admin/canchas/${c.id}`} className="enlace">
                       Editar
                     </Link>
                   </li>
