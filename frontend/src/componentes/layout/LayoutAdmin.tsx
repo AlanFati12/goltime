@@ -3,11 +3,13 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { nombreCompleto, useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { salir } from '@/caracteristicas/autenticacion/servicioAutenticacion'
+import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
 import { Boton } from '@/componentes/ui/Boton'
 import { cn } from '@/lib/utils'
 
 const enlaces = [
   { a: '/admin', texto: 'Inicio', fin: true },
+  { a: '/admin/reservas', texto: 'Reservas' },
   { a: '/admin/sedes', texto: 'Sedes' },
   { a: '/admin/canchas', texto: 'Canchas' },
   { a: '/admin/festivos', texto: 'Festivos' },
@@ -57,6 +59,7 @@ export function LayoutAdmin() {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-borde bg-superficie flex items-center justify-end gap-3 border-b px-4 py-3 text-sm">
+          <CampanaNotificaciones />
           <span className="text-texto-suave truncate">{nombreCompleto(usuario)}</span>
           <Boton tamano="sm" variante="secundario" onClick={cerrarSesion}>
             Salir

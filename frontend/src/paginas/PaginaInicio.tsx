@@ -13,9 +13,14 @@ export function PaginaInicio() {
         Conoce nuestras sedes y canchas, consulta precios y horarios. Muy pronto podrás reservar,
         seguir torneos y ganar premios.
       </p>
-      <EnlaceBoton to="/sedes" tamano="lg">
-        Ver sedes y canchas
-      </EnlaceBoton>
+      <div className="flex flex-wrap gap-3">
+        <EnlaceBoton to="/reservar" tamano="lg">
+          Reservar una cancha
+        </EnlaceBoton>
+        <EnlaceBoton to="/sedes" tamano="lg" variante="secundario">
+          Ver sedes y canchas
+        </EnlaceBoton>
+      </div>
 
       <p
         role="status"

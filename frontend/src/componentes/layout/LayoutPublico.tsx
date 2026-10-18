@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom'
 
 import { useSesion, nombreCompleto } from '@/caracteristicas/autenticacion/almacenSesion'
 import { salir } from '@/caracteristicas/autenticacion/servicioAutenticacion'
+import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
 import { Boton } from '@/componentes/ui/Boton'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 
@@ -28,6 +29,14 @@ export function LayoutPublico() {
             <Link to="/sedes" className="text-texto-suave hover:text-primario">
               Sedes
             </Link>
+            <Link to="/reservar" className="text-texto-suave hover:text-primario">
+              Reservar
+            </Link>
+            {usuario?.rol === 'CLIENTE' && (
+              <Link to="/mis-reservas" className="text-texto-suave hover:text-primario">
+                Mis reservas
+              </Link>
+            )}
             {usuario ? (
               <>
                 {usuario.rol === 'ADMIN' && (
@@ -35,6 +44,7 @@ export function LayoutPublico() {
                     Panel
                   </Link>
                 )}
+                <CampanaNotificaciones />
                 <Link
                   to="/perfil"
                   className="text-texto-suave hover:text-primario max-w-40 truncate"

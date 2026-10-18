@@ -1,6 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+import { PaginaReservasAdmin } from '@/caracteristicas/reservas/admin/PaginaReservasAdmin'
+import { PaginaMisReservas } from '@/caracteristicas/reservas/PaginaMisReservas'
+import { PaginaReservaDetalle } from '@/caracteristicas/reservas/PaginaReservaDetalle'
+import { PaginaReservar } from '@/caracteristicas/reservas/PaginaReservar'
+import { PaginaNotificaciones } from '@/caracteristicas/notificaciones/PaginaNotificaciones'
 import { PaginaCanchaForm } from '@/caracteristicas/sedes/admin/PaginaCanchaForm'
 import { PaginaCanchasAdmin } from '@/caracteristicas/sedes/admin/PaginaCanchasAdmin'
 import { PaginaFestivos } from '@/caracteristicas/sedes/admin/PaginaFestivos'
@@ -42,6 +47,7 @@ export default function App() {
               <Route path="sedes" element={<PaginaSedes />} />
               <Route path="sedes/:id" element={<PaginaSedeDetalle />} />
               <Route path="canchas/:id" element={<PaginaCanchaDetalle />} />
+              <Route path="reservar" element={<PaginaReservar />} />
               <Route path="ingresar" element={<PaginaIngresar />} />
               <Route path="registro" element={<PaginaRegistro />} />
               <Route path="olvide-clave" element={<PaginaOlvideClave />} />
@@ -49,6 +55,9 @@ export default function App() {
               <Route path="verificar-correo" element={<PaginaVerificarCorreo />} />
               <Route element={<RutaProtegida />}>
                 <Route path="perfil" element={<PaginaPerfil />} />
+                <Route path="mis-reservas" element={<PaginaMisReservas />} />
+                <Route path="mis-reservas/:id" element={<PaginaReservaDetalle />} />
+                <Route path="notificaciones" element={<PaginaNotificaciones />} />
               </Route>
               <Route path="*" element={<PaginaNoEncontrada />} />
             </Route>
@@ -56,6 +65,7 @@ export default function App() {
             <Route element={<RutaProtegida rol="ADMIN" />}>
               <Route path="admin" element={<LayoutAdmin />}>
                 <Route index element={<PaginaPanelAdmin />} />
+                <Route path="reservas" element={<PaginaReservasAdmin />} />
                 <Route path="sedes" element={<PaginaSedesAdmin />} />
                 <Route path="sedes/nueva" element={<PaginaSedeForm />} />
                 <Route path="sedes/:id" element={<PaginaSedeForm />} />

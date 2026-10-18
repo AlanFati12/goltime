@@ -40,6 +40,17 @@ Las horas del día se guardan como **minutos desde la medianoche** (`minuto_aper
 
 El intervalo se parte en cada cambio de franja y a medianoche; cada tramo cuesta `minutos / 60 × precio_hora` y el total se redondea al peso. Por minuto rige, en este orden: franja de festivo (si la fecha es festivo) → franja normal del día → precio base de la cancha. Dos franjas del mismo tipo no pueden solaparse (mismos días, horas y vigencia).
 
+## V5: reservas, ocupaciones, historial y notificaciones
+
+| Tabla | Propósito | Notas |
+|---|---|---|
+| `reservas` | Reservas de canchas | `codigo` legible (`GT-2026-000123`, secuencia `reservas_codigo_seq`). Estados `PENDIENTE`, `CONFIRMADA`, `RECHAZADA`, `EXPIRADA`, `CANCELADA`, `COMPLETADA`, `NO_ASISTIO`. Guarda el **precio como instantánea** (`precio_base`, `descuento`, `precio_final`). `CHECK`: exactamente uno entre `cliente_id` y `cliente_mostrador_id`. Campos de auditoría de la cancelación (`cancelada_por`, `rol_cancelador`, `motivo_cancelacion`, `cancelacion_tardia`), de la aprobación (`aprobada_por`, `motivo_rechazo`, `expira_en`), `veces_reprogramada`, `clave_idempotencia` (único por cliente) y `version` para bloqueo optimista |
+| `ocupaciones_cancha` | Qué cancha está ocupada y cuándo | `rango TSTZRANGE` y **`EXCLUDE USING gist (cancha_id WITH =, rango WITH &&)`**: la base de datos impide que dos ocupaciones se solapen en la misma cancha, aun con peticiones concurrentes. Una reserva de una cancha compuesta ocupa la propia y todas sus componentes. `tipo` = `RESERVA` o `BLOQUEO` (los bloqueos llegan en la Fase 4) |
+| `reserva_historial` | Quién hizo qué en cada reserva | `accion`, `actor_id`, `actor_rol` (`ADMIN`, `CLIENTE`, `SISTEMA`), `motivo`, `datos_anteriores` y `datos_nuevos` en JSONB |
+| `notificaciones` | Notificaciones in-app | Por usuario, con `leida` y enlace opcional a una entidad |
+
+V5 también sube `antelacion_minima_horas` de 1 a 3: con aprobación del admin la solicitud necesita tiempo para ser respondida antes de expirar.
+
 Extensión requerida: `btree_gist` (para la restricción de exclusión de reservas, desde la Fase 2/3).
 
 ## Relaciones
