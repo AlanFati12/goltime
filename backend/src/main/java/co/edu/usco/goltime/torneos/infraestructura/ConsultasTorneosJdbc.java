@@ -50,7 +50,8 @@ class ConsultasTorneosJdbc implements ConsultasTorneos {
             LEFT JOIN inscripciones_torneo iv ON iv.id = p.visitante_id
             LEFT JOIN equipos ev ON ev.id = iv.equipo_id
             LEFT JOIN canchas c ON c.id = p.cancha_id
-            LEFT JOIN jugadores jf ON jf.id = p.figura_jugador_id""";
+            LEFT JOIN jugadores jf ON jf.id = p.figura_jugador_id
+            """;
 
     private final JdbcTemplate jdbc;
 
