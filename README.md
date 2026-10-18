@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 0 (base)** completada. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 1 (autenticación y usuarios)** completada, sobre la Fase 0 (base). Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -86,4 +86,22 @@ cd frontend && npm test && npm run lint && npm run build
 
 ## Usuarios de prueba
 
-Se agregan en la Fase 1 (administrador inicial desde `ADMIN_CORREO` / `ADMIN_CLAVE`) y en la Fase 9 (datos de demostración).
+- **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
+- **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
+- Los datos de demostración completos llegan en la Fase 9.
+
+## Autenticación (Fase 1)
+
+| Qué | Cómo funciona |
+|---|---|
+| Registro | `POST /api/v1/autenticacion/registrar`. Siempre crea `CLIENTE`. Exige aceptar términos (Ley 1581) |
+| Sesión | Access token JWT de 15 min en el cuerpo (el front lo guarda en memoria) y refresh token opaco en cookie `HttpOnly; SameSite=Strict` |
+| Renovación | `POST /api/v1/autenticacion/refrescar` rota el refresh token. Reutilizar uno ya rotado revoca toda la familia |
+| Cierre | `POST /api/v1/autenticacion/salir` revoca el refresh y borra la cookie |
+| Recuperación | `POST .../olvide-clave` (siempre 202) y `POST .../restablecer-clave` con token de un solo uso de 30 min |
+| Verificación de correo | Enlace por correo. Si `VERIFICACION_CORREO_OBLIGATORIA=true`, sin verificar no se puede ingresar |
+| Protección | Límite de tasa por IP (Bucket4j) y bloqueo temporal tras 5 fallos de ingreso (correo + IP) |
+| Desactivación | El token de un usuario desactivado o con contraseña cambiada deja de servir al instante (`version_token`) |
+| Admin | `/api/v1/admin/clientes` (listar, desactivar con previsualización, reactivar, habilitar inscripción de equipos) y `/api/v1/admin/administradores` |
+
+La documentación interactiva completa está en Swagger.

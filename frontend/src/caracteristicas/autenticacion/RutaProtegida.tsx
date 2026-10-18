@@ -7,7 +7,7 @@ export function RutaProtegida({ rol }: { rol?: Rol }) {
   const usuario = useSesion((s) => s.usuario)
   const ubicacion = useLocation()
 
-  if (!usuario) return <Navigate to="/ingresar" state={{ desde: ubicacion }} replace />
+  if (!usuario) return <Navigate to="/ingresar" state={{ desde: ubicacion.pathname }} replace />
   if (rol && usuario.rol !== rol) return <Navigate to="/" replace />
   return <Outlet />
 }

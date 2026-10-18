@@ -15,6 +15,10 @@ Convenciones: ids `BIGINT` identity, fechas `timestamptz` (UTC), enums como `VAR
 | `configuracion` | Parámetros del negocio (clave/valor tipado) | Se siembran los valores por defecto aprobados: 4 h de cancelación, 2 reprogramaciones, expiración de pendientes 12 h o 2 h antes del inicio, etc. |
 | `audit_log` | Bitácora de acciones administrativas | `cambios` en JSONB; índices por entidad y por fecha |
 
+## V2: refresh tokens persistentes
+
+`refresh_tokens.recordar` (boolean): conserva si la sesión es persistente ("recordarme", 7 días) o de sesión (12 horas) al rotar el token.
+
 Extensión requerida: `btree_gist` (para la restricción de exclusión de reservas, desde la Fase 2/3).
 
 ## Relaciones

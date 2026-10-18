@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { usuarioDePrueba } from '@/test/usuarios'
+
 import { useSesion } from './almacenSesion'
 import { RutaProtegida } from './RutaProtegida'
 
@@ -28,13 +30,13 @@ describe('RutaProtegida', () => {
   })
 
   it('manda al inicio si el rol no coincide', () => {
-    useSesion.getState().iniciar('t', { id: 1, nombres: 'Ana', apellidos: 'Pérez', rol: 'CLIENTE' })
+    useSesion.getState().iniciar('t', usuarioDePrueba({ rol: 'CLIENTE' }))
     montar('ADMIN')
     expect(screen.getByText('Inicio')).toBeInTheDocument()
   })
 
   it('deja pasar si el rol coincide', () => {
-    useSesion.getState().iniciar('t', { id: 1, nombres: 'Luis', apellidos: 'Gómez', rol: 'ADMIN' })
+    useSesion.getState().iniciar('t', usuarioDePrueba({ rol: 'ADMIN' }))
     montar('ADMIN')
     expect(screen.getByText('Panel')).toBeInTheDocument()
   })
