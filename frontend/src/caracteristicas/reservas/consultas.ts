@@ -102,11 +102,11 @@ export interface DatosReprogramacion {
 
 export function usePrevisualizarReprogramacion() {
   return useMutation({
-    mutationFn: async (p: { id: number; datos: DatosReprogramacion }) =>
+    mutationFn: async (p: { id: number; datos: DatosReprogramacion; admin?: boolean }) =>
       (
         await api.post<PrevisualizacionReprogramacion>(
-          `/reservas/${p.id}/reprogramar/previsualizar`,
-          p.datos,
+          `${p.admin ? '/admin' : ''}/reservas/${p.id}/reprogramar/previsualizar`,
+          p.admin ? { ...p.datos, motivo: 'previsualización' } : p.datos,
         )
       ).data,
   })
@@ -115,8 +115,18 @@ export function usePrevisualizarReprogramacion() {
 export function useReprogramarReserva() {
   const cliente = useQueryClient()
   return useMutation({
-    mutationFn: async (p: { id: number; datos: DatosReprogramacion }) =>
-      (await api.patch<Reserva>(`/reservas/${p.id}/reprogramar`, p.datos)).data,
+    mutationFn: async (p: {
+      id: number
+      datos: DatosReprogramacion
+      admin?: boolean
+      motivo?: string
+    }) =>
+      (
+        await api.patch<Reserva>(
+          `${p.admin ? '/admin' : ''}/reservas/${p.id}/reprogramar`,
+          p.admin ? { ...p.datos, motivo: p.motivo } : p.datos,
+        )
+      ).data,
     onSuccess: () => refrescar(cliente),
   })
 }
@@ -126,18 +136,47 @@ export function useReprogramarReserva() {
 export interface FiltrosReservasAdmin {
   estado: EstadoReserva | ''
   busqueda: string
+  sedeId: string
+  estadoPago: string
+  origen: string
+  desde: string
+  hasta: string
   pagina: number
+}
+
+export const FILTROS_RESERVAS_INICIALES: FiltrosReservasAdmin = {
+  estado: 'PENDIENTE',
+  busqueda: '',
+  sedeId: '',
+  estadoPago: '',
+  origen: '',
+  desde: '',
+  hasta: '',
+  pagina: 0,
+}
+
+/** Parámetros de consulta (sin la paginación) de los filtros activos; los usan el listado y la exportación. */
+export function paramsDeFiltros(f: FiltrosReservasAdmin): Record<string, string> {
+  const params: Record<string, string> = {}
+  if (f.estado) params.estado = f.estado
+  if (f.busqueda.trim()) params.busqueda = f.busqueda.trim()
+  if (f.sedeId) params.sedeId = f.sedeId
+  if (f.estadoPago) params.estadoPago = f.estadoPago
+  if (f.origen) params.origen = f.origen
+  if (f.desde) params.desde = f.desde
+  if (f.hasta) params.hasta = f.hasta
+  return params
 }
 
 export function useReservasAdmin(filtros: FiltrosReservasAdmin) {
   return useQuery({
     queryKey: ['reservas', 'admin', filtros],
-    queryFn: async () => {
-      const params: Record<string, string | number> = { pagina: filtros.pagina, tamano: 15 }
-      if (filtros.estado) params.estado = filtros.estado
-      if (filtros.busqueda.trim()) params.busqueda = filtros.busqueda.trim()
-      return (await api.get<Pagina<Reserva>>('/admin/reservas', { params })).data
-    },
+    queryFn: async () =>
+      (
+        await api.get<Pagina<Reserva>>('/admin/reservas', {
+          params: { ...paramsDeFiltros(filtros), pagina: filtros.pagina, tamano: 15 },
+        })
+      ).data,
     placeholderData: keepPreviousData,
     refetchInterval: 30_000,
   })

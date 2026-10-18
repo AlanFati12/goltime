@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 3 (disponibilidad y reservas del cliente)** completada, sobre las Fases 0, 1 y 2. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 4 (reservas del admin, bloqueos, pagos y auditoría)** completada, sobre las Fases 0 a 3. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,20 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Administración de reservas (Fase 4)
+
+| Qué | Dónde |
+|---|---|
+| Calendario por día o semana | Panel: `/admin/agenda` (reservas y bloqueos por cancha; toca un espacio vacío para reservar) |
+| Listado con filtros, CSV y detalle | `/admin/reservas`, `/admin/reservas/:id` |
+| Crear reservas a nombre de un cliente o de mostrador | `/admin/reservas/nueva` |
+| Pagos, abonos y reembolsos | Detalle de la reserva |
+| Bloqueos de horario (puntuales y recurrentes) | `/admin/bloqueos`: revisa las reservas afectadas y exige confirmarlas |
+| Bitácora de auditoría | `/admin/auditoria` |
+| API admin | `POST /admin/reservas`, `PATCH .../reprogramar` y `.../estado`, `GET/POST .../pagos`, `POST .../reembolsos`, `GET /admin/reservas/exportar`, `GET /admin/agenda`, `/admin/bloqueos` (+ `/previsualizar`), `GET /admin/auditoria` |
+
+Detalle del flujo de conflictos, pagos y agenda en el [ADR 0008](docs/decisiones/0008-bloqueos-pagos-y-agenda.md).
 
 ## Reservas (Fase 3)
 

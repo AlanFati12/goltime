@@ -9,12 +9,15 @@ import { cn } from '@/lib/utils'
 
 const enlaces = [
   { a: '/admin', texto: 'Inicio', fin: true },
+  { a: '/admin/agenda', texto: 'Agenda' },
   { a: '/admin/reservas', texto: 'Reservas' },
+  { a: '/admin/bloqueos', texto: 'Bloqueos' },
   { a: '/admin/sedes', texto: 'Sedes' },
   { a: '/admin/canchas', texto: 'Canchas' },
   { a: '/admin/festivos', texto: 'Festivos' },
   { a: '/admin/clientes', texto: 'Clientes' },
   { a: '/admin/administradores', texto: 'Administradores' },
+  { a: '/admin/auditoria', texto: 'Auditoría' },
 ]
 
 /** Panel del administrador: barra lateral en escritorio y barra superior desplazable en móvil. */

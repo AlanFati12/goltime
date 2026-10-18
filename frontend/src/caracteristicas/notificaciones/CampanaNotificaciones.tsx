@@ -17,7 +17,7 @@ export function rutaDeNotificacion(
   rol: 'ADMIN' | 'CLIENTE',
 ): string | null {
   if (n.entidad === 'reserva' && n.entidadId)
-    return rol === 'ADMIN' ? '/admin/reservas' : `/mis-reservas/${n.entidadId}`
+    return rol === 'ADMIN' ? `/admin/reservas/${n.entidadId}` : `/mis-reservas/${n.entidadId}`
   return null
 }
 

@@ -83,15 +83,18 @@ export function describirEntrada(h: EntradaHistorial): string {
 }
 
 /** Hasta cuántos bloques seguidos libres hay desde el slot elegido (respetando el máximo de la cancha). */
-export function duracionesPosibles(cancha: DisponibilidadCancha, desde: Slot): number[] {
+export function duracionesPosibles(
+  cancha: DisponibilidadCancha,
+  desde: Slot,
+  comoAdmin = false,
+): number[] {
   const indice = cancha.slots.findIndex((s) => s.inicio === desde.inicio)
   if (indice < 0) return []
+  // El administrador también puede usar los bloques que aún no son reservables por la antelación mínima.
+  const sirve = (s: Slot) =>
+    s.estado === 'DISPONIBLE' || (comoAdmin && s.estado === 'NO_RESERVABLE')
   let libres = 0
-  while (
-    indice + libres < cancha.slots.length &&
-    cancha.slots[indice + libres].estado === 'DISPONIBLE'
-  )
-    libres++
+  while (indice + libres < cancha.slots.length && sirve(cancha.slots[indice + libres])) libres++
   const duraciones: number[] = []
   for (let bloques = 1; bloques <= libres; bloques++) {
     const minutos = bloques * cancha.duracionBloqueMin

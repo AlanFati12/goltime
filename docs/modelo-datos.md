@@ -51,6 +51,18 @@ El intervalo se parte en cada cambio de franja y a medianoche; cada tramo cuesta
 
 V5 también sube `antelacion_minima_horas` de 1 a 3: con aprobación del admin la solicitud necesita tiempo para ser respondida antes de expirar.
 
+## V6: bloqueos y pagos
+
+| Tabla | Propósito | Notas |
+|---|---|---|
+| `bloqueos` | Bloqueos de horario de una sede | `tipo` `PUNTUAL` (intervalo `inicio`-`fin`, o días completos con `todo_el_dia`) o `RECURRENTE` (`dias_semana`, `minuto_inicio`/`minuto_fin`, entre `fecha_desde` y `fecha_hasta`, máximo un año). `motivo_tipo` (mantenimiento, evento privado, torneo, clima, otro) y `motivo_detalle`. Borrado lógico con `activo` |
+| `bloqueo_canchas` | Canchas elegidas para el bloqueo | Sin filas = toda la sede |
+| `pagos` | Pagos, abonos y reembolsos registrados por el admin | `tipo` `PAGO`, `ABONO` o `REEMBOLSO`; `metodo` (efectivo, transferencia, Nequi, Daviplata, tarjeta en sitio); `registrado_por` |
+
+Un bloqueo se materializa como filas de `ocupaciones_cancha` con `tipo = 'BLOQUEO'` (una por cancha afectada e intervalo futuro), así que la restricción de exclusión impide reservar encima de él y también que dos bloqueos se pisen. V6 agrega la llave foránea `ocupaciones_cancha.bloqueo_id -> bloqueos`.
+
+Estados de pago de una reserva (`reservas.estado_pago`): `PENDIENTE` -> `ABONADO` -> `PAGADO`; al cancelarse, rechazarse o expirar con dinero pagado pasa a `REEMBOLSO_PENDIENTE`, y los reembolsos la llevan a `REEMBOLSADO`.
+
 Extensión requerida: `btree_gist` (para la restricción de exclusión de reservas, desde la Fase 2/3).
 
 ## Relaciones
