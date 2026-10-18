@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 6 (estadísticas)** completada, sobre las Fases 0 a 5. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 7 (promociones y premios)** completada, sobre las Fases 0 a 6. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,19 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Promociones y premios (Fase 7)
+
+| Qué | Dónde |
+|---|---|
+| Ver promociones vigentes | Web: `/promociones` |
+| Escribir un código o usar un premio al reservar | Diálogo de solicitud de reserva (muestra el precio con descuento calculado por el servidor) |
+| Mi progreso y premios ganados | Web: `/mis-premios` |
+| Administrar promociones (código o automáticas, cupos, franjas) | Panel: `/admin/promociones` |
+| Reglas de fidelidad y premios otorgados | Panel: `/admin/premios` |
+| API | `GET /api/v1/publico/promociones`, `GET /api/v1/me/descuentos/previsualizar`, `GET /api/v1/me/premios`, `/api/v1/admin/promociones`, `/api/v1/admin/premios/reglas`, `/otorgados` |
+
+En cada reserva se aplica un solo descuento: el de mayor valor. Los premios salen de contar las reservas completadas, así que corregir una a "no asistió" revoca el premio sin usar. Detalle en el [ADR 0011](docs/decisiones/0011-promociones-y-premios.md).
 
 ## Estadísticas (Fase 6)
 

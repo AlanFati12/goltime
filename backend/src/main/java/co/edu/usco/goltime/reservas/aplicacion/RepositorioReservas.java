@@ -31,6 +31,12 @@ public interface RepositorioReservas {
 
     int contarActivasFuturas(long clienteId, Instant ahora);
 
+    /** Reservas del cliente que no se cancelaron, rechazaron ni expiraron (para saber si es su primera reserva). */
+    int contarNoCanceladas(long clienteId);
+
+    /** Reservas COMPLETADA del cliente, sin partidos de torneo (cuentan para los premios). */
+    int contarCompletadas(long clienteId);
+
     List<Long> idsFuturasActivasDeCliente(long clienteId, Instant ahora);
 
     Pagina<Reserva> deCliente(long clienteId, PestanaReservas pestana, Instant ahora, SolicitudPagina pagina);

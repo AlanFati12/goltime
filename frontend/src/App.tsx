@@ -31,6 +31,10 @@ import { PaginaPartido } from '@/caracteristicas/torneos/PaginaPartido'
 import { PaginaTorneoDetalle } from '@/caracteristicas/torneos/PaginaTorneoDetalle'
 import { PaginaTorneos } from '@/caracteristicas/torneos/PaginaTorneos'
 import { PaginaEstadisticas } from '@/caracteristicas/estadisticas/PaginaEstadisticas'
+import { PaginaMisPremios } from '@/caracteristicas/promociones/PaginaMisPremios'
+import { PaginaPremiosAdmin } from '@/caracteristicas/promociones/PaginaPremiosAdmin'
+import { PaginaPromociones } from '@/caracteristicas/promociones/PaginaPromociones'
+import { PaginaPromocionesAdmin } from '@/caracteristicas/promociones/PaginaPromocionesAdmin'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
 ;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
@@ -65,6 +69,7 @@ export default function App() {
               <Route path="sedes/:id" element={<PaginaSedeDetalle />} />
               <Route path="canchas/:id" element={<PaginaCanchaDetalle />} />
               <Route path="reservar" element={<PaginaReservar />} />
+              <Route path="promociones" element={<PaginaPromociones />} />
               <Route path="torneos" element={<PaginaTorneos />} />
               <Route path="torneos/partidos/:id" element={<PaginaPartido />} />
               <Route path="torneos/:id" element={<PaginaTorneoDetalle />} />
@@ -80,6 +85,7 @@ export default function App() {
                 <Route path="mis-reservas" element={<PaginaMisReservas />} />
                 <Route path="mis-reservas/:id" element={<PaginaReservaDetalle />} />
                 <Route path="notificaciones" element={<PaginaNotificaciones />} />
+                <Route path="mis-premios" element={<PaginaMisPremios />} />
               </Route>
               <Route path="*" element={<PaginaNoEncontrada />} />
             </Route>
@@ -101,6 +107,8 @@ export default function App() {
                 <Route path="canchas/:id" element={<PaginaCanchaForm />} />
                 <Route path="festivos" element={<PaginaFestivos />} />
                 <Route path="estadisticas" element={<PaginaEstadisticas />} />
+                <Route path="promociones" element={<PaginaPromocionesAdmin />} />
+                <Route path="premios" element={<PaginaPremiosAdmin />} />
                 <Route path="equipos" element={<PaginaEquiposAdmin />} />
                 <Route path="equipos/:id" element={<PaginaEquipoAdmin />} />
                 <Route path="torneos" element={<PaginaTorneosAdmin />} />

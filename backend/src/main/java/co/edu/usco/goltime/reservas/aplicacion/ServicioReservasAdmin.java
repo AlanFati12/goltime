@@ -24,6 +24,7 @@ import co.edu.usco.goltime.notificaciones.aplicacion.Notificador;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioPagos.PagoRegistrado;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.FiltroReservasAdmin;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
+import co.edu.usco.goltime.reservas.dominio.CompletadaRevertidaEvento;
 import co.edu.usco.goltime.reservas.dominio.EstadoPago;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.MetodoPago;
@@ -164,6 +165,9 @@ public class ServicioReservasAdmin {
         historial.registrar(new EntradaHistorial(null, id, destino.name(), admin.id(), null, Rol.ADMIN, null, Map.of("estado", antes.name()),
                 Map.of("estado", destino.name()), ahora));
         auditoria.registrar("MARCAR_" + destino.name() + "_RESERVA", ENTIDAD, id, Map.of("estado", Map.of("antes", antes.name(), "despues", destino.name())), null);
+        if (antes == EstadoReserva.COMPLETADA && destino != EstadoReserva.COMPLETADA) {
+            eventos.publishEvent(new CompletadaRevertidaEvento(id, guardada.clienteId()));
+        }
         if (destino == EstadoReserva.COMPLETADA) {
             eventos.publishEvent(new ReservaCompletadaEvento(id, guardada.clienteId(), guardada.canchaId(), guardada.duracionMin()));
         }

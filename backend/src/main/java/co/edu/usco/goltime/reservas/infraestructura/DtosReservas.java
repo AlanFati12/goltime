@@ -34,7 +34,9 @@ public final class DtosReservas {
             @NotNull Instant inicio,
             @NotNull Instant fin,
             @Size(max = 100) String nombreEquipo,
-            @Size(max = 500) String notas) {
+            @Size(max = 500) String notas,
+            @Size(max = 40) String codigoPromocion,
+            Long premioId) {
     }
 
     public record SolicitudMotivo(@Size(max = 500) String motivo) {

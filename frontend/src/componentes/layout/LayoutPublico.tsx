@@ -32,13 +32,21 @@ export function LayoutPublico() {
             <Link to="/torneos" className="text-texto-suave hover:text-primario">
               Torneos
             </Link>
+            <Link to="/promociones" className="text-texto-suave hover:text-primario">
+              Promociones
+            </Link>
             <Link to="/reservar" className="text-texto-suave hover:text-primario">
               Reservar
             </Link>
             {usuario?.rol === 'CLIENTE' && (
-              <Link to="/mis-reservas" className="text-texto-suave hover:text-primario">
-                Mis reservas
-              </Link>
+              <>
+                <Link to="/mis-reservas" className="text-texto-suave hover:text-primario">
+                  Mis reservas
+                </Link>
+                <Link to="/mis-premios" className="text-texto-suave hover:text-primario">
+                  Mis premios
+                </Link>
+              </>
             )}
             {usuario ? (
               <>

@@ -102,6 +102,20 @@ class AdaptadorRepositorioReservas implements RepositorioReservas {
     }
 
     @Override
+    public int contarNoCanceladas(long clienteId) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM reservas WHERE cliente_id = ? AND estado IN ('PENDIENTE', 'CONFIRMADA', 'COMPLETADA', 'NO_ASISTIO')",
+                Integer.class, clienteId);
+        return n == null ? 0 : n;
+    }
+
+    @Override
+    public int contarCompletadas(long clienteId) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM reservas WHERE cliente_id = ? AND estado = 'COMPLETADA' AND origen <> 'TORNEO'", Integer.class,
+                clienteId);
+        return n == null ? 0 : n;
+    }
+
+    @Override
     public List<Long> idsFuturasActivasDeCliente(long clienteId, Instant ahora) {
         return jpa.idsFuturas(clienteId, ACTIVAS, ahora);
     }

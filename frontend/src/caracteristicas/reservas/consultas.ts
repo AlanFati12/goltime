@@ -72,6 +72,8 @@ export interface DatosSolicitud {
   fin: string
   nombreEquipo?: string
   notas?: string
+  codigoPromocion?: string
+  premioId?: number
 }
 
 export function useSolicitarReserva() {

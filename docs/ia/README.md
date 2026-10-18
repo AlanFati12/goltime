@@ -81,3 +81,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: nada que corregir en las pruebas, pero en el navegador se vio que el valor de un indicador se partía en dos líneas y que un estado aparecía con guion bajo.
 - Pendiente: caché de corta duración si el volumen lo exige; los premios (Fase 7) y la fidelización deben seguir ignorando el origen `TORNEO`.
 
+### Fase 7: Promociones y premios (18/oct/2026)
+
+- Backend: migración V8; dominio puro de `Promocion` (vigencia, días, franja, sede, cancha, primera reserva), `TipoDescuento` y `CalculadoraPremios`; puerto `PoliticaDescuentos` en reservas implementado por promociones (un solo descuento, el mayor); cupos con bloqueo de fila; eventos de reserva liberada y de completada corregida; servicio de premios que otorga o revoca comparando lo ganado con lo otorgado; endpoints de administración, vitrina pública y previsualización del cliente.
+- Frontend: página pública de promociones, selector de código y premio en la solicitud de reserva con el precio final del servidor, `Mis premios` con barra de progreso, y administración de promociones (con uso) y de premios (reglas, otorgados y revocación).
+- Pruebas: 319 en backend (10 de dominio y 11 de integración nuevas: código con cupo que se libera al cancelar, códigos inválidos o fuera de condiciones sin crear reserva, automática contra código, previsualización, reprogramación, premio ganado y usado, premio ajeno, revocación al corregir una completada, torneos sin cliente) y 58 en frontend. Verificado en Docker y en el navegador.
+- Qué se corrigió: una prueba esperaba volver a completar una reserva `NO_ASISTIO` (la máquina de estados no lo permite, y está bien); en el navegador la fecha de la franja mostraba `NaN` porque el backend omite los campos nulos y el frontend los comparaba con `null`.
+- Pendiente: descuentos acumulables, cupones personales y campañas por correo (fuera del alcance mínimo).
+

@@ -81,6 +81,15 @@ Extensión requerida: `btree_gist` (para la restricción de exclusión de reserv
 
 Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `origen = 'TORNEO'`.
 
+### V8: promociones y premios (Fase 7)
+
+| Tabla | Para qué sirve | Notas |
+|---|---|---|
+| `promociones` | Descuentos con vigencia, días, franja, sede/cancha, cupos | Código único sin distinguir mayúsculas; sin código = automática |
+| `usos_promocion` | Un uso por reserva | `reserva_id` único; estado `ACTIVO` o `LIBERADO` (cuenta para los cupos solo si está activo) |
+| `reglas_premio` | "Cada N reservas completadas, un beneficio" | Porcentaje o monto fijo, vigencia en días |
+| `premios_cliente` | Premios ganados | Copia el beneficio; estados `DISPONIBLE`, `USADO`, `VENCIDO`, `REVOCADO` |
+
 ## Relaciones
 
 ```mermaid
@@ -103,4 +112,6 @@ erDiagram
 - Fase 3: `reservas` (con `aprobada_por`, `fecha_aprobacion`, `motivo_rechazo`, `expira_en`), `ocupaciones_cancha` con `EXCLUDE`, `reserva_historial`, `pagos`, `notificaciones`.
 - Fase 4: `bloqueos`, `bloqueo_canchas`, `pagos`.
 - Fase 5: ver V7 abajo.
-- Fases 6 a 8: estadísticas, promociones, premios, series de reservas, lista de espera. Ver [propuesta-inicial.md](propuesta-inicial.md).
+- Fase 6: sin tablas nuevas (lee reservas, pagos y horarios).
+- Fase 7: ver V8 abajo.
+- Fase 8: series de reservas, lista de espera. Ver [propuesta-inicial.md](propuesta-inicial.md).
