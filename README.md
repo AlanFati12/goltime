@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 8 (extras)** completada, sobre las Fases 0 a 7. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **todas las fases (0 a 9) completadas**. Listo para la demostración de INNOVASOFT IX: ver el [guion de demostración](docs/guion-demo.md). Alcance y orden de fases en [docs/propuesta-inicial.md](docs/propuesta-inicial.md).
 
 ## Arquitectura resumida
 
@@ -17,7 +17,7 @@ Cliente-servidor en tres niveles, cada pieza en su propio contenedor:
 | `db` | PostgreSQL 16 | Datos. El esquema lo manejan migraciones Flyway |
 | `mailpit` | Mailpit | Bandeja de correos de desarrollo |
 
-Backend organizado por módulos de negocio (`autenticacion`, `usuarios`, `sedes`, `reservas`, `promociones`, `premios`, `torneos`, `notificaciones`, `auditoria`, `estadisticas`), cada uno con `dominio/`, `aplicacion/` e `infraestructura/`. Un test de ArchUnit impide que se viole esa separación. Detalle y diagramas en [docs/propuesta-inicial.md](docs/propuesta-inicial.md) y [docs/decisiones/](docs/decisiones/).
+Backend organizado por módulos de negocio (`autenticacion`, `usuarios`, `sedes`, `reservas`, `promociones`, `premios`, `torneos`, `notificaciones`, `auditoria`, `estadisticas`, `configuracion`), cada uno con `dominio/`, `aplicacion/` e `infraestructura/`. Un test de ArchUnit impide que se viole esa separación. Detalle y diagramas en [docs/propuesta-inicial.md](docs/propuesta-inicial.md) y [docs/decisiones/](docs/decisiones/).
 
 ## Requisitos
 
@@ -39,6 +39,16 @@ docker compose up --build
 | Correos de desarrollo (Mailpit) | <http://localhost:8025> |
 | PostgreSQL | `localhost:5433` |
 
+### Datos de demostración
+
+Con el sistema arriba y la base de datos vacía (`docker compose down -v` antes, si ya la usaste):
+
+```bash
+docker compose --profile demo run --rm demo
+```
+
+Carga dos sedes, 16 clientes, unos tres meses de historial, promociones, premios y tres torneos. Las cuentas y el recorrido de la demo están en el [guion](docs/guion-demo.md). Nunca lo uses en producción: las cuentas de demostración tienen una clave conocida.
+
 ## Variables de entorno
 
 Todas están documentadas en [.env.example](.env.example). Nunca se suben secretos al repositorio (`.env` está en `.gitignore`).
@@ -51,6 +61,7 @@ Todas están documentadas en [.env.example](.env.example). Nunca se suben secret
 | `SMTP_*`, `CORREO_REMITENTE` | Correo. Por defecto apunta a Mailpit; para correo real basta cambiar estos valores |
 | `CORS_ORIGENES` | Orígenes del front permitidos |
 | `PERFIL` | Perfil de Spring: `dev`, `test`, `prod` |
+| `DEMO_CLAVE_CLIENTES` | Clave de los clientes de demostración (por defecto `Demo2026*`); solo la usa el servicio `demo` |
 
 ## Desarrollo sin Docker (opcional)
 
@@ -82,7 +93,13 @@ cd frontend && npm test && npm run lint && npm run build
 - [docs/propuesta-inicial.md](docs/propuesta-inicial.md): decisiones, arquitectura, plan de fases
 - [docs/decisiones/](docs/decisiones/): registros de decisiones de arquitectura (ADR)
 - [docs/modelo-datos.md](docs/modelo-datos.md): modelo relacional (crece con cada fase)
-- [docs/ia/](docs/ia/): registro obligatorio del uso de IA
+- [docs/guion-demo.md](docs/guion-demo.md): recorrido de 10 minutos para la exposición
+- [docs/seguridad.md](docs/seguridad.md): revisión de seguridad, qué se verifica y con qué prueba
+- [docs/ia/](docs/ia/): registro obligatorio del uso de IA (incluye el [prompt maestro](docs/ia/prompt-maestro.md))
+
+## Configuración del negocio
+
+Las políticas (antelación, cancelación, expiración de solicitudes, recordatorios) se editan sin reiniciar en `/admin/configuracion`; cada cambio queda en la auditoría.
 
 ## Usuarios de prueba
 

@@ -97,3 +97,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: los clientes de las pruebas chocaron contra el límite de reservas activas (se usaron clientes distintos); dos pruebas compartían días que, corridos al lunes por el domingo, se solapaban; los correos de verificación de registro contaminaban el conteo de avisos (se filtró por plantilla).
 - Pendiente: Fase 9 (pulido, datos de demostración y revisión de seguridad).
 
+### Fase 9: Pulido, demostración y seguridad (18/oct/2026)
+
+- Backend: módulo `configuracion` (parámetros del negocio editables con validación de rango, aplicados de inmediato y auditados; se retiraron tres claves que nunca se usaron); `RutasProtegidasIT`, que recorre **todas** las rutas de la API y exige que las de administración respondan 401 sin sesión y 403 a un cliente, que las de cliente exijan sesión y que lo público sea solo lectura.
+- Datos de demostración: cargador en Python (`scripts/demo`, servicio `demo` de Docker Compose) que usa la API real y solo toca la base de datos para el historial de fechas pasadas y las cuentas; deja 2 sedes, 16 clientes, ~1.100 reservas de tres meses con pagos, promociones, premios, una serie recurrente, bloqueos y tres torneos (finalizado, en curso con grupos y empate resuelto por criterios, e inscripciones abiertas con una solicitud pendiente).
+- Documentación: guion de demo de 10 minutos con plan B (`docs/guion-demo.md`), revisión de seguridad con la prueba que respalda cada punto (`docs/seguridad.md`), el prompt maestro guardado tal cual (`docs/ia/prompt-maestro.md`), README y reglas de trabajo del proyecto al día.
+- Qué se corrigió: las cuentas de demostración fallaban al ingresar porque la clave debía llevar el prefijo `{bcrypt}` del codificador delegante (error 500 que destapó la carga real); el cuerpo de una reserva para cliente de mostrador anida los datos; los comandos `docker compose run` se quedaban esperando en esta máquina (problema local de Docker Desktop con contenedores adjuntos).
+- Pendiente fuera del alcance de las fases: HTTPS y respaldos en el despliegue real (documentado en `docs/seguridad.md`), pasarela de pagos en línea, y un flujo E2E con Playwright (opcional en el prompt maestro).
+
