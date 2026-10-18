@@ -49,6 +49,8 @@ services:
       URL_PUBLICA: ${URL_PUBLICA:-http://localhost:8081}
       VERIFICACION_CORREO_OBLIGATORIA: ${VERIFICACION_CORREO_OBLIGATORIA:-false}
       TZ: UTC
+    volumes:
+      - datos_archivos:/app/uploads
     ports:
       - "8080:8080" # Swagger UI en desarrollo: http://localhost:8080/swagger-ui.html
 
@@ -61,3 +63,4 @@ services:
 
 volumes:
   datos_db:
+  datos_archivos:
