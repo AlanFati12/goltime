@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body style="font-family: Arial, sans-serif; background:#f8fafc; padding:24px; color:#0f172a;">
+  <div style="max-width:520px; margin:auto; background:#ffffff; border-radius:12px; padding:24px; border:1px solid #e2e8f0;">
+    <h2 style="color:#166534; margin-top:0;">Goltime</h2>
+    <p>Hola <strong th:text="${nombre}">Cliente</strong>,</p>
+    <h3 style="margin-bottom:4px;" th:text="${titulo}">Título</h3>
+    <p th:text="${mensaje}">Mensaje</p>
+    <p style="font-size:13px; color:#475569;">Puedes ver el detalle y tus notificaciones iniciando sesión en Goltime.</p>
+  </div>
+</body>
+</html>
