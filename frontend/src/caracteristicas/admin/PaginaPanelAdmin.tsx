@@ -24,6 +24,17 @@ const accesos = [
     texto: 'Aprueba o rechaza las solicitudes pendientes y revisa todas las reservas.',
   },
   {
+    a: '/admin/torneos',
+    titulo: 'Torneos',
+    texto:
+      'Crea ligas, eliminatorias y grupos, genera el fixture, programa partidos y registra resultados.',
+  },
+  {
+    a: '/admin/equipos',
+    titulo: 'Equipos',
+    texto: 'Equipos y jugadores reutilizables entre torneos.',
+  },
+  {
     a: '/admin/sedes',
     titulo: 'Sedes',
     texto: 'Crea sedes, define su horario de operación y sube fotos.',

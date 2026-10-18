@@ -19,6 +19,17 @@ import { PaginaSedesAdmin } from '@/caracteristicas/sedes/admin/PaginaSedesAdmin
 import { PaginaCanchaDetalle } from '@/caracteristicas/sedes/PaginaCanchaDetalle'
 import { PaginaSedeDetalle } from '@/caracteristicas/sedes/PaginaSedeDetalle'
 import { PaginaSedes } from '@/caracteristicas/sedes/PaginaSedes'
+import { PaginaEquipoAdmin } from '@/caracteristicas/torneos/admin/PaginaEquipoAdmin'
+import { PaginaEquiposAdmin } from '@/caracteristicas/torneos/admin/PaginaEquiposAdmin'
+import { PaginaPartidoAdmin } from '@/caracteristicas/torneos/admin/PaginaPartidoAdmin'
+import { PaginaTorneoForm } from '@/caracteristicas/torneos/admin/PaginaTorneoForm'
+import { PaginaTorneoGestion } from '@/caracteristicas/torneos/admin/PaginaTorneoGestion'
+import { PaginaTorneosAdmin } from '@/caracteristicas/torneos/admin/PaginaTorneosAdmin'
+import { PaginaEquipoPublico } from '@/caracteristicas/torneos/PaginaEquipoPublico'
+import { PaginaJugadorPublico } from '@/caracteristicas/torneos/PaginaJugadorPublico'
+import { PaginaPartido } from '@/caracteristicas/torneos/PaginaPartido'
+import { PaginaTorneoDetalle } from '@/caracteristicas/torneos/PaginaTorneoDetalle'
+import { PaginaTorneos } from '@/caracteristicas/torneos/PaginaTorneos'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
 ;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
@@ -53,6 +64,11 @@ export default function App() {
               <Route path="sedes/:id" element={<PaginaSedeDetalle />} />
               <Route path="canchas/:id" element={<PaginaCanchaDetalle />} />
               <Route path="reservar" element={<PaginaReservar />} />
+              <Route path="torneos" element={<PaginaTorneos />} />
+              <Route path="torneos/partidos/:id" element={<PaginaPartido />} />
+              <Route path="torneos/:id" element={<PaginaTorneoDetalle />} />
+              <Route path="equipos/:id" element={<PaginaEquipoPublico />} />
+              <Route path="jugadores/:id" element={<PaginaJugadorPublico />} />
               <Route path="ingresar" element={<PaginaIngresar />} />
               <Route path="registro" element={<PaginaRegistro />} />
               <Route path="olvide-clave" element={<PaginaOlvideClave />} />
@@ -83,6 +99,13 @@ export default function App() {
                 <Route path="canchas/nueva" element={<PaginaCanchaForm />} />
                 <Route path="canchas/:id" element={<PaginaCanchaForm />} />
                 <Route path="festivos" element={<PaginaFestivos />} />
+                <Route path="equipos" element={<PaginaEquiposAdmin />} />
+                <Route path="equipos/:id" element={<PaginaEquipoAdmin />} />
+                <Route path="torneos" element={<PaginaTorneosAdmin />} />
+                <Route path="torneos/nuevo" element={<PaginaTorneoForm />} />
+                <Route path="torneos/:id" element={<PaginaTorneoGestion />} />
+                <Route path="torneos/:id/editar" element={<PaginaTorneoForm />} />
+                <Route path="partidos/:id" element={<PaginaPartidoAdmin />} />
                 <Route path="clientes" element={<PaginaClientes />} />
                 <Route path="administradores" element={<PaginaAdministradores />} />
               </Route>

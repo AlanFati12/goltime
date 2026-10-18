@@ -65,6 +65,22 @@ Estados de pago de una reserva (`reservas.estado_pago`): `PENDIENTE` -> `ABONADO
 
 Extensión requerida: `btree_gist` (para la restricción de exclusión de reservas, desde la Fase 2/3).
 
+### V7: torneos (Fase 5)
+
+| Tabla | Para qué sirve | Notas |
+|---|---|---|
+| `equipos`, `jugadores` | Catálogo reutilizable | Nombre de equipo único sin distinguir mayúsculas; `documento` único si existe |
+| `equipo_jugadores` | Plantilla habitual del equipo | Dorsal único entre los activos |
+| `torneos` | Configuración del torneo | `formato`, `estado`, puntos 3/1/0, `criterios_desempate` (JSONB en orden), `marcador_wo_goles`, podio (`campeon_id`, `subcampeon_id`, `tercero_id`) |
+| `torneo_canchas` | Canchas elegidas para el torneo | Vacío = cualquiera de la sede |
+| `inscripciones_torneo` | Un equipo en un torneo | Única por (torneo, equipo); `semilla`; estado `SOLICITADA/APROBADA/RECHAZADA/RETIRADA` |
+| `plantillas_torneo` | Jugadores del equipo en ese torneo | Un jugador solo en un equipo por torneo; dorsal único por inscripción |
+| `fases`, `grupos`, `grupo_equipos` | Estructura del fixture | Tipos `GRUPOS`, `LIGA`, `ELIMINATORIA` |
+| `partidos` | Cada partido o descanso | `siguiente_partido_id` + `lado_en_siguiente` (y los del perdedor) para el cuadro; `ref_local/ref_visitante` para clasificados por definir; `reserva_id` de la reserva interna |
+| `eventos_partido` | Goles, asistencias, tarjetas | `evento_relacionado_id` liga la asistencia al gol |
+
+Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `origen = 'TORNEO'`.
+
 ## Relaciones
 
 ```mermaid
@@ -85,5 +101,6 @@ erDiagram
 ## Pendiente por fase
 
 - Fase 3: `reservas` (con `aprobada_por`, `fecha_aprobacion`, `motivo_rechazo`, `expira_en`), `ocupaciones_cancha` con `EXCLUDE`, `reserva_historial`, `pagos`, `notificaciones`.
-- Fase 4: `bloqueos`, `bloqueo_canchas`.
-- Fases 5 a 8: torneos, promociones, premios, series de reservas, lista de espera. Ver [propuesta-inicial.md](propuesta-inicial.md).
+- Fase 4: `bloqueos`, `bloqueo_canchas`, `pagos`.
+- Fase 5: ver V7 abajo.
+- Fases 6 a 8: estadísticas, promociones, premios, series de reservas, lista de espera. Ver [propuesta-inicial.md](propuesta-inicial.md).

@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 4 (reservas del admin, bloqueos, pagos y auditoría)** completada, sobre las Fases 0 a 3. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 5 (torneos)** completada, sobre las Fases 0 a 4. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,20 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Torneos (Fase 5)
+
+| Qué | Dónde |
+|---|---|
+| Ver torneos activos, próximos y finalizados; tabla, llaves, calendario, goleadores y equipos | Web pública: `/torneos`, `/torneos/:id`, `/torneos/partidos/:id`, `/equipos/:id`, `/jugadores/:id` (y próximos partidos en la portada) |
+| Equipos y jugadores reutilizables | Panel: `/admin/equipos`, `/admin/equipos/:id` |
+| Crear torneos (liga, eliminación directa, grupos y eliminación) | Panel: `/admin/torneos/nuevo` |
+| Inscribir equipos, plantillas, fixture, estados | `/admin/torneos/:id` |
+| Programar con reserva de cancha, resultados, W.O., eventos | `/admin/partidos/:id` |
+| API pública | `GET /api/v1/publico/torneos`, `.../{id}`, `.../posiciones`, `.../partidos`, `.../estadisticas`, `/publico/partidos/{id}`, `/publico/equipos/{id}`, `/publico/jugadores/{id}` |
+| API admin | `/api/v1/admin/equipos`, `/admin/torneos` (+ `/inscripciones`, `/fixture`, `/estado`), `/admin/partidos/{id}` (+ `/programacion`, `/resultado`, `/wo`, `/eventos`) |
+
+Los partidos programados reservan la cancha como cualquier reserva (origen `TORNEO`) y, si chocan con reservas de clientes, siguen el mismo flujo de confirmación que los bloqueos. Las posiciones se calculan en el backend con criterios de desempate configurables. Detalle en el [ADR 0009](docs/decisiones/0009-torneos-fixture-y-reservas-de-partidos.md).
 
 ## Administración de reservas (Fase 4)
 

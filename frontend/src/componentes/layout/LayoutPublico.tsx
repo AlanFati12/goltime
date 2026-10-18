@@ -29,6 +29,9 @@ export function LayoutPublico() {
             <Link to="/sedes" className="text-texto-suave hover:text-primario">
               Sedes
             </Link>
+            <Link to="/torneos" className="text-texto-suave hover:text-primario">
+              Torneos
+            </Link>
             <Link to="/reservar" className="text-texto-suave hover:text-primario">
               Reservar
             </Link>
