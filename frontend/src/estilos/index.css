@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
+@import 'tailwindcss';
+
+/*
+ * Tokens de diseño de Goltime. Para cambiar la identidad visual basta con editar estas variables;
+ * los componentes solo usan clases semánticas (bg-primario, text-acento, etc.).
+ */
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-titulo: 'Poppins', 'Inter', system-ui, sans-serif;
+
+  --color-primario: #16a34a;
+  --color-primario-oscuro: #166534;
+  --color-primario-claro: #dcfce7;
+  --color-acento: #facc15;
+  --color-fondo: #f8fafc;
+  --color-superficie: #ffffff;
+  --color-texto: #0f172a;
+  --color-texto-suave: #475569;
+  --color-borde: #e2e8f0;
+
+  --color-exito: #16a34a;
+  --color-alerta: #d97706;
+  --color-peligro: #dc2626;
+
+  --radius-tarjeta: 0.75rem;
+  --radius-boton: 0.5rem;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.oscuro {
+    color-scheme: dark;
+    --color-fondo: #0f172a;
+    --color-superficie: #1e293b;
+    --color-texto: #f1f5f9;
+    --color-texto-suave: #94a3b8;
+    --color-borde: #334155;
+    --color-primario-claro: #14532d;
+  }
+
+  body {
+    @apply bg-fondo text-texto font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-titulo;
+  }
+
+  :focus-visible {
+    @apply outline-primario outline-2 outline-offset-2;
+  }
+}
