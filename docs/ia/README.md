@@ -73,3 +73,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: un bloque de texto SQL perdía el espacio inicial al concatenarse con la consulta base (error de sintaxis visible en la primera prueba); varias expectativas de las pruebas eran propias (el choque de equipos se evalúa antes que el de cancha); el frontend trataba como `null` campos que el backend omite (mostraba "undefined-undefined pen.").
 - Pendiente: solicitud de inscripción por clientes habilitados (Fase 8), `DOBLE_ELIMINACION` y llaves de ida y vuelta (recortables), orden manual de siembra en la interfaz (la API ya lo admite), estadísticas de ingresos que excluyan el origen `TORNEO` (Fase 6).
 
+### Fase 6: Estadísticas (18/oct/2026)
+
+- Backend: módulo `estadisticas` de solo lectura con agregaciones SQL (resumen con comparación contra el periodo anterior, serie por día/semana/mes sin huecos, rendimiento y ocupación por cancha con horario efectivo, horas pico, clientes frecuentes) y exportación CSV; `FormatoCsv` compartido con reservas.
+- Frontend: panel `/admin/estadisticas` con filtros, indicadores con variación, gráfica de barras y mapa de calor propios (SVG, sin librerías) con vista de tabla accesible.
+- Pruebas: 292 en backend (6 de dominio y 10 de integración nuevas, con datos insertados directamente para fijar cada cifra: ingresos reales vs recaudado vs por cobrar, torneos excluidos de ingresos e incluidos en ocupación, horario propio de cancha, filtros por sede y cancha, validación del periodo, CSV) y 56 en frontend. Verificado en Docker y en el navegador con datos de prueba.
+- Qué se corrigió: nada que corregir en las pruebas, pero en el navegador se vio que el valor de un indicador se partía en dos líneas y que un estado aparecía con guion bajo.
+- Pendiente: caché de corta duración si el volumen lo exige; los premios (Fase 7) y la fidelización deben seguir ignorando el origen `TORNEO`.
+
