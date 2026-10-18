@@ -22,7 +22,7 @@ import co.edu.usco.goltime.BaseIntegracion;
 import co.edu.usco.goltime.compartido.dominio.ZonaHoraria;
 
 /** Ayudantes comunes de las pruebas de reservas: crear sedes y canchas, fechas futuras y llamadas a la API. */
-abstract class BaseReservasIT extends BaseIntegracion {
+public abstract class BaseReservasIT extends BaseIntegracion {
 
     protected static String nombre(String base) {
         return base + " " + UUID.randomUUID().toString().substring(0, 6);
@@ -31,6 +31,15 @@ abstract class BaseReservasIT extends BaseIntegracion {
     /** Fecha a {@code dias} días de hoy en Bogotá (la antelación mínima es de 3 h y la máxima de 30 días). */
     protected static LocalDate enDias(int dias) {
         return ZonaHoraria.fechaLocal(Instant.now()).plusDays(dias);
+    }
+
+    /**
+     * Fecha a {@code dias} días de hoy o, si cae en domingo, el lunes siguiente. Los domingos la sede cierra a las
+     * 20:00 (L-S cierra a las 23:00), y las pruebas reservan hasta las 23:00: así no dependen del día en que corran.
+     */
+    protected static LocalDate diaHabil(int dias) {
+        LocalDate fecha = enDias(dias);
+        return fecha.getDayOfWeek() == java.time.DayOfWeek.SUNDAY ? fecha.plusDays(1) : fecha;
     }
 
     protected static Instant a(LocalDate fecha, String hora) {

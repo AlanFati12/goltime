@@ -8,7 +8,9 @@ import java.util.Optional;
 
 import co.edu.usco.goltime.compartido.dominio.Pagina;
 import co.edu.usco.goltime.compartido.dominio.SolicitudPagina;
+import co.edu.usco.goltime.reservas.dominio.EstadoPago;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
+import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
 
 /** Puerto de persistencia y consulta de reservas. */
@@ -48,6 +50,7 @@ public interface RepositorioReservas {
     }
 
     /** Filtros del listado de administración; los nulos no filtran. */
-    record FiltroReservasAdmin(EstadoReserva estado, Long sedeId, String busqueda) {
+    record FiltroReservasAdmin(EstadoReserva estado, Long sedeId, Long canchaId, EstadoPago estadoPago, OrigenReserva origen,
+            Instant desde, Instant hasta, String busqueda) {
     }
 }

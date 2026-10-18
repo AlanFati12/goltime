@@ -135,6 +135,26 @@ class AdaptadorRepositorioReservas implements RepositorioReservas {
             desde.append(" AND c.sede_id = ?");
             parametros.add(filtro.sedeId());
         }
+        if (filtro.canchaId() != null) {
+            desde.append(" AND r.cancha_id = ?");
+            parametros.add(filtro.canchaId());
+        }
+        if (filtro.estadoPago() != null) {
+            desde.append(" AND r.estado_pago = ?");
+            parametros.add(filtro.estadoPago().name());
+        }
+        if (filtro.origen() != null) {
+            desde.append(" AND r.origen = ?");
+            parametros.add(filtro.origen().name());
+        }
+        if (filtro.desde() != null) {
+            desde.append(" AND r.inicio >= ?");
+            parametros.add(java.time.OffsetDateTime.ofInstant(filtro.desde(), java.time.ZoneOffset.UTC));
+        }
+        if (filtro.hasta() != null) {
+            desde.append(" AND r.inicio < ?");
+            parametros.add(java.time.OffsetDateTime.ofInstant(filtro.hasta(), java.time.ZoneOffset.UTC));
+        }
         if (filtro.busqueda() != null && !filtro.busqueda().isBlank()) {
             desde.append(" AND (lower(r.codigo) LIKE ? OR lower(coalesce(u.nombres || ' ' || u.apellidos, m.nombre)) LIKE ? OR lower(coalesce(u.correo, '')) LIKE ?)");
             String patron = "%" + filtro.busqueda().trim().toLowerCase() + "%";

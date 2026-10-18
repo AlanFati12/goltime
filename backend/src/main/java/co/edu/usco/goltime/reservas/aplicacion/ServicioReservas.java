@@ -2,11 +2,9 @@ package co.edu.usco.goltime.reservas.aplicacion;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +35,6 @@ import co.edu.usco.goltime.reservas.dominio.ReservaCompletadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja.ReglasCancha;
 import co.edu.usco.goltime.sedes.aplicacion.ServicioCanchas;
-import co.edu.usco.goltime.sedes.aplicacion.ServicioFestivos;
 import co.edu.usco.goltime.sedes.aplicacion.Vistas.VistaCancha;
 import co.edu.usco.goltime.sedes.dominio.CalculadoraPrecio;
 import co.edu.usco.goltime.sedes.dominio.HorarioDia;
@@ -57,20 +54,20 @@ public class ServicioReservas {
     private final RepositorioOcupaciones ocupaciones;
     private final RepositorioHistorial historial;
     private final ServicioCanchas canchas;
-    private final ServicioFestivos festivos;
+    private final CalculosReserva calculos;
     private final ConfiguracionReservas configuracion;
     private final Notificador notificador;
     private final ApplicationEventPublisher eventos;
     private final Clock reloj;
 
     public ServicioReservas(RepositorioReservas reservas, RepositorioOcupaciones ocupaciones, RepositorioHistorial historial,
-            ServicioCanchas canchas, ServicioFestivos festivos, ConfiguracionReservas configuracion, Notificador notificador,
+            ServicioCanchas canchas, CalculosReserva calculos, ConfiguracionReservas configuracion, Notificador notificador,
             ApplicationEventPublisher eventos, Clock reloj) {
         this.reservas = reservas;
         this.ocupaciones = ocupaciones;
         this.historial = historial;
         this.canchas = canchas;
-        this.festivos = festivos;
+        this.calculos = calculos;
         this.configuracion = configuracion;
         this.notificador = notificador;
         this.eventos = eventos;
@@ -96,17 +93,17 @@ public class ServicioReservas {
         Instant ahora = reloj.instant();
         PoliticaReservas politica = configuracion.politica();
         VistaCancha cancha = canchas.detallePublico(canchaId);
-        validarFranja(cancha, inicio, fin, ahora, politica);
+        calculos.validarFranja(cancha, inicio, fin, ahora, politica);
         if (reservas.contarActivasFuturas(clienteId, ahora) >= politica.maxReservasActivasCliente()) {
             throw new ExcepcionNegocio(CodigoError.LIMITE_DE_RESERVAS,
                     "Ya tienes " + politica.maxReservasActivasCliente() + " reservas activas. Cancela alguna o espera a que se juegue.");
         }
-        Precio precio = calcularPrecio(cancha, inicio, fin);
+        Precio precio = calculos.calcularPrecio(cancha, inicio, fin);
         int anio = ZonaHoraria.fechaLocal(ahora).getYear();
         Reserva nueva = Reserva.solicitar(reservas.siguienteCodigo(anio), clienteId, canchaId, inicio, fin, precio, nombreEquipo,
                 notas, politica.calcularExpiracion(ahora, inicio), clave);
         Reserva guardada = reservas.guardar(nueva);
-        ocupaciones.ocupar(guardada.id(), idsQueOcupa(cancha), inicio, fin);
+        ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(cancha), inicio, fin);
 
         Actor actor = new Actor(clienteId, Rol.CLIENTE);
         registrar(guardada.id(), "CREADA", actor, null, null, datosDe(guardada));
@@ -162,31 +159,31 @@ public class ServicioReservas {
     public PrevisualizacionReprogramacion previsualizarReprogramacion(long id, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin) {
         Reserva reserva = cargarAutorizada(id, actor);
         Instant ahora = reloj.instant();
-        PoliticaReservas politica = configuracion.politica();
+        PoliticaReservas politica = politicaPara(actor);
         verificarPuedeReprogramar(reserva, actor, ahora, politica);
         VistaCancha destino = canchas.detallePublico(nuevaCanchaId != null ? nuevaCanchaId : reserva.canchaId());
-        validarFranja(destino, inicio, fin, ahora, politica);
-        Precio nuevo = calcularPrecio(destino, inicio, fin);
-        boolean libre = !ocupaciones.hayOcupacion(idsQueOcupa(destino), inicio, fin, reserva.id());
+        calculos.validarFranja(destino, inicio, fin, ahora, politica);
+        Precio nuevo = calculos.calcularPrecio(destino, inicio, fin);
+        boolean libre = !ocupaciones.hayOcupacion(CalculosReserva.idsQueOcupa(destino), inicio, fin, reserva.id());
         return new PrevisualizacionReprogramacion(libre, reserva.precio().finalAPagar(), nuevo.finalAPagar(),
                 nuevo.finalAPagar() - reserva.precio().finalAPagar());
     }
 
     @Transactional
-    public VistaReserva reprogramar(long id, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin) {
+    public VistaReserva reprogramar(long id, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin, String motivo) {
         Reserva reserva = cargarAutorizada(id, actor);
         Instant ahora = reloj.instant();
-        PoliticaReservas politica = configuracion.politica();
+        PoliticaReservas politica = politicaPara(actor);
         VistaCancha destino = canchas.detallePublico(nuevaCanchaId != null ? nuevaCanchaId : reserva.canchaId());
-        validarFranja(destino, inicio, fin, ahora, politica);
-        Precio nuevo = calcularPrecio(destino, inicio, fin);
+        calculos.validarFranja(destino, inicio, fin, ahora, politica);
+        Precio nuevo = calculos.calcularPrecio(destino, inicio, fin);
 
         Map<String, Object> antes = datosDe(reserva);
         reserva.reprogramar(actor, destino.cancha().id(), inicio, fin, nuevo, ahora, politica, politica.calcularExpiracion(ahora, inicio));
         Reserva guardada = reservas.guardar(reserva);
         ocupaciones.liberar(guardada.id());
-        ocupaciones.ocupar(guardada.id(), idsQueOcupa(destino), inicio, fin);
-        registrar(guardada.id(), "REPROGRAMADA", actor, null, antes, datosDe(guardada));
+        ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(destino), inicio, fin);
+        registrar(guardada.id(), "REPROGRAMADA", actor, motivo, antes, datosDe(guardada));
 
         if (actor.rol() == Rol.CLIENTE) {
             notificador.notificarAdministradores("RESERVA_REPROGRAMADA", "Reserva reprogramada por el cliente",
@@ -298,6 +295,12 @@ public class ServicioReservas {
     // Apoyo
     // ===================================================================================
 
+    /** El cliente se rige por la política normal; el administrador, por la suya (sin antelación mínima ni límites). */
+    private PoliticaReservas politicaPara(Actor actor) {
+        PoliticaReservas politica = configuracion.politica();
+        return actor.rol() == Rol.CLIENTE ? politica : politica.paraAdministrador();
+    }
+
     private Reserva cargar(long id) {
         return reservas.buscarPorId(id).orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "La reserva no existe."));
     }
@@ -324,29 +327,6 @@ public class ServicioReservas {
                         "Solo puedes reprogramar con al menos " + politica.horasMinCancelacion() + " horas de antelación.");
             }
         }
-    }
-
-    private void validarFranja(VistaCancha cancha, Instant inicio, Instant fin, Instant ahora, PoliticaReservas politica) {
-        if (inicio == null || fin == null) {
-            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Indica la hora de inicio y de fin.");
-        }
-        HorarioDia horario = cancha.horarioEfectivo().get(ZonaHoraria.aHoraLocal(inicio).getDayOfWeek().getValue() - 1);
-        ValidadorFranja.validar(horario, new ReglasCancha(cancha.cancha().duracionBloqueMin(), cancha.cancha().duracionMinMin(),
-                cancha.cancha().duracionMaxMin()), inicio, fin, ahora, politica);
-    }
-
-    private Precio calcularPrecio(VistaCancha cancha, Instant inicio, Instant fin) {
-        LocalDate desde = ZonaHoraria.fechaLocal(inicio);
-        Set<LocalDate> festivosDelRango = festivos.fechasEntre(desde, ZonaHoraria.fechaLocal(fin));
-        return Precio.sinDescuento(CalculadoraPrecio.calcular(cancha.cancha().precioBaseHora(), cancha.tarifas(), festivosDelRango, inicio, fin).total());
-    }
-
-    /** La cancha reservada y, si es compuesta, todas sus componentes. */
-    private static Set<Long> idsQueOcupa(VistaCancha cancha) {
-        Set<Long> ids = new LinkedHashSet<>();
-        ids.add(cancha.cancha().id());
-        ids.addAll(cancha.cancha().componentes());
-        return ids;
     }
 
     private static Map<String, Object> datosDe(Reserva r) {

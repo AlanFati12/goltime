@@ -35,7 +35,7 @@ class SolicitudReservasIT extends BaseReservasIT {
         sedeId = crearSede(admin);
         canchaId = crearCancha(admin, sedeId, "Cancha A");
         cliente = nuevoClienteConSesion();
-        fecha = enDias(5);
+        fecha = diaHabil(5);
     }
 
     private MvcResult solicitarConClave(String token, String clave, long cancha, LocalDate f, String desde, String hasta) throws Exception {
