@@ -1,0 +1,23 @@
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+
+# Backend
+backend/target/
+*.class
+*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+# IDE y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Subidas locales
+uploads/
