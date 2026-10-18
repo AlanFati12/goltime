@@ -36,6 +36,7 @@ import co.edu.usco.goltime.reservas.dominio.PoliticaReservas;
 import co.edu.usco.goltime.reservas.dominio.Precio;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
 import co.edu.usco.goltime.reservas.dominio.ReservaCompletadaEvento;
+import co.edu.usco.goltime.reservas.dominio.ReservaCreadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ReservaLiberadaEvento;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja;
 import co.edu.usco.goltime.reservas.dominio.ValidadorFranja.ReglasCancha;
@@ -122,6 +123,7 @@ public class ServicioReservas {
         Reserva guardada = reservas.guardar(nueva);
         ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(cancha), inicio, fin);
         descuento.ifPresent(d -> descuentos.consumir(d, guardada.id(), clienteId));
+        eventos.publishEvent(new ReservaCreadaEvento(guardada.id(), clienteId, canchaId, inicio, fin));
 
         Actor actor = new Actor(clienteId, Rol.CLIENTE);
         Map<String, Object> datosCreada = datosDe(guardada);

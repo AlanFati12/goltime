@@ -96,6 +96,12 @@ public class ServicioReservasAdmin {
     /** Crea una reserva ya CONFIRMADA (no necesita aprobación) con las reglas del administrador. */
     @Transactional
     public VistaReserva crear(Actor admin, DatosReservaAdmin d) {
+        return crear(admin, d, true);
+    }
+
+    /** {@code avisar = false} evita el aviso por reserva cuando el llamador (una serie) envía uno solo para todas. */
+    @Transactional
+    public VistaReserva crear(Actor admin, DatosReservaAdmin d, boolean avisar) {
         Instant ahora = reloj.instant();
         PoliticaReservas politica = configuracion.politica().paraAdministrador();
         VistaCancha cancha = canchas.detallePublico(d.canchaId());
@@ -138,7 +144,7 @@ public class ServicioReservasAdmin {
         historial.registrar(new EntradaHistorial(null, guardada.id(), "CREADA", admin.id(), null, Rol.ADMIN, null, null, datos, ahora));
         auditoria.registrar("CREAR_RESERVA_ADMIN", ENTIDAD, guardada.id(),
                 Map.of("codigo", guardada.codigo(), "canchaId", guardada.canchaId(), "cliente", clienteId != null ? "usuario " + clienteId : "mostrador " + mostradorId), null);
-        if (clienteId != null) {
+        if (clienteId != null && avisar) {
             notificador.notificar(clienteId, "RESERVA_CREADA_ADMIN", "Te creamos una reserva",
                     "El administrador registró la reserva %s para el %s en %s.".formatted(guardada.codigo(), FormatoTexto.fechaHora(guardada.inicio()),
                             cancha.cancha().nombre()), "reserva", guardada.id());
