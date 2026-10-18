@@ -89,3 +89,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: una prueba esperaba volver a completar una reserva `NO_ASISTIO` (la máquina de estados no lo permite, y está bien); en el navegador la fecha de la franja mostraba `NaN` porque el backend omite los campos nulos y el frontend los comparaba con `null`.
 - Pendiente: descuentos acumulables, cupones personales y campañas por correo (fuera del alcance mínimo).
 
+### Fase 8: Extras (18/oct/2026)
+
+- Backend: migraciones V9 y V10; correo por el `Notificador` (conjunto cerrado de avisos, solo con correo verificado y después de confirmar la transacción) con adjuntos y generador `.ics`; series recurrentes con previsualización y cancelación; lista de espera que reacciona a la liberación de horarios; solicitud de inscripción de equipos por clientes habilitados con aprobación o rechazo; favoritas y calificaciones.
+- Frontend: panel de series, «Avisarme si se libera», lista de espera, calendario, calificación y resumen en la cancha, favoritas, solicitud de inscripción, solicitudes en la gestión del torneo y `/mi-cuenta`.
+- Pruebas: 342 en backend (23 nuevas: correo con adjunto, `.ics`, series, lista de espera, solicitudes de torneo, favoritas y calificaciones) y 62 en frontend. Verificado en Docker (serie de 4 semanas por la API) y en el navegador.
+- Qué se corrigió: los clientes de las pruebas chocaron contra el límite de reservas activas (se usaron clientes distintos); dos pruebas compartían días que, corridos al lunes por el domingo, se solapaban; los correos de verificación de registro contaminaban el conteo de avisos (se filtró por plantilla).
+- Pendiente: Fase 9 (pulido, datos de demostración y revisión de seguridad).
+
