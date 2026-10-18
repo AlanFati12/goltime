@@ -30,6 +30,7 @@ import { PaginaJugadorPublico } from '@/caracteristicas/torneos/PaginaJugadorPub
 import { PaginaPartido } from '@/caracteristicas/torneos/PaginaPartido'
 import { PaginaTorneoDetalle } from '@/caracteristicas/torneos/PaginaTorneoDetalle'
 import { PaginaTorneos } from '@/caracteristicas/torneos/PaginaTorneos'
+import { PaginaEstadisticas } from '@/caracteristicas/estadisticas/PaginaEstadisticas'
 import { PaginaClientes } from '@/caracteristicas/admin/PaginaClientes'
 ;('@/caracteristicas/admin/PaginaClientes')
 import { PaginaAdministradores } from '@/caracteristicas/admin/PaginaAdministradores'
@@ -99,6 +100,7 @@ export default function App() {
                 <Route path="canchas/nueva" element={<PaginaCanchaForm />} />
                 <Route path="canchas/:id" element={<PaginaCanchaForm />} />
                 <Route path="festivos" element={<PaginaFestivos />} />
+                <Route path="estadisticas" element={<PaginaEstadisticas />} />
                 <Route path="equipos" element={<PaginaEquiposAdmin />} />
                 <Route path="equipos/:id" element={<PaginaEquipoAdmin />} />
                 <Route path="torneos" element={<PaginaTorneosAdmin />} />

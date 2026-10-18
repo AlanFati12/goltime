@@ -24,6 +24,11 @@ const accesos = [
     texto: 'Aprueba o rechaza las solicitudes pendientes y revisa todas las reservas.',
   },
   {
+    a: '/admin/estadisticas',
+    titulo: 'Estadísticas',
+    texto: 'Ingresos reales, ocupación, horas pico y clientes frecuentes, con exportación a CSV.',
+  },
+  {
     a: '/admin/torneos',
     titulo: 'Torneos',
     texto:
@@ -66,8 +71,7 @@ export function PaginaPanelAdmin() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Panel de administración</h1>
       <p className="text-texto-suave max-w-2xl text-sm">
-        Aquí irán los indicadores del día, la agenda de reservas y las estadísticas a medida que se
-        construyan las siguientes fases.
+        Accesos rápidos a la operación diaria del negocio.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {accesos.map((a) => (
