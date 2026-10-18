@@ -1,0 +1,9 @@
+goltime:
+  seguridad:
+    cookie-segura: true
+  swagger:
+    habilitado: false
+
+logging:
+  level:
+    root: INFO

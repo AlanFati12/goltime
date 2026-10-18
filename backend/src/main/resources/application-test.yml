@@ -1,0 +1,6 @@
+goltime:
+  seguridad:
+    jwt-secreto: secreto-solo-para-pruebas-automaticas-0123456789
+    cookie-segura: false
+  swagger:
+    habilitado: true

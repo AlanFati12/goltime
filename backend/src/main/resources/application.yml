@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: goltime-api
+  profiles:
+    default: dev
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/goltime}
+    username: ${DB_USUARIO:goltime}
+    password: ${DB_CLAVE:goltime}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PUERTO:1025}
+    username: ${SMTP_USUARIO:}
+    password: ${SMTP_CLAVE:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTENTICACION:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+goltime:
+  zona-horaria: America/Bogota
+  seguridad:
+    # Secreto HS256: mínimo 32 caracteres (256 bits). Obligatorio por variable de entorno.
+    jwt-secreto: ${JWT_SECRETO}
+    acceso-minutos: 15
+    refresco-dias: 7
+    cookie-segura: ${COOKIE_SEGURA:true}
+  cors:
+    origenes-permitidos: ${CORS_ORIGENES:http://localhost:5173}
+  correo:
+    remitente: ${CORREO_REMITENTE:no-responder@goltime.local}
+  administrador-inicial:
+    correo: ${ADMIN_CORREO:}
+    clave: ${ADMIN_CLAVE:}
+  swagger:
+    habilitado: false
+
+springdoc:
+  api-docs:
+    enabled: ${goltime.swagger.habilitado}
+  swagger-ui:
+    enabled: ${goltime.swagger.habilitado}

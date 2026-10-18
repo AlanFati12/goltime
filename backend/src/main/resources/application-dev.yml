@@ -1,0 +1,9 @@
+goltime:
+  seguridad:
+    cookie-segura: false
+  swagger:
+    habilitado: true
+
+logging:
+  level:
+    co.edu.usco.goltime: DEBUG
