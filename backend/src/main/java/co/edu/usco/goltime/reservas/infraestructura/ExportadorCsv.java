@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import co.edu.usco.goltime.compartido.dominio.FormatoCsv;
 import co.edu.usco.goltime.compartido.dominio.ZonaHoraria;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
@@ -20,7 +21,7 @@ final class ExportadorCsv {
     }
 
     static byte[] aCsv(List<VistaReserva> reservas) {
-        StringBuilder csv = new StringBuilder("﻿");
+        StringBuilder csv = new StringBuilder(FormatoCsv.BOM);
         csv.append(String.join(",", ENCABEZADO)).append("\r\n");
         for (VistaReserva v : reservas) {
             Reserva r = v.reserva();
@@ -38,15 +39,7 @@ final class ExportadorCsv {
         return instante == null ? "" : FECHA_HORA.format(instante);
     }
 
-    /** Escapa comillas y neutraliza fórmulas (=, +, -, @) para evitar inyección de fórmulas al abrir en Excel. */
     static String celda(String valor) {
-        if (valor == null) {
-            return "";
-        }
-        String texto = valor;
-        if (!texto.isEmpty() && "=+-@\t\r".indexOf(texto.charAt(0)) >= 0) {
-            texto = "'" + texto;
-        }
-        return "\"" + texto.replace("\"", "\"\"") + "\"";
+        return FormatoCsv.celda(valor);
     }
 }
