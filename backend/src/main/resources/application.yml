@@ -36,7 +36,7 @@ spring:
 
 server:
   port: 8080
-  forward-headers-strategy: framework
+  forward-headers-strategy: native
   error:
     include-message: never
     include-stacktrace: never
@@ -56,9 +56,19 @@ goltime:
   seguridad:
     # Secreto HS256: mínimo 32 caracteres (256 bits). Obligatorio por variable de entorno.
     jwt-secreto: ${JWT_SECRETO}
-    acceso-minutos: 15
-    refresco-dias: 7
     cookie-segura: ${COOKIE_SEGURA:true}
+  autenticacion:
+    acceso-minutos: 15
+    refresco-dias: 7          # sesión con "recordarme"
+    refresco-sesion-horas: 12 # sesión sin "recordarme"
+    intentos-maximos: 5       # fallos de login antes del bloqueo temporal
+    bloqueo-minutos: 15
+    verificacion-correo-obligatoria: ${VERIFICACION_CORREO_OBLIGATORIA:false}
+    url-publica: ${URL_PUBLICA:http://localhost:8081}
+  limite-tasa:
+    ingreso-por-minuto: 10
+    registro-por-hora: 10
+    recuperacion-por-hora: 5
   cors:
     origenes-permitidos: ${CORS_ORIGENES:http://localhost:5173}
   correo:
@@ -66,6 +76,8 @@ goltime:
   administrador-inicial:
     correo: ${ADMIN_CORREO:}
     clave: ${ADMIN_CLAVE:}
+  almacenamiento:
+    directorio: ${DIRECTORIO_ARCHIVOS:./uploads}
   swagger:
     habilitado: false
 

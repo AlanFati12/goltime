@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
+import { renovarSesion } from '@/caracteristicas/autenticacion/servicioSesion'
 
 /** Respuesta de error de la API (ProblemDetail, RFC 7807) con el código de negocio estable. */
 export interface ErrorApi {
@@ -9,6 +10,15 @@ export interface ErrorApi {
   detail?: string
   codigo?: string
   campos?: { campo: string; mensaje: string }[]
+}
+
+/** Página de resultados de la API ({@code pagina} empieza en 0). */
+export interface Pagina<T> {
+  contenido: T[]
+  pagina: number
+  tamano: number
+  totalElementos: number
+  totalPaginas: number
 }
 
 export const api = axios.create({
@@ -22,24 +32,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-let renovacionEnCurso: Promise<string> | null = null
-
-/** Pide un nuevo access token con la cookie de refresh. Una sola renovación a la vez. */
-function renovarToken(): Promise<string> {
-  renovacionEnCurso ??= axios
-    .post<{ tokenAcceso: string }>('/api/v1/autenticacion/refrescar', null, {
-      withCredentials: true,
-    })
-    .then((r) => {
-      useSesion.getState().actualizarToken(r.data.tokenAcceso)
-      return r.data.tokenAcceso
-    })
-    .finally(() => {
-      renovacionEnCurso = null
-    })
-  return renovacionEnCurso
-}
-
 type ConfigReintentable = InternalAxiosRequestConfig & { _reintentada?: boolean }
 
 api.interceptors.response.use(
@@ -47,11 +39,18 @@ api.interceptors.response.use(
   async (error: AxiosError<ErrorApi>) => {
     const config = error.config as ConfigReintentable | undefined
     const esRutaDeAuth = config?.url?.includes('/autenticacion/')
-    if (error.response?.status === 401 && config && !config._reintentada && !esRutaDeAuth) {
+    const teniaSesion = useSesion.getState().tokenAcceso !== null
+    if (
+      error.response?.status === 401 &&
+      config &&
+      !config._reintentada &&
+      !esRutaDeAuth &&
+      teniaSesion
+    ) {
       config._reintentada = true
       try {
-        const token = await renovarToken()
-        config.headers.Authorization = `Bearer ${token}`
+        const sesion = await renovarSesion()
+        config.headers.Authorization = `Bearer ${sesion.tokenAcceso}`
         return api(config)
       } catch {
         useSesion.getState().cerrar()
@@ -64,7 +63,12 @@ api.interceptors.response.use(
 /** Mensaje amigable a partir de cualquier error de la API. */
 export function mensajeDeError(error: unknown): string {
   if (axios.isAxiosError<ErrorApi>(error)) {
-    return error.response?.data?.detail ?? 'No pudimos conectar con el servidor. Intenta de nuevo.'
+    if (!error.response) return 'No pudimos conectar con el servidor. Revisa tu conexión.'
+    return error.response.data?.detail ?? 'Ocurrió un error inesperado. Intenta de nuevo.'
   }
   return 'Ocurrió un error inesperado.'
+}
+
+export function codigoDeError(error: unknown): string | undefined {
+  return axios.isAxiosError<ErrorApi>(error) ? error.response?.data?.codigo : undefined
 }
