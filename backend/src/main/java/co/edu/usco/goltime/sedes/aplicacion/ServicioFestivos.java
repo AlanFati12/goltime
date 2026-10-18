@@ -31,6 +31,12 @@ public class ServicioFestivos {
         return festivos.delAnio(anio);
     }
 
+    /** Fechas festivas dentro del rango (extremos incluidos). Lo usan los cálculos de precio de otros módulos. */
+    @Transactional(readOnly = true)
+    public java.util.Set<LocalDate> fechasEntre(LocalDate desde, LocalDate hasta) {
+        return festivos.fechasEntre(desde, hasta);
+    }
+
     @Transactional
     public Festivo crear(LocalDate fecha, String nombre) {
         Festivo nuevo = new Festivo(null, fecha, nombre);

@@ -4,6 +4,11 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 
 const accesos = [
   {
+    a: '/admin/reservas',
+    titulo: 'Reservas',
+    texto: 'Aprueba o rechaza las solicitudes pendientes y revisa todas las reservas.',
+  },
+  {
     a: '/admin/sedes',
     titulo: 'Sedes',
     texto: 'Crea sedes, define su horario de operación y sube fotos.',

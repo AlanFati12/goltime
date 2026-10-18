@@ -4,7 +4,7 @@ Aplicación web para la gestión de canchas sintéticas de fútbol: sedes, canch
 
 Proyecto final de Ingeniería de Software, Universidad Surcolombiana (USCO). Se expone en **INNOVASOFT IX, 19 de noviembre de 2026**.
 
-> Estado: **Fase 2 (sedes, canchas, tarifas, horarios y festivos)** completada, sobre las Fases 0 y 1. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
+> Estado: **Fase 3 (disponibilidad y reservas del cliente)** completada, sobre las Fases 0, 1 y 2. Ver [docs/propuesta-inicial.md](docs/propuesta-inicial.md) para el alcance y el orden de fases.
 
 ## Arquitectura resumida
 
@@ -89,6 +89,20 @@ cd frontend && npm test && npm run lint && npm run build
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
 - **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 - Los datos de demostración completos llegan en la Fase 9.
+
+## Reservas (Fase 3)
+
+| Qué | Dónde |
+|---|---|
+| Ver horarios libres y reservar | Web: `/reservar` (grilla por cancha, próximos 7 días, filtros y precio de cada bloque) |
+| Mis reservas, detalle, reprogramar, cancelar, comprobante | Web: `/mis-reservas`, `/mis-reservas/:id` |
+| Aprobar o rechazar solicitudes | Panel: `/admin/reservas` |
+| Notificaciones | Campana del encabezado y `/notificaciones` |
+| API cliente | `POST /api/v1/reservas` (cabecera `Idempotency-Key`), `GET /api/v1/me/reservas?pestana=`, `GET /reservas/{id}`, `POST /reservas/{id}/cancelar`, `PATCH /reservas/{id}/reprogramar` (+ `/previsualizar`) |
+| API pública | `GET /api/v1/publico/disponibilidad`, `/disponibilidad/semana` |
+| API admin | `GET /api/v1/admin/reservas`, `POST .../{id}/aprobar`, `.../rechazar`, `.../cancelar` |
+
+El cliente **solicita** y el administrador **aprueba**; una solicitud sin respuesta expira a las 12 h o 2 h antes del inicio. Dos reservas no pueden solaparse nunca (restricción de exclusión en PostgreSQL). Detalle en [ADR 0007](docs/decisiones/0007-reservas-aprobacion-expiracion-e-idempotencia.md).
 
 ## Catálogo (Fase 2)
 

@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
@@ -78,6 +79,11 @@ export function PaginaCanchaDetalle() {
               bloques de {c.duracionBloqueMin} min ({c.duracionMinMin}–{c.duracionMaxMin} min)
             </dd>
           </dl>
+          <EnlaceBoton
+            to={`/reservar?sedeId=${c.sedeId}&canchaId=${c.id}&modalidad=${c.modalidad}`}
+          >
+            Reservar esta cancha
+          </EnlaceBoton>
           {c.esCompuesta && (
             <Alerta tipo="info">
               Esta cancha se forma con {c.componentes.map((x) => x.nombre).join(' y ')}. Si alguna

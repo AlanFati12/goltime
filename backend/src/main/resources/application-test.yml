@@ -1,4 +1,6 @@
 goltime:
+  reservas:
+    intervalo-tareas-ms: 3600000
   limite-tasa:
     ingreso-por-minuto: 100000
     registro-por-hora: 100000

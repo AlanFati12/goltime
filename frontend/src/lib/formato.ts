@@ -24,3 +24,19 @@ export function formatearFechaHora(iso: string | Date): string {
 export function formatearHora(iso: string | Date): string {
   return formatInTimeZone(iso, ZONA_HORARIA, 'HH:mm')
 }
+
+/** Fecha de hoy en Bogotá como "2026-11-17" (para los campos de fecha). */
+export function hoyEnBogota(): string {
+  return formatInTimeZone(new Date(), ZONA_HORARIA, 'yyyy-MM-dd')
+}
+
+/** "2026-11-17" -> "mar 17 nov". */
+export function formatearDia(fechaISO: string): string {
+  const [a, m, d] = fechaISO.split('-').map(Number)
+  return formatInTimeZone(new Date(Date.UTC(a, m - 1, d, 12)), 'UTC', 'EEE d MMM', { locale: es })
+}
+
+/** Instante -> "2026-11-17" en hora de Bogotá. */
+export function fechaEnBogota(iso: string | Date): string {
+  return formatInTimeZone(iso, ZONA_HORARIA, 'yyyy-MM-dd')
+}
