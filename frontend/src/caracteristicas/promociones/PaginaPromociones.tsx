@@ -16,8 +16,8 @@ const hora = (m: number) =>
 export function PaginaPromociones() {
   const { data, isPending, isError, error } = usePromocionesPublicas()
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Promociones</h1>
+    <div className="flex max-w-5xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Promociones</h1>
       <p className="text-texto-suave">
         Escribe el código al solicitar tu reserva. Se aplica un solo descuento por reserva.
       </p>

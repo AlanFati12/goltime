@@ -24,8 +24,8 @@ export function PaginaMisPremios() {
   const disponibles = data?.premios.filter((p) => p.estado === 'DISPONIBLE') ?? []
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Mis premios</h1>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <h1 className="text-2xl font-bold sm:text-3xl">Mis premios</h1>
       {isPending && <Cargando texto="Cargando tus premios…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && data.progreso.length === 0 && (

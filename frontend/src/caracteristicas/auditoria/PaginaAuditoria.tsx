@@ -35,7 +35,7 @@ export function PaginaAuditoria() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Auditoría</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Auditoría</h1>
         <p className="text-texto-suave text-sm">
           Quién hizo qué sobre cualquier dato del negocio, de lo más reciente a lo más antiguo.
         </p>

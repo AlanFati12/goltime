@@ -507,7 +507,7 @@ export function PaginaPartidoAdmin() {
   const listo = !!p?.local?.inscripcionId && !!p?.visitante?.inscripcionId && p.estado !== 'BYE'
 
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
+    <div className="flex max-w-4xl flex-col gap-6">
       <Link
         to={t ? `/admin/torneos/${t.id}` : '/admin/torneos'}
         className="text-primario text-sm hover:underline"

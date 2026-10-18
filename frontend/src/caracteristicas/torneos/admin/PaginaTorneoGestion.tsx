@@ -8,8 +8,11 @@ import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Insignia } from '@/componentes/ui/Insignia'
+import { MenuDesplegable } from '@/componentes/ui/MenuDesplegable'
+import { estiloItemMenu } from '@/componentes/ui/estilosMenu'
+import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Modal } from '@/componentes/ui/Modal'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
@@ -367,6 +370,10 @@ export function PaginaTorneoGestion() {
   const { data, isPending, isError, error } = useTorneo(id, true)
   const { cambiarEstado } = useAccionesTorneo()
   const [cancelando, setCancelando] = useState(false)
+  const [elegida, setPestana] = useState<'equipos' | 'fixture' | 'partidos' | null>(null)
+  const terminado = data?.torneo.estado === 'FINALIZADO' || data?.torneo.estado === 'CANCELADO'
+  // Sin fixture lo siguiente es armar los equipos; con fixture, lo habitual es registrar partidos.
+  const pestana = elegida ?? ((data?.partidosTotales ?? 0) > 0 ? 'partidos' : 'equipos')
 
   const cambiar = (destino: EstadoTorneo, motivo?: string) =>
     cambiarEstado.mutateAsync({ id, estado: destino, motivo }).then(
@@ -378,7 +385,7 @@ export function PaginaTorneoGestion() {
     )
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Link to="/admin/torneos" className="text-primario text-sm hover:underline">
         ← Torneos
       </Link>
@@ -386,39 +393,76 @@ export function PaginaTorneoGestion() {
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h1 className="text-2xl font-bold">{data.torneo.nombre}</h1>
-            <div className="flex flex-wrap gap-2">
-              {data.torneo.estado !== 'FINALIZADO' && data.torneo.estado !== 'CANCELADO' && (
-                <EnlaceBoton variante="secundario" to={`/admin/torneos/${id}/editar`}>
-                  Editar
-                </EnlaceBoton>
-              )}
-              {ACCIONES[data.torneo.estado].map((a) => (
-                <Boton
-                  key={a.destino}
-                  variante={a.peligro ? 'peligro' : 'primario'}
-                  disabled={cambiarEstado.isPending}
-                  onClick={() =>
-                    a.destino === 'CANCELADO' ? setCancelando(true) : void cambiar(a.destino)
-                  }
-                >
-                  {a.texto}
-                </Boton>
-              ))}
-            </div>
-          </div>
+          <EncabezadoPagina
+            titulo={data.torneo.nombre}
+            acciones={
+              <>
+                {ACCIONES[data.torneo.estado]
+                  .filter((a) => !a.peligro)
+                  .map((a) => (
+                    <Boton
+                      key={a.destino}
+                      disabled={cambiarEstado.isPending}
+                      onClick={() => void cambiar(a.destino)}
+                    >
+                      {a.texto}
+                    </Boton>
+                  ))}
+                {!terminado && (
+                  <MenuDesplegable
+                    etiqueta="Más acciones del torneo"
+                    boton={<span className="px-2 text-sm font-medium">Más ▾</span>}
+                  >
+                    <Link
+                      role="menuitem"
+                      to={`/admin/torneos/${id}/editar`}
+                      className={estiloItemMenu}
+                    >
+                      Editar torneo
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`${estiloItemMenu} text-peligro`}
+                      onClick={() => setCancelando(true)}
+                    >
+                      Cancelar torneo
+                    </button>
+                  </MenuDesplegable>
+                )}
+              </>
+            }
+          />
           <ResumenTorneo t={data.torneo} />
-          <SeccionSolicitudes detalle={data} />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <SeccionEquipos detalle={data} />
-            <SeccionFixture detalle={data} />
-          </div>
-          <h2 className="text-xl font-semibold">Partidos y resultados</h2>
-          <p className="text-texto-suave text-sm">
-            Abre un partido para programarlo, registrar el resultado y sus eventos.
-          </p>
-          <PanelTorneo detalle={data} admin />
+          <Pestanas
+            etiqueta="Gestión del torneo"
+            pestanas={[
+              {
+                id: 'equipos',
+                texto: 'Equipos',
+                conteo: data.solicitudes?.length ?? 0,
+              },
+              { id: 'fixture', texto: 'Fixture' },
+              { id: 'partidos', texto: 'Partidos y resultados' },
+            ]}
+            actual={pestana}
+            alCambiar={setPestana}
+          />
+          {pestana === 'equipos' && (
+            <>
+              <SeccionSolicitudes detalle={data} />
+              <SeccionEquipos detalle={data} />
+            </>
+          )}
+          {pestana === 'fixture' && <SeccionFixture detalle={data} />}
+          {pestana === 'partidos' && (
+            <>
+              <p className="text-texto-suave text-sm">
+                Abre un partido para programarlo, registrar el resultado y sus eventos.
+              </p>
+              <PanelTorneo detalle={data} admin />
+            </>
+          )}
           {cancelando && (
             <ModalMotivo
               titulo="Cancelar torneo"

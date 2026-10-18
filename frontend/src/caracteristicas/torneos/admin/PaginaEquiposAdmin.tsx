@@ -87,7 +87,7 @@ export function PaginaEquiposAdmin() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Equipos</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Equipos</h1>
         <Boton onClick={() => setNuevo(true)}>Nuevo equipo</Boton>
       </div>
       <p className="text-texto-suave max-w-3xl text-sm">

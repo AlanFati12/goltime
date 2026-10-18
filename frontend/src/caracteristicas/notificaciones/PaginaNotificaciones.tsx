@@ -23,7 +23,7 @@ export function PaginaNotificaciones() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-3xl font-bold">Notificaciones</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Notificaciones</h1>
         <Boton
           variante="secundario"
           tamano="sm"

@@ -38,7 +38,7 @@ export function PaginaAdministradores() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Administradores</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Administradores</h1>
         {isPending && <Cargando />}
         {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
         {data && (

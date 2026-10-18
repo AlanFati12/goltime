@@ -13,18 +13,18 @@
   --color-primario-oscuro: #166534;
   --color-primario-claro: #dcfce7;
   --color-acento: #facc15;
-  --color-fondo: #f8fafc;
+  --color-fondo: #f6f7f9;
   --color-superficie: #ffffff;
   --color-texto: #0f172a;
   --color-texto-suave: #475569;
-  --color-borde: #e2e8f0;
+  --color-borde: #e6e9ee;
 
   --color-exito: #16a34a;
   --color-alerta: #d97706;
   --color-peligro: #dc2626;
 
-  --radius-tarjeta: 0.75rem;
-  --radius-boton: 0.5rem;
+  --radius-tarjeta: 1rem;
+  --radius-boton: 0.625rem;
 }
 
 @layer base {
@@ -49,7 +49,7 @@
   h1,
   h2,
   h3 {
-    @apply font-titulo;
+    @apply font-titulo tracking-tight;
   }
 
   :focus-visible {

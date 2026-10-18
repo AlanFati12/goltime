@@ -18,7 +18,7 @@ export function PaginaTorneosAdmin() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Torneos</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Torneos</h1>
         <EnlaceBoton to="/admin/torneos/nuevo">Nuevo torneo</EnlaceBoton>
       </div>
       <Tarjeta className="flex items-end gap-4">

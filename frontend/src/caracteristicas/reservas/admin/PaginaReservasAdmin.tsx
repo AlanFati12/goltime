@@ -8,8 +8,10 @@ import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Insignia } from '@/componentes/ui/Insignia'
+import { Plegable } from '@/componentes/ui/Plegable'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
@@ -37,6 +39,15 @@ export function PaginaReservasAdmin() {
   const { data, isPending, isError, error, isFetching } = useReservasAdmin(filtros)
   const { aprobar, rechazar, cancelar } = useAccionesReservaAdmin()
 
+  const avanzados = [
+    filtros.sedeId,
+    filtros.estadoPago,
+    filtros.origen,
+    filtros.desde,
+    filtros.hasta,
+  ].filter(Boolean).length
+  const hayFiltros = avanzados > 0 || !!filtros.busqueda || filtros.estado !== 'PENDIENTE'
+
   const cambiar = (parcial: Partial<FiltrosReservasAdmin>) =>
     setFiltros((f) => ({ ...f, pagina: 0, ...parcial }))
 
@@ -58,83 +69,108 @@ export function PaginaReservasAdmin() {
     })
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Reservas</h1>
-        <div className="flex gap-2">
-          <Boton variante="secundario" onClick={exportar} disabled={exportando}>
-            {exportando ? 'Exportando…' : 'Exportar CSV'}
-          </Boton>
-          <EnlaceBoton to="/admin/reservas/nueva">Nueva reserva</EnlaceBoton>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Reservas"
+        descripcion="Aprueba las solicitudes y consulta el historial."
+        acciones={
+          <>
+            <Boton variante="secundario" onClick={exportar} disabled={exportando}>
+              {exportando ? 'Exportando…' : 'Exportar CSV'}
+            </Boton>
+            <EnlaceBoton to="/admin/reservas/nueva">Nueva reserva</EnlaceBoton>
+          </>
+        }
+      />
 
-      <Tarjeta className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Campo
-          className="lg:col-span-2"
-          etiqueta="Buscar"
-          type="search"
-          placeholder="Código, nombre o correo del cliente"
-          value={filtros.busqueda}
-          onChange={(e) => cambiar({ busqueda: e.target.value })}
-        />
-        <CampoSelect
-          etiqueta="Estado"
-          value={filtros.estado}
-          onChange={(e) => cambiar({ estado: e.target.value as EstadoReserva | '' })}
-        >
-          <option value="">Todos</option>
-          {(Object.keys(ETIQUETA_ESTADO_RESERVA) as EstadoReserva[]).map((e) => (
-            <option key={e} value={e}>
-              {ETIQUETA_ESTADO_RESERVA[e]}
-            </option>
-          ))}
-        </CampoSelect>
-        <CampoSelect
-          etiqueta="Sede"
-          value={filtros.sedeId}
-          onChange={(e) => cambiar({ sedeId: e.target.value })}
-        >
-          <option value="">Todas</option>
-          {sedes.data?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}
-            </option>
-          ))}
-        </CampoSelect>
-        <CampoSelect
-          etiqueta="Estado de pago"
-          value={filtros.estadoPago}
-          onChange={(e) => cambiar({ estadoPago: e.target.value })}
-        >
-          <option value="">Todos</option>
-          {Object.entries(ETIQUETA_PAGO).map(([valor, texto]) => (
-            <option key={valor} value={valor}>
-              {texto}
-            </option>
-          ))}
-        </CampoSelect>
-        <CampoSelect
-          etiqueta="Origen"
-          value={filtros.origen}
-          onChange={(e) => cambiar({ origen: e.target.value })}
-        >
-          <option value="">Todos</option>
-          <option value="WEB">Web</option>
-          <option value="ADMIN">Administrador</option>
-        </CampoSelect>
-        <Campo
-          etiqueta="Desde"
-          type="date"
-          value={filtros.desde}
-          onChange={(e) => cambiar({ desde: e.target.value })}
-        />
-        <Campo
-          etiqueta="Hasta"
-          type="date"
-          value={filtros.hasta}
-          onChange={(e) => cambiar({ hasta: e.target.value })}
-        />
+      <Tarjeta className="flex flex-col gap-4 p-4 sm:p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <Campo
+            className="min-w-56 flex-1"
+            etiqueta="Buscar"
+            type="search"
+            placeholder="Código, nombre o correo del cliente"
+            value={filtros.busqueda}
+            onChange={(e) => cambiar({ busqueda: e.target.value })}
+          />
+          <CampoSelect
+            className="w-56"
+            etiqueta="Estado"
+            value={filtros.estado}
+            onChange={(e) => cambiar({ estado: e.target.value as EstadoReserva | '' })}
+          >
+            <option value="">Todos</option>
+            {(Object.keys(ETIQUETA_ESTADO_RESERVA) as EstadoReserva[]).map((e) => (
+              <option key={e} value={e}>
+                {ETIQUETA_ESTADO_RESERVA[e]}
+              </option>
+            ))}
+          </CampoSelect>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <Plegable
+            titulo="Más filtros"
+            resumen={avanzados > 0 ? `(${avanzados} activos)` : undefined}
+            abiertoInicial={avanzados > 0}
+          >
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <CampoSelect
+                etiqueta="Sede"
+                value={filtros.sedeId}
+                onChange={(e) => cambiar({ sedeId: e.target.value })}
+              >
+                <option value="">Todas</option>
+                {sedes.data?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre}
+                  </option>
+                ))}
+              </CampoSelect>
+              <CampoSelect
+                etiqueta="Estado de pago"
+                value={filtros.estadoPago}
+                onChange={(e) => cambiar({ estadoPago: e.target.value })}
+              >
+                <option value="">Todos</option>
+                {Object.entries(ETIQUETA_PAGO).map(([valor, texto]) => (
+                  <option key={valor} value={valor}>
+                    {texto}
+                  </option>
+                ))}
+              </CampoSelect>
+              <CampoSelect
+                etiqueta="Origen"
+                value={filtros.origen}
+                onChange={(e) => cambiar({ origen: e.target.value })}
+              >
+                <option value="">Todos</option>
+                <option value="WEB">Web</option>
+                <option value="ADMIN">Administrador</option>
+              </CampoSelect>
+              <Campo
+                etiqueta="Desde"
+                type="date"
+                value={filtros.desde}
+                onChange={(e) => cambiar({ desde: e.target.value })}
+              />
+              <Campo
+                etiqueta="Hasta"
+                type="date"
+                value={filtros.hasta}
+                onChange={(e) => cambiar({ hasta: e.target.value })}
+              />
+            </div>
+          </Plegable>
+          {hayFiltros && (
+            <button
+              type="button"
+              className="text-primario shrink-0 self-start text-sm font-medium"
+              onClick={() => setFiltros({ ...FILTROS_RESERVAS_INICIALES, estado: '' })}
+            >
+              Quitar filtros
+            </button>
+          )}
+        </div>
       </Tarjeta>
 
       {isPending && <Cargando texto="Cargando reservas…" />}

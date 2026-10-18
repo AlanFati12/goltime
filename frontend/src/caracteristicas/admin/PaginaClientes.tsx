@@ -49,7 +49,7 @@ export function PaginaClientes() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Clientes</h1>
+      <h1 className="text-2xl font-bold sm:text-3xl">Clientes</h1>
 
       <Tarjeta className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium">

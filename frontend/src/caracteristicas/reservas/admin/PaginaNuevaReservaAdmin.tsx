@@ -102,7 +102,7 @@ export function PaginaNuevaReservaAdmin() {
         <Link to="/admin/reservas" className="text-texto-suave text-sm hover:underline">
           ← Reservas
         </Link>
-        <h1 className="text-2xl font-bold">Nueva reserva</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Nueva reserva</h1>
         <p className="text-texto-suave text-sm">
           Queda confirmada de inmediato. Puedes reservar con poca antelación y sin el límite de
           reservas por cliente.

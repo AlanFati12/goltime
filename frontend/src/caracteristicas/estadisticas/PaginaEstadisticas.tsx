@@ -7,6 +7,8 @@ import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { Plegable } from '@/componentes/ui/Plegable'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora, hoyEnBogota, sumarDias } from '@/lib/formato'
@@ -62,56 +64,62 @@ function Indicadores({ r }: { r: ResumenConComparacion }) {
   const a = r.actual
   const v = r.variaciones
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Kpi
-        titulo="Ingresos reales"
-        valor={formatearCOP(a.ingresosReales)}
-        variacion={v.ingresosReales}
-        ayuda="Solo reservas completadas"
-      />
-      <Kpi
-        titulo="Recaudado"
-        valor={formatearCOP(a.recaudado)}
-        variacion={v.recaudado}
-        ayuda={`Por cobrar: ${formatearCOP(a.porCobrar)}`}
-      />
-      <Kpi
-        titulo="Ocupación"
-        valor={`${a.ocupacionPct}%`}
-        variacion={v.ocupacionPct}
-        ayuda={`${a.horasJugadas} h jugadas · ${a.partidosTorneo} partidos de torneo`}
-      />
-      <Kpi
-        titulo="Ticket promedio"
-        valor={formatearCOP(a.ticketPromedio)}
-        variacion={v.ticketPromedio}
-        ayuda={`${a.clientesUnicos} clientes distintos`}
-      />
-      <Kpi
-        titulo="Reservas"
-        valor={String(a.reservas)}
-        variacion={v.reservas}
-        ayuda={`${a.completadas} completadas`}
-      />
-      <Kpi
-        titulo="Cancelaciones"
-        valor={`${a.tasaCancelacion}%`}
-        ayuda={`${a.canceladas} reservas canceladas`}
-      />
-      <Kpi
-        titulo="No asistencia"
-        valor={`${a.tasaNoAsistencia}%`}
-        ayuda={`${a.noAsistio} reservas sin presentarse`}
-      />
-      <Kpi
-        titulo="Por estado"
-        valor={String(a.reservas)}
-        ayuda={
-          Object.entries(a.porEstado)
-            .map(([e, n]) => `${e.toLowerCase().replace('_', ' ')}: ${n}`)
-            .join(' · ') || 'Sin reservas'
-        }
-      />
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi
+          titulo="Ingresos reales"
+          valor={formatearCOP(a.ingresosReales)}
+          variacion={v.ingresosReales}
+          ayuda="Solo reservas completadas"
+        />
+        <Kpi
+          titulo="Recaudado"
+          valor={formatearCOP(a.recaudado)}
+          variacion={v.recaudado}
+          ayuda={`Por cobrar: ${formatearCOP(a.porCobrar)}`}
+        />
+        <Kpi
+          titulo="Ocupación"
+          valor={`${a.ocupacionPct}%`}
+          variacion={v.ocupacionPct}
+          ayuda={`${a.horasJugadas} h jugadas · ${a.partidosTorneo} partidos de torneo`}
+        />
+        <Kpi
+          titulo="Reservas"
+          valor={String(a.reservas)}
+          variacion={v.reservas}
+          ayuda={`${a.completadas} completadas`}
+        />
+      </div>
+      <Plegable titulo="Más indicadores">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Kpi
+            titulo="Ticket promedio"
+            valor={formatearCOP(a.ticketPromedio)}
+            variacion={v.ticketPromedio}
+            ayuda={`${a.clientesUnicos} clientes distintos`}
+          />
+          <Kpi
+            titulo="Cancelaciones"
+            valor={`${a.tasaCancelacion}%`}
+            ayuda={`${a.canceladas} reservas canceladas`}
+          />
+          <Kpi
+            titulo="No asistencia"
+            valor={`${a.tasaNoAsistencia}%`}
+            ayuda={`${a.noAsistio} reservas sin presentarse`}
+          />
+          <Kpi
+            titulo="Por estado"
+            valor={String(a.reservas)}
+            ayuda={
+              Object.entries(a.porEstado)
+                .map(([e, n]) => `${e.toLowerCase().replace('_', ' ')}: ${n}`)
+                .join(' · ') || 'Sin reservas'
+            }
+          />
+        </div>
+      </Plegable>
     </div>
   )
 }
@@ -137,76 +145,85 @@ export function PaginaEstadisticas() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Estadísticas</h1>
-        <Boton
-          variante="secundario"
-          disabled={!valido}
-          onClick={() =>
-            descargarCsv(filtro, agrupacion).catch((e) => avisar.error(mensajeDeError(e)))
-          }
-        >
-          Exportar CSV
-        </Boton>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Estadísticas"
+        descripcion="Cómo va el negocio en el periodo elegido."
+        acciones={
+          <Boton
+            variante="secundario"
+            disabled={!valido}
+            onClick={() =>
+              descargarCsv(filtro, agrupacion).catch((e) => avisar.error(mensajeDeError(e)))
+            }
+          >
+            Exportar CSV
+          </Boton>
+        }
+      />
 
-      <Tarjeta className="flex flex-wrap items-end gap-4">
-        <div className="flex gap-2 pb-0.5" role="group" aria-label="Periodos rápidos">
-          {PRESETS.map((p) => (
-            <Boton key={p.id} tamano="sm" variante="secundario" onClick={() => preset(p.dias)}>
-              {p.texto}
-            </Boton>
-          ))}
+      <Tarjeta className="flex flex-col gap-4 p-4 sm:p-4">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex gap-2 pb-0.5" role="group" aria-label="Periodos rápidos">
+            {PRESETS.map((p) => (
+              <Boton key={p.id} tamano="sm" variante="secundario" onClick={() => preset(p.dias)}>
+                {p.texto}
+              </Boton>
+            ))}
+          </div>
+          <CampoSelect
+            className="min-w-44"
+            etiqueta="Sede"
+            value={filtro.sedeId ?? ''}
+            onChange={(e) =>
+              setFiltro({
+                ...filtro,
+                sedeId: e.target.value ? Number(e.target.value) : null,
+                canchaId: null,
+              })
+            }
+          >
+            <option value="">Todas</option>
+            {sedes.data?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </CampoSelect>
         </div>
-        <Campo
-          etiqueta="Desde"
-          type="date"
-          value={filtro.desde}
-          max={filtro.hasta}
-          onChange={(e) => setFiltro({ ...filtro, desde: e.target.value })}
-        />
-        <Campo
-          etiqueta="Hasta"
-          type="date"
-          value={filtro.hasta}
-          onChange={(e) => setFiltro({ ...filtro, hasta: e.target.value })}
-        />
-        <CampoSelect
-          className="min-w-44"
-          etiqueta="Sede"
-          value={filtro.sedeId ?? ''}
-          onChange={(e) =>
-            setFiltro({
-              ...filtro,
-              sedeId: e.target.value ? Number(e.target.value) : null,
-              canchaId: null,
-            })
-          }
-        >
-          <option value="">Todas</option>
-          {sedes.data?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}
-            </option>
-          ))}
-        </CampoSelect>
-        <CampoSelect
-          className="min-w-44"
-          etiqueta="Cancha"
-          value={filtro.canchaId ?? ''}
-          disabled={!sede}
-          onChange={(e) =>
-            setFiltro({ ...filtro, canchaId: e.target.value ? Number(e.target.value) : null })
-          }
-        >
-          <option value="">Todas</option>
-          {sede?.canchas.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
-            </option>
-          ))}
-        </CampoSelect>
+        <Plegable titulo="Fechas exactas y cancha">
+          <div className="flex flex-wrap items-end gap-4">
+            <Campo
+              etiqueta="Desde"
+              type="date"
+              value={filtro.desde}
+              max={filtro.hasta}
+              onChange={(e) => setFiltro({ ...filtro, desde: e.target.value })}
+            />
+            <Campo
+              etiqueta="Hasta"
+              type="date"
+              value={filtro.hasta}
+              onChange={(e) => setFiltro({ ...filtro, hasta: e.target.value })}
+            />
+            <CampoSelect
+              className="min-w-44"
+              etiqueta="Cancha"
+              value={filtro.canchaId ?? ''}
+              disabled={!sede}
+              onChange={(e) =>
+                setFiltro({ ...filtro, canchaId: e.target.value ? Number(e.target.value) : null })
+              }
+            >
+              <option value="">Todas</option>
+              {sede?.canchas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </CampoSelect>
+          </div>
+        </Plegable>
       </Tarjeta>
       {!valido && <Alerta tipo="error">La fecha inicial no puede ser posterior a la final.</Alerta>}
 

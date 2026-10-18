@@ -203,7 +203,7 @@ export function PaginaEquipoAdmin() {
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="text-2xl font-bold">{data.equipo.nombre}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{data.equipo.nombre}</h1>
           <DatosEquipo key={data.equipo.id + data.equipo.nombre} equipo={data.equipo} />
           <Tarjeta className="flex flex-col gap-3">
             <h2 className="text-lg font-semibold">Plantilla habitual ({data.plantilla.length})</h2>

@@ -145,7 +145,7 @@ export function PaginaSedeForm() {
           <Link to="/admin/sedes" className="text-texto-suave text-sm hover:underline">
             ← Sedes
           </Link>
-          <h1 className="text-2xl font-bold">{sede ? sede.nombre : 'Nueva sede'}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{sede ? sede.nombre : 'Nueva sede'}</h1>
         </div>
         {sede && (
           <Insignia tono={sede.activa ? 'verde' : 'rojo'}>

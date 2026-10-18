@@ -34,7 +34,7 @@ export function PaginaMisReservas() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-3xl font-bold">Mis reservas</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Mis reservas</h1>
         <EnlaceBoton to="/reservar">Reservar</EnlaceBoton>
       </div>
 

@@ -1,37 +1,63 @@
-import { useEstadoApi } from '@/caracteristicas/inicio/useEstadoApi'
-import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { useProximosPartidos } from '@/caracteristicas/torneos/consultas'
 import { TarjetaPartido } from '@/caracteristicas/torneos/TarjetaPartido'
+import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
+
+const PASOS = [
+  { n: 1, titulo: 'Elige tu cancha', texto: 'Mira las sedes, modalidades y precios.' },
+  { n: 2, titulo: 'Escoge el horario', texto: 'Toca un espacio libre en el calendario.' },
+  { n: 3, titulo: 'Juega', texto: 'Te confirmamos la reserva y te avisamos.' },
+]
 
 export function PaginaInicio() {
-  const { data, isPending, isError } = useEstadoApi()
   const proximos = useProximosPartidos(4)
 
   return (
-    <section className="flex flex-col items-start gap-6 py-10">
-      <h1 className="text-primario-oscuro text-4xl font-bold sm:text-5xl">
-        Reserva tu cancha, <span className="text-primario">juega tu partido</span>
-      </h1>
-      <p className="text-texto-suave max-w-xl text-lg">
-        Conoce nuestras sedes y canchas, consulta precios y horarios. Reserva en línea y sigue los
-        torneos de la sede.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <EnlaceBoton to="/reservar" tamano="lg">
-          Reservar una cancha
-        </EnlaceBoton>
-        <EnlaceBoton to="/sedes" tamano="lg" variante="secundario">
-          Ver sedes y canchas
-        </EnlaceBoton>
-        <EnlaceBoton to="/torneos" tamano="lg" variante="secundario">
-          Ver torneos
-        </EnlaceBoton>
-      </div>
+    <div className="flex flex-col gap-16 sm:gap-20">
+      <section className="flex flex-col items-start gap-6 pt-4 sm:pt-10">
+        <h1 className="text-primario-oscuro max-w-3xl text-4xl leading-tight font-bold sm:text-6xl">
+          Reserva tu cancha, <span className="text-primario">juega tu partido</span>
+        </h1>
+        <p className="text-texto-suave max-w-xl text-lg">
+          Fútbol sintético en Neiva: reserva en línea en menos de un minuto.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <EnlaceBoton to="/reservar" tamano="lg">
+            Reservar una cancha
+          </EnlaceBoton>
+          <EnlaceBoton to="/sedes" tamano="lg" variante="secundario">
+            Ver sedes
+          </EnlaceBoton>
+        </div>
+      </section>
+
+      <section aria-label="Cómo funciona">
+        <ol className="grid gap-4 sm:grid-cols-3">
+          {PASOS.map((p) => (
+            <li
+              key={p.n}
+              className="border-borde bg-superficie rounded-tarjeta flex gap-4 border p-5"
+            >
+              <span className="bg-primario-claro text-primario-oscuro font-titulo flex size-9 shrink-0 items-center justify-center rounded-full font-bold">
+                {p.n}
+              </span>
+              <div>
+                <h2 className="font-semibold">{p.titulo}</h2>
+                <p className="text-texto-suave mt-0.5 text-sm">{p.texto}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       {proximos.data && proximos.data.length > 0 && (
-        <section className="flex w-full flex-col gap-3" aria-label="Próximos partidos">
-          <h2 className="text-xl font-semibold">Próximos partidos</h2>
-          <div className="grid gap-3 md:grid-cols-2">
+        <section className="flex flex-col gap-4" aria-label="Próximos partidos">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-2xl font-semibold">Próximos partidos</h2>
+            <EnlaceBoton to="/torneos" variante="fantasma" tamano="sm">
+              Ver torneos
+            </EnlaceBoton>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
             {proximos.data.map((p) => (
               <TarjetaPartido
                 key={p.id}
@@ -43,15 +69,6 @@ export function PaginaInicio() {
           </div>
         </section>
       )}
-
-      <p
-        role="status"
-        className="border-borde bg-superficie text-texto-suave rounded-tarjeta border px-3 py-2 text-sm"
-      >
-        {isPending && 'Conectando con la API…'}
-        {isError && 'La API no responde.'}
-        {data && `API conectada (${data.aplicacion}) · zona horaria ${data.zonaHoraria}`}
-      </p>
-    </section>
+    </div>
   )
 }
