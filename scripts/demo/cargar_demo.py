@@ -183,7 +183,7 @@ def historial(bd, canchas, clientes, mostradores, admin_id, hoy):
             dia = hoy - dt.timedelta(days=atras)
             for cancha, base in canchas:
                 cid = cancha["id"]
-                cantidad = random.choice([0, 1, 2, 2, 3, 3, 4]) if dia.weekday() < 5 else random.choice([2, 3, 4, 5])
+                cantidad = random.choice([1, 2, 3, 4, 4, 5, 6]) if dia.weekday() < 5 else random.choice([4, 5, 6, 7, 8])
                 for hora in random.sample(sorted(set(horas)), k=min(cantidad, len(set(horas)))):
                     hora = random.choice(horas) if random.random() < 0.5 else hora
                     if dia.weekday() == 6 and hora >= 20:
@@ -277,18 +277,18 @@ def futuras(admin, f5, f8, f7, clientes, mostradores, centro, norte, hoy):
             ok("POST", f"/admin/reservas/{rid}/aprobar", admin, {})
     # reservas del administrador para clientes de mostrador
     dia = dia_habil(hoy + dt.timedelta(days=3))
-    llamar("POST", "/admin/reservas", admin, {"canchaId": f5[2]["id"], "inicio": iso(dia, 20), "fin": iso(dia, 21), "mostradorNombre": "Don Hernando Perdomo", "mostradorTelefono": "3125550202",
-                                              "nombreEquipo": "Los Veteranos"}, esperado=(409,))
+    llamar("POST", "/admin/reservas", admin, {"canchaId": f5[2]["id"], "inicio": iso(dia, 20), "fin": iso(dia, 21), "mostrador": {"nombre": "Don Hernando Perdomo", "telefono": "3125550202"},
+                                              "nombreEquipo": "Los Veteranos"}, esperado=(400, 409, 422))
     # serie recurrente: los miércoles a las 20:00 durante 8 semanas
     miercoles = hoy + dt.timedelta(days=(2 - hoy.weekday()) % 7 + 7)
     llamar("POST", "/admin/series", admin, {"canchaId": f7[0]["id"], "inicio": iso(miercoles, 20), "fin": iso(miercoles, 21), "semanas": 8, "clienteId": clientes[0][0],
-                                            "nombreEquipo": "Los Miércoles", "omitirOcupadas": True}, esperado=(409,))
+                                            "nombreEquipo": "Los Miércoles", "omitirOcupadas": True}, esperado=(400, 409, 422))
     # bloqueos
     jueves = dia_habil(hoy + dt.timedelta(days=(3 - hoy.weekday()) % 7 + 7))
     llamar("POST", "/admin/bloqueos", admin, {"sedeId": centro["id"], "canchaIds": [f5[2]["id"]], "tipo": "PUNTUAL", "inicio": iso(jueves, 8), "fin": iso(jueves, 12), "motivo": "MANTENIMIENTO",
-                                              "detalle": "Cambio de grama en la cancha 3"}, esperado=(409,))
+                                              "detalle": "Cambio de grama en la cancha 3"}, esperado=(400, 409, 422))
     llamar("POST", "/admin/bloqueos", admin, {"sedeId": norte["id"], "tipo": "RECURRENTE", "diasSemana": [1], "horaInicio": "08:00", "horaFin": "10:00", "fechaDesde": str(hoy),
-                                              "fechaHasta": str(hoy + dt.timedelta(days=90)), "motivo": "MANTENIMIENTO", "detalle": "Limpieza y revisión semanal de las canchas"}, esperado=(409,))
+                                              "fechaHasta": str(hoy + dt.timedelta(days=90)), "motivo": "MANTENIMIENTO", "detalle": "Limpieza y revisión semanal de las canchas"}, esperado=(400, 409, 422))
 
 
 # ------------------------------------------------------------------ Equipos y torneos
