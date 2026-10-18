@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
-import { Boton } from '@/componentes/ui/Boton'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
@@ -57,22 +58,17 @@ export function PaginaTorneos() {
   const lista = data?.filter((t) => actual.estados.includes(t.estado)) ?? []
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold">Torneos</h1>
-      <div role="tablist" aria-label="Estado del torneo" className="flex gap-2">
-        {GRUPOS.map((g) => (
-          <Boton
-            key={g.id}
-            role="tab"
-            aria-selected={grupo === g.id}
-            tamano="sm"
-            variante={grupo === g.id ? 'primario' : 'secundario'}
-            onClick={() => setGrupo(g.id)}
-          >
-            {g.texto} ({data?.filter((t) => g.estados.includes(t.estado)).length ?? 0})
-          </Boton>
-        ))}
-      </div>
+    <div className="flex max-w-6xl flex-col gap-6">
+      <EncabezadoPagina titulo="Torneos" descripcion="Sigue las ligas y copas de nuestras sedes." />
+      <Pestanas
+        etiqueta="Estado del torneo"
+        pestanas={GRUPOS.map((g) => ({
+          id: g.id,
+          texto: `${g.texto} (${data?.filter((t) => g.estados.includes(t.estado)).length ?? 0})`,
+        }))}
+        actual={grupo}
+        alCambiar={setGrupo}
+      />
       {isPending && <Cargando texto="Cargando torneos…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && lista.length === 0 && (

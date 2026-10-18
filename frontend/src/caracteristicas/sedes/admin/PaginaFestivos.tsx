@@ -45,7 +45,7 @@ export function PaginaFestivos() {
     <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl font-bold">Festivos</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Festivos</h1>
           <div className="flex items-center gap-2">
             <Boton
               tamano="sm"

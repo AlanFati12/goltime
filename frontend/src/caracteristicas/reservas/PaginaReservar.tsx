@@ -5,6 +5,8 @@ import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { useSedesPublicas } from '@/caracteristicas/sedes/consultas'
 import { HORAS } from '@/caracteristicas/sedes/constantes'
 import { Alerta } from '@/componentes/ui/Alerta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { Plegable } from '@/componentes/ui/Plegable'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
@@ -57,6 +59,8 @@ export function PaginaReservar() {
     setParams(siguiente, { replace: true })
   }
 
+  const filtrosExtra = desde !== '00:00' || hasta !== '24:00' || precioMax !== ''
+
   const pasaFiltros = (s: Slot) => {
     const hora = formatearHora(s.inicio)
     return hora >= desde && hora < hasta && (!precioMax || s.precio <= Number(precioMax))
@@ -72,68 +76,81 @@ export function PaginaReservar() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold">Reservar una cancha</h1>
-        <p className="text-texto-suave mt-1 text-sm">
-          Elige sede y fecha, y toca un horario libre. El administrador confirmará tu solicitud.
-        </p>
-      </div>
+      <EncabezadoPagina
+        titulo="Reservar una cancha"
+        descripcion={
+          usuario
+            ? 'Elige sede y fecha, y toca un horario libre. El administrador confirmará tu solicitud.'
+            : 'Elige sede y fecha, y toca un horario libre. Para solicitarlo te pediremos iniciar sesión.'
+        }
+      />
 
-      {!usuario && (
-        <Alerta tipo="info">
-          Puedes ver los horarios sin cuenta. Para solicitar una reserva te pediremos iniciar
-          sesión.
-        </Alerta>
-      )}
-
-      <Tarjeta className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <CampoSelect
-          etiqueta="Sede"
-          value={sedeId ?? ''}
-          onChange={(e) => cambiar({ sedeId: e.target.value, modalidad: '', canchaId: '' })}
+      <Tarjeta className="flex flex-col gap-4 p-4 sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <CampoSelect
+            etiqueta="Sede"
+            value={sedeId ?? ''}
+            onChange={(e) => cambiar({ sedeId: e.target.value, modalidad: '', canchaId: '' })}
+          >
+            {sedes.data?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </CampoSelect>
+          <Campo
+            etiqueta="Fecha"
+            type="date"
+            min={hoyEnBogota()}
+            value={fecha}
+            onChange={(e) => e.target.value && cambiar({ fecha: e.target.value })}
+          />
+          <CampoSelect
+            etiqueta="Modalidad"
+            value={modalidad}
+            onChange={(e) => cambiar({ modalidad: e.target.value })}
+          >
+            <option value="">Todas</option>
+            {modalidades.map((m) => (
+              <option key={m}>{m}</option>
+            ))}
+          </CampoSelect>
+        </div>
+        <Plegable
+          titulo="Filtrar por hora o precio"
+          resumen={filtrosExtra ? '(activo)' : undefined}
+          abiertoInicial={filtrosExtra}
         >
-          {sedes.data?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}
-            </option>
-          ))}
-        </CampoSelect>
-        <Campo
-          etiqueta="Fecha"
-          type="date"
-          min={hoyEnBogota()}
-          value={fecha}
-          onChange={(e) => e.target.value && cambiar({ fecha: e.target.value })}
-        />
-        <CampoSelect
-          etiqueta="Modalidad"
-          value={modalidad}
-          onChange={(e) => cambiar({ modalidad: e.target.value })}
-        >
-          <option value="">Todas</option>
-          {modalidades.map((m) => (
-            <option key={m}>{m}</option>
-          ))}
-        </CampoSelect>
-        <Campo
-          etiqueta="Precio máximo por bloque (COP)"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          step={5000}
-          value={precioMax}
-          onChange={(e) => setPrecioMax(e.target.value)}
-        />
-        <CampoSelect etiqueta="Desde las" value={desde} onChange={(e) => setDesde(e.target.value)}>
-          {HORAS.slice(0, 48).map((h) => (
-            <option key={h}>{h}</option>
-          ))}
-        </CampoSelect>
-        <CampoSelect etiqueta="Hasta las" value={hasta} onChange={(e) => setHasta(e.target.value)}>
-          {HORAS.slice(1).map((h) => (
-            <option key={h}>{h}</option>
-          ))}
-        </CampoSelect>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <CampoSelect
+              etiqueta="Desde las"
+              value={desde}
+              onChange={(e) => setDesde(e.target.value)}
+            >
+              {HORAS.slice(0, 48).map((h) => (
+                <option key={h}>{h}</option>
+              ))}
+            </CampoSelect>
+            <CampoSelect
+              etiqueta="Hasta las"
+              value={hasta}
+              onChange={(e) => setHasta(e.target.value)}
+            >
+              {HORAS.slice(1).map((h) => (
+                <option key={h}>{h}</option>
+              ))}
+            </CampoSelect>
+            <Campo
+              etiqueta="Precio máximo por bloque (COP)"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={5000}
+              value={precioMax}
+              onChange={(e) => setPrecioMax(e.target.value)}
+            />
+          </div>
+        </Plegable>
       </Tarjeta>
 
       {semana.data && (

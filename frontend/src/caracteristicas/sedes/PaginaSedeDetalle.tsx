@@ -39,11 +39,11 @@ export function PaginaSedeDetalle() {
         </Link>{' '}
         / {sede.nombre}
       </nav>
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Galeria fotos={sede.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl font-bold">{sede.nombre}</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{sede.nombre}</h1>
             <p className="text-texto-suave text-sm">
               {sede.direccion} · {sede.ciudad}
             </p>

@@ -11,13 +11,26 @@ export function Galeria({ fotos, alto = 'aspect-video' }: { fotos: Foto[]; alto?
     return (
       <div
         className={cn(
-          'bg-primario-claro text-primario-oscuro rounded-tarjeta flex items-center justify-center text-sm',
+          'from-primario-claro to-primario/20 text-primario/60 rounded-tarjeta flex items-center justify-center bg-gradient-to-br',
           alto,
         )}
         role="img"
         aria-label="Sin fotos"
       >
-        Sin fotos todavía
+        <svg
+          viewBox="0 0 24 24"
+          className="size-12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="m12 8 3.5 2.5-1.3 4h-4.4l-1.3-4Z" />
+          <path d="M12 3v5M20 9.5l-4.5 1M17.5 19l-3.3-4.5M6.5 19l3.3-4.5M4 9.5l4.5 1" />
+        </svg>
       </div>
     )
   }
