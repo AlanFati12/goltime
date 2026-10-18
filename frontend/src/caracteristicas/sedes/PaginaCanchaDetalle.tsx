@@ -82,7 +82,7 @@ export function PaginaCanchaDetalle() {
         ]}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <Galeria fotos={c.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-2">

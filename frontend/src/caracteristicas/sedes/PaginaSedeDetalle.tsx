@@ -37,7 +37,7 @@ export function PaginaSedeDetalle() {
   return (
     <div className="flex flex-col gap-6">
       <Migas items={[{ texto: 'Sedes', a: '/sedes' }, { texto: sede.nombre }]} />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <Galeria fotos={sede.fotos} />
         <Tarjeta className="flex flex-col gap-4">
           <div>

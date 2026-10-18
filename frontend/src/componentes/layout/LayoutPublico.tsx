@@ -49,7 +49,7 @@ export function LayoutPublico() {
     <div className="flex min-h-screen flex-col">
       <header className="border-borde/80 bg-superficie/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
-          <Link to="/" aria-label="Goltime, ir al inicio" className="mr-6 shrink-0">
+          <Link to="/" aria-label="Goltime, ir al inicio" className="mr-2 shrink-0 sm:mr-6">
             <Logo />
           </Link>
           <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
@@ -66,7 +66,12 @@ export function LayoutPublico() {
               </EnlaceBoton>
             )}
             {usuario?.rol === 'ADMIN' && (
-              <EnlaceBoton to="/admin" tamano="sm" variante="secundario">
+              <EnlaceBoton
+                to="/admin"
+                tamano="sm"
+                variante="secundario"
+                className="hidden sm:inline-flex"
+              >
                 Ir al panel
               </EnlaceBoton>
             )}
@@ -119,6 +124,11 @@ export function LayoutPublico() {
             {usuario?.rol !== 'ADMIN' && (
               <NavLink to="/reservar" className={estiloEnlace}>
                 Reservar cancha
+              </NavLink>
+            )}
+            {usuario?.rol === 'ADMIN' && (
+              <NavLink to="/admin" className={estiloEnlace}>
+                Panel de administración
               </NavLink>
             )}
             {enlaces.map((e) => (
