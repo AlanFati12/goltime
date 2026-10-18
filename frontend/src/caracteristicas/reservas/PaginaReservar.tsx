@@ -13,9 +13,11 @@ import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearDia, formatearHora, hoyEnBogota } from '@/lib/formato'
 import { cn } from '@/lib/utils'
 
+import { BotonEspera } from '@/caracteristicas/extras/BotonEspera'
 import { ModalReserva } from './ModalReserva'
 import { useDisponibilidad, useSemana } from './consultas'
 import type { DisponibilidadCancha, Slot } from './tipos'
+import { sumarMinutos } from './utilidades'
 
 const ETIQUETA_SLOT: Record<Slot['estado'], string> = {
   DISPONIBLE: '',
@@ -234,6 +236,13 @@ export function PaginaReservar() {
                           {libre ? formatearCOP(s.precio) : ETIQUETA_SLOT[s.estado]}
                         </span>
                       </button>
+                      {s.estado === 'OCUPADO' && usuario?.rol === 'CLIENTE' && (
+                        <BotonEspera
+                          canchaId={c.canchaId}
+                          inicio={s.inicio}
+                          fin={sumarMinutos(s.inicio, c.duracionBloqueMin)}
+                        />
+                      )}
                     </li>
                   )
                 })}

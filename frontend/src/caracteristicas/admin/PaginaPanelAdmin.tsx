@@ -9,6 +9,11 @@ const accesos = [
     texto: 'Calendario por día o semana con las reservas y bloqueos de cada cancha.',
   },
   {
+    a: '/admin/series',
+    titulo: 'Reservas recurrentes',
+    texto: 'La misma reserva todas las semanas, con revisión previa de cada fecha.',
+  },
+  {
     a: '/admin/bloqueos',
     titulo: 'Bloqueos',
     texto: 'Cierra horarios por mantenimiento, eventos o clima, avisando a los clientes afectados.',

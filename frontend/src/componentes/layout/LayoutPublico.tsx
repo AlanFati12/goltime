@@ -43,8 +43,8 @@ export function LayoutPublico() {
                 <Link to="/mis-reservas" className="text-texto-suave hover:text-primario">
                   Mis reservas
                 </Link>
-                <Link to="/mis-premios" className="text-texto-suave hover:text-primario">
-                  Mis premios
+                <Link to="/mi-cuenta" className="text-texto-suave hover:text-primario">
+                  Mi cuenta
                 </Link>
               </>
             )}
