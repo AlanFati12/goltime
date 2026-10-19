@@ -21,9 +21,9 @@ const error = (e: unknown) => avisar.error(mensajeDeError(e))
 
 const ACCIONES_RAPIDAS: { tipo: TipoEvento; texto: ReactNode; clase: string }[] = [
   { tipo: 'GOL', texto: 'Gol', clase: 'hover:bg-primario-claro hover:text-primario-oscuro' },
-  { tipo: 'ASISTENCIA', texto: 'Asist.', clase: 'hover:bg-blue-50 hover:text-info' },
-  { tipo: 'AMARILLA', texto: <IconoTarjeta />, clase: 'hover:bg-amber-50' },
-  { tipo: 'ROJA', texto: <IconoTarjeta roja />, clase: 'hover:bg-red-50' },
+  { tipo: 'ASISTENCIA', texto: 'Asist.', clase: 'hover:bg-info-claro hover:text-info' },
+  { tipo: 'AMARILLA', texto: <IconoTarjeta />, clase: 'hover:bg-alerta-claro' },
+  { tipo: 'ROJA', texto: <IconoTarjeta roja />, clase: 'hover:bg-peligro-claro' },
 ]
 
 const contar = (eventos: EventoPartido[], jugadorId: number, tipos: TipoEvento[]) =>
@@ -382,7 +382,7 @@ export function PlanillaPartido({
                   <span
                     className={cn(
                       'hidden rounded-full px-2 text-xs sm:inline',
-                      local ? 'bg-primario-claro text-primario-oscuro' : 'text-info bg-blue-50',
+                      local ? 'bg-primario-claro text-primario-oscuro' : 'text-info bg-info-claro',
                     )}
                   >
                     {local ? 'Local' : 'Visitante'}

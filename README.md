@@ -87,6 +87,16 @@ cd backend && DB_URL=jdbc:postgresql://localhost:5433/goltime DB_CLAVE=... JWT_S
 cd frontend && npm install && npm run dev     # http://localhost:5173, con proxy a la API
 ```
 
+Para usar y probar la aplicación se usa una sola URL, <http://localhost:8081>. Después de cambiar el frontend, reconstruye ese contenedor:
+
+```bash
+docker compose up --build -d web
+```
+
+## Interfaz
+
+Tema visual «Partido nocturno» con modo claro y oscuro (botón de sol y luna en la barra superior; se recuerda en el navegador). Tokens de color, tipografía y movimiento en `frontend/src/estilos/index.css`. Ver [ADR 0016](docs/decisiones/0016-tema-partido-nocturno.md) y [ADR 0017](docs/decisiones/0017-modo-oscuro-y-carga-por-rutas.md).
+
 ## Pruebas
 
 ```bash

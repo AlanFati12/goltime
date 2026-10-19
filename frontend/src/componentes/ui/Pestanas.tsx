@@ -44,7 +44,7 @@ export function Pestanas<T extends string>({
             <span
               className={cn(
                 'rounded-full px-1.5 text-xs font-semibold',
-                actual === p.id ? 'bg-noche text-volt-vivo' : 'bg-tenue text-texto-suave',
+                actual === p.id ? 'bg-invertido text-sobre-invertido' : 'bg-tenue text-texto-suave',
               )}
             >
               {p.conteo}
@@ -78,7 +78,9 @@ export function Segmentado<T extends string>({
           onClick={() => alCambiar(o.id)}
           className={cn(
             'rounded-full px-4 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200',
-            actual === o.id ? 'bg-noche text-white' : 'text-texto-suave hover:text-texto',
+            actual === o.id
+              ? 'bg-invertido text-sobre-invertido'
+              : 'text-texto-suave hover:text-texto',
           )}
         >
           {o.texto}

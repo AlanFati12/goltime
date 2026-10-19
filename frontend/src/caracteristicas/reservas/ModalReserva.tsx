@@ -117,7 +117,7 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
             <div className="bg-volt-claro animate-velo rounded-2xl px-5 py-4">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="text-primario-oscuro font-semibold">Total</p>
-                <p className="text-noche font-titulo cifras text-4xl leading-none font-extrabold">
+                <p className="text-texto font-titulo cifras text-4xl leading-none font-extrabold">
                   {formatearCOP(cotizacion.total)}
                 </p>
               </div>

@@ -3,7 +3,7 @@
 ## 1. Prompt maestro (18/oct/2026)
 
 - **Objetivo:** definir producto, stack, arquitectura, roles, módulos, reglas de negocio, modelo de datos, API, seguridad, frontend, calidad, datos de demo, registro de IA y plan por fases.
-- **Prompt:** documento "PROMPT MAESTRO: GOLTIME" (18 secciones). **Pendiente:** guardar el texto íntegro en `docs/ia/prompt-maestro.md` (la IA no lo transcribió para no introducir diferencias; copiarlo tal cual).
+- **Prompt:** documento "PROMPT MAESTRO: GOLTIME" (18 secciones), guardado íntegro en [prompt-maestro.md](prompt-maestro.md).
 - **Resultado:** la IA respondió con 18 preguntas de alcance en vez de escribir código, como pedía la sección 0.
 - **Qué se aceptó o corrigió:** se aceptó el flujo de preguntar primero.
 
@@ -31,3 +31,11 @@
 - **Resultado:** archivo de Figma con la v1 y la v2 de la portada; skills instaladas localmente (no versionadas); rediseño de todo el frontend en la rama `feat/rediseno-visual`. Ver [ADR 0016](../decisiones/0016-tema-partido-nocturno.md).
 - **Controles humanos:** la IA pidió confirmación antes de descargar las skills (repositorio, tamaño y licencia de cada una) y antes de bajar las fotos (archivo, autor y peso). No ejecutó los scripts de las skills.
 - **Qué se verificó:** `npm test` (66 pruebas), `npm run lint` sin errores, `npm run build`, y revisión en el navegador de portada, sedes, cancha, reservar, torneos, partido, promociones, acceso y 404 en escritorio (1440 px) y móvil (375 px), sin desbordes horizontales. El panel de administración no se revisó con sesión porque la clave del administrador está en `.env`.
+
+## Modo oscuro y tareas pendientes (19/oct/2026)
+
+- **Prompt:** "Quiero que crees un botón donde cualquier persona pueda darle y pueda alternar entre versión de modo oscuro y modo claro en esta página […] también revisa si queda alguna tarea o algo pendiente por hacer del proyecto y ponte manos a la obra".
+- **Resultado:** modo oscuro con botón en las barras pública y del panel; carga de páginas por rutas (paquete inicial de 939 KB a 391 KB); corrección de esta bitácora (el prompt maestro ya estaba guardado); README al día. Ver [ADR 0017](../decisiones/0017-modo-oscuro-y-carga-por-rutas.md).
+- **Qué se detectó:** la CSP de Nginx bloqueaba el script en línea de `index.html`, así que en producción no se aplicaba la clase `js`; se movió a `public/arranque.js`.
+- **Qué se verificó:** 66 pruebas, lint sin errores, build, y revisión en <http://localhost:8081> en claro y oscuro (portada, sedes, reservar, torneo, promociones, ingreso), escritorio y móvil; el tema se mantiene al recargar.
+- **Pendiente para el equipo:** revisar el panel de administración y las pantallas del cliente con sesión (las claves de prueba están en `.env`), y HTTPS al desplegar en el VPS (ver `docs/seguridad.md`).

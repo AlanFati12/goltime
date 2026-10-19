@@ -43,7 +43,7 @@ export function MenuUsuario() {
       boton={
         <>
           <span
-            className="bg-primario flex size-8 items-center justify-center rounded-full text-sm font-semibold text-white"
+            className="bg-volt text-noche flex size-8 items-center justify-center rounded-full text-sm font-bold"
             aria-hidden
           >
             {nombre.trim().charAt(0).toUpperCase()}

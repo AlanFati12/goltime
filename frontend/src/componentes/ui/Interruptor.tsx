@@ -18,7 +18,7 @@ export function Interruptor({ activo, alCambiar, etiqueta, deshabilitado }: Prop
       onClick={() => alCambiar(!activo)}
       className={cn(
         'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50',
-        activo ? 'bg-primario' : 'bg-slate-300',
+        activo ? 'bg-primario' : 'bg-texto-suave/35',
       )}
     >
       <span

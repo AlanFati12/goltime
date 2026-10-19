@@ -1,13 +1,15 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react'
-import { useEffect, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
+import { Cargando } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { cn } from '@/lib/utils'
 
 import { BarraCarga } from './BarraCarga'
+import { BotonTema } from './BotonTema'
 import { Logo } from './Logo'
 import { MenuUsuario } from './MenuUsuario'
 
@@ -98,7 +100,7 @@ export function LayoutPublico() {
           'fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,box-shadow] duration-300 print:hidden',
           transparente
             ? 'border-b border-transparent bg-transparent'
-            : 'border-borde/70 border-b bg-white/90 backdrop-blur-md',
+            : 'border-borde/70 bg-superficie/85 border-b backdrop-blur-md',
         )}
       >
         <div className="contenedor flex h-[72px] items-center gap-2">
@@ -119,6 +121,11 @@ export function LayoutPublico() {
               transparente && '[&>div>button]:text-white/85 [&>div>button:hover]:bg-white/10',
             )}
           >
+            <BotonTema
+              className={
+                transparente ? 'text-white/85 hover:bg-white/10 hover:text-white' : undefined
+              }
+            />
             {usuario?.rol !== 'ADMIN' && (
               <EnlaceBoton
                 to="/reservar"
@@ -237,7 +244,10 @@ export function LayoutPublico() {
         )}
       >
         <div key={pathname} className="animate-entrada-pagina">
-          <Outlet />
+          {/* La barra y el pie se quedan mientras llega el código de la página. */}
+          <Suspense fallback={<Cargando className="min-h-[60vh]" />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 

@@ -53,7 +53,7 @@ export function PaginaSedes() {
                     <h2 className="text-4xl leading-[0.95] font-extrabold uppercase sm:text-5xl">
                       {s.nombre}
                     </h2>
-                    <span className="bg-tenue group-hover:bg-volt text-noche flex size-12 shrink-0 items-center justify-center rounded-full transition-colors duration-300">
+                    <span className="bg-tenue group-hover:bg-volt text-texto group-hover:text-noche flex size-12 shrink-0 items-center justify-center rounded-full transition-colors duration-300">
                       <ArrowUpRight
                         className="size-5 transition-transform duration-300 group-hover:rotate-45"
                         aria-hidden

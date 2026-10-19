@@ -29,12 +29,12 @@ import { useAgenda } from './consultas'
 
 const PX_POR_HORA = 56
 const COLORES: Record<string, string> = {
-  PENDIENTE: 'border-amber-500 bg-amber-50 text-amber-900 hover:bg-amber-100',
+  PENDIENTE: 'border-amber-500 bg-alerta-claro text-alerta hover:bg-alerta-claro',
   CONFIRMADA: 'border-primario bg-volt-claro text-primario-oscuro hover:bg-volt-claro/70',
-  COMPLETADA: 'border-slate-300 bg-tenue text-texto-suave hover:bg-slate-200',
-  NO_ASISTIO: 'border-peligro bg-red-50 text-peligro hover:bg-red-100',
+  COMPLETADA: 'border-borde bg-tenue text-texto-suave hover:bg-tenue',
+  NO_ASISTIO: 'border-peligro bg-peligro-claro text-peligro hover:bg-peligro-claro',
   BLOQUEO:
-    'border-slate-500 bg-[repeating-linear-gradient(45deg,#f1f5f9_0,#f1f5f9_6px,#e2e8f0_6px,#e2e8f0_12px)] text-texto',
+    'border-texto-suave bg-[repeating-linear-gradient(45deg,#f1f5f9_0,#f1f5f9_6px,#e2e8f0_6px,#e2e8f0_12px)] text-texto',
 }
 
 interface Cuadro {
@@ -227,14 +227,15 @@ export function PaginaAgenda() {
         </div>
         <div className="text-texto-suave ml-auto flex flex-wrap gap-3 text-xs" aria-hidden>
           <span className="flex items-center gap-1.5">
-            <span className="size-3 rounded-sm border-l-4 border-amber-500 bg-amber-50" /> Pendiente
+            <span className="bg-alerta-claro size-3 rounded-sm border-l-4 border-amber-500" />{' '}
+            Pendiente
           </span>
           <span className="flex items-center gap-1.5">
             <span className="border-primario bg-volt-claro size-3 rounded-sm border-l-4" />{' '}
             Confirmada
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-3 rounded-sm border-l-4 border-slate-500 bg-slate-200" /> Bloqueo
+            <span className="border-texto-suave bg-tenue size-3 rounded-sm border-l-4" /> Bloqueo
           </span>
         </div>
       </Tarjeta>

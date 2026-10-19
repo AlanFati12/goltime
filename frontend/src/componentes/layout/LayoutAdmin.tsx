@@ -21,14 +21,16 @@ import {
   Ban,
   type LucideIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
 import { useSolicitudesPendientes } from '@/caracteristicas/admin/consultasAdmin'
+import { Cargando } from '@/componentes/ui/Cargando'
 import { cn } from '@/lib/utils'
 
 import { BarraCarga } from './BarraCarga'
+import { BotonTema } from './BotonTema'
 import { Logo } from './Logo'
 import { MenuUsuario } from './MenuUsuario'
 
@@ -174,7 +176,7 @@ export function LayoutAdmin() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <BarraCarga />
-        <header className="border-borde/70 sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-white/85 px-4 backdrop-blur-md md:px-8">
+        <header className="border-borde/70 bg-superficie/85 sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-md md:px-8">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -194,13 +196,16 @@ export function LayoutAdmin() {
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            <BotonTema />
             <CampanaNotificaciones />
             <MenuUsuario />
           </div>
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
           <div key={pathname} className="animate-entrada-pagina mx-auto w-full max-w-7xl">
-            <Outlet />
+            <Suspense fallback={<Cargando className="min-h-[60vh]" />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

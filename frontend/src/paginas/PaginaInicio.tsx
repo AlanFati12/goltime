@@ -215,7 +215,7 @@ function ComoFunciona() {
                 className="group hover:bg-superficie flex gap-6 rounded-3xl p-5 transition-colors duration-300 sm:p-6"
               >
                 <span
-                  className="font-titulo text-primario group-hover:text-noche w-14 shrink-0 text-6xl leading-[0.8] font-extrabold transition-colors duration-300"
+                  className="font-titulo text-primario group-hover:text-texto w-14 shrink-0 text-6xl leading-[0.8] font-extrabold transition-colors duration-300"
                   aria-hidden
                 >
                   {i + 1}

@@ -165,7 +165,7 @@ export function PaginaReservar() {
               className={cn(
                 'presionable min-w-28 rounded-2xl border px-4 py-3 text-center text-sm whitespace-nowrap transition-[background-color,border-color,color] duration-200',
                 d.fecha === fecha
-                  ? 'border-noche bg-noche text-white'
+                  ? 'border-invertido bg-invertido text-sobre-invertido'
                   : 'border-borde bg-superficie hover:border-texto-suave/40',
               )}
             >
@@ -177,7 +177,7 @@ export function PaginaReservar() {
                   'text-xs',
                   'font-semibold',
                   d.fecha === fecha
-                    ? 'text-volt-vivo'
+                    ? 'text-volt-vivo oscuro:text-sobre-invertido'
                     : d.horariosLibres > 0
                       ? 'text-primario'
                       : 'text-texto-suave',

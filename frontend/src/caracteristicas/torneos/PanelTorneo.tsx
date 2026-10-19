@@ -88,7 +88,9 @@ export function PanelTorneo({
             <li key={i.id}>
               <Tarjeta className="flex items-center gap-3 p-4">
                 <span
-                  className={cn('ring-borde size-9 shrink-0 rounded-full ring-1 ring-offset-2')}
+                  className={cn(
+                    'ring-borde ring-offset-superficie size-9 shrink-0 rounded-full ring-1 ring-offset-2',
+                  )}
                   style={{ backgroundColor: i.color ?? 'var(--color-noche)' }}
                   aria-hidden="true"
                 />

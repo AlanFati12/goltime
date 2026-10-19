@@ -51,7 +51,7 @@ export function Logo({ className, claro }: { className?: string; claro?: boolean
       <span
         className={cn(
           'font-titulo text-[1.65rem] leading-none font-extrabold tracking-[-0.01em] uppercase',
-          claro ? 'text-white' : 'text-noche',
+          claro ? 'text-white' : 'text-texto',
         )}
       >
         Gol<span className={claro ? 'text-volt-vivo' : 'text-primario'}>time</span>

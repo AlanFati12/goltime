@@ -9,8 +9,8 @@ const estilos = cva('rounded-boton flex items-start gap-2.5 border px-3.5 py-3 t
     tipo: {
       error: 'border-peligro/25 bg-peligro/5 text-peligro',
       exito: 'border-exito/25 bg-primario-claro text-primario-oscuro',
-      aviso: 'border-alerta/25 bg-amber-50 text-alerta',
-      info: 'border-info/20 bg-blue-50 text-blue-900',
+      aviso: 'border-alerta/25 bg-alerta-claro text-alerta',
+      info: 'border-info/20 bg-info-claro text-texto',
     },
   },
   defaultVariants: { tipo: 'info' },

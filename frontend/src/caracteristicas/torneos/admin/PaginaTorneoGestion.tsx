@@ -373,7 +373,7 @@ function SeccionSolicitudes({ detalle }: { detalle: DetalleTorneo }) {
   const solicitudes = detalle.solicitudes ?? []
   if (solicitudes.length === 0) return null
   return (
-    <Tarjeta className="flex flex-col gap-3 border-amber-300 bg-amber-50/40">
+    <Tarjeta className="border-alerta/40 bg-alerta-claro/40 flex flex-col gap-3">
       <TituloTarjeta
         className="mb-0"
         titulo={`Solicitudes de inscripción (${solicitudes.length})`}

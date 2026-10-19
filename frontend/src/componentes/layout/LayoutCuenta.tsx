@@ -1,6 +1,8 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { nombreCompleto, useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
+import { Cargando } from '@/componentes/ui/Cargando'
 import { cn } from '@/lib/utils'
 
 import { SECCIONES_CUENTA } from './seccionesCuenta'
@@ -44,7 +46,7 @@ export function LayoutCuenta() {
                 cn(
                   'flex shrink-0 items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors duration-200 lg:rounded-2xl',
                   isActive
-                    ? 'bg-noche text-white'
+                    ? 'bg-invertido text-sobre-invertido'
                     : 'text-texto-suave hover:bg-superficie hover:text-texto',
                 )
               }
@@ -52,7 +54,10 @@ export function LayoutCuenta() {
               {({ isActive }) => (
                 <>
                   <s.icono
-                    className={cn('size-4', isActive ? 'text-volt-vivo' : 'text-texto-suave')}
+                    className={cn(
+                      'size-4',
+                      isActive ? 'text-volt-vivo oscuro:text-sobre-invertido' : 'text-texto-suave',
+                    )}
                     aria-hidden
                   />
                   {s.texto}
@@ -63,7 +68,9 @@ export function LayoutCuenta() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <Outlet />
+        <Suspense fallback={<Cargando />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   )

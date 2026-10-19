@@ -56,7 +56,7 @@ function Kpi({
           <span
             className={cn(
               'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold',
-              bueno ? 'bg-primario-claro text-primario-oscuro' : 'text-peligro bg-red-50',
+              bueno ? 'bg-primario-claro text-primario-oscuro' : 'text-peligro bg-peligro-claro',
             )}
             title="Comparado con el periodo anterior"
           >

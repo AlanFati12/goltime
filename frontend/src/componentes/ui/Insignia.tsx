@@ -9,9 +9,9 @@ const estilos = cva(
     variants: {
       tono: {
         verde: 'bg-volt-claro text-primario-oscuro ring-primario/20',
-        rojo: 'bg-red-50 text-peligro ring-peligro/15',
-        ambar: 'bg-amber-50 text-alerta ring-alerta/20',
-        azul: 'bg-blue-50 text-info ring-info/15',
+        rojo: 'bg-peligro-claro text-peligro ring-peligro/15',
+        ambar: 'bg-alerta-claro text-alerta ring-alerta/20',
+        azul: 'bg-info-claro text-info ring-info/15',
         gris: 'bg-tenue text-texto-suave ring-borde',
       },
     },

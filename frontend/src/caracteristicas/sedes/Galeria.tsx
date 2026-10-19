@@ -62,7 +62,7 @@ export function Galeria({
                 onClick={() => setActual(i)}
                 aria-label={`Ver foto ${i + 1}`}
                 className={cn(
-                  'presionable overflow-hidden rounded-xl ring-2 ring-offset-2 transition-opacity duration-200',
+                  'presionable ring-offset-fondo overflow-hidden rounded-xl ring-2 ring-offset-2 transition-opacity duration-200',
                   i === actual ? 'ring-volt' : 'opacity-60 ring-transparent hover:opacity-100',
                 )}
               >

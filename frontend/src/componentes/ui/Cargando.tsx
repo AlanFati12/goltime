@@ -27,7 +27,7 @@ export function Cargando({
 export function Esqueleto({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn('bg-tenue relative overflow-hidden rounded-xl', className)}>
-      <div className="animate-barrido absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/70 to-transparent motion-reduce:hidden" />
+      <div className="animate-barrido oscuro:via-white/5 absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/70 to-transparent motion-reduce:hidden" />
     </div>
   )
 }

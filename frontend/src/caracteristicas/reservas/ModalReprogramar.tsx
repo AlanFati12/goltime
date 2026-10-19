@@ -118,7 +118,7 @@ export function ModalReprogramar({
                         className={cn(
                           'rounded-boton w-full border px-1 py-1 text-xs',
                           activo
-                            ? 'border-primario bg-primario text-white'
+                            ? 'border-primario bg-primario text-sobre-primario'
                             : libre
                               ? 'border-primario bg-primario-claro text-primario-oscuro'
                               : 'border-borde bg-borde/40 text-texto-suave line-through',

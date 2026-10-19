@@ -9,8 +9,14 @@
  *
  * - volt: el lima vivo de las acciones principales; siempre con texto `noche` encima.
  * - primario: el lima profundo para estados activos, enlaces y selecciones dentro de la app;
- *   admite texto blanco encima y se lee como texto sobre blanco (contraste ≥ 4,5:1).
+ *   se lee como texto sobre el fondo (contraste ≥ 4,5:1) y lleva `sobre-primario` encima.
+ * - invertido: lo seleccionado y el botón principal de la app. Azul noche en modo claro y lima
+ *   en modo oscuro, siempre con `sobre-invertido` encima.
+ *
+ * El modo oscuro (ADR 0017) redefine estas mismas variables bajo [data-tema='oscuro'].
  */
+@custom-variant oscuro (&:where([data-tema='oscuro'], [data-tema='oscuro'] *));
+
 @theme {
   --font-sans: 'Barlow', system-ui, sans-serif;
   --font-titulo: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
@@ -25,6 +31,10 @@
   --color-primario: #4d7c0f;
   --color-primario-oscuro: #3f6212;
   --color-primario-claro: #f0fadc;
+  --color-sobre-primario: #ffffff;
+  --color-invertido: #0b1220;
+  --color-invertido-suave: #16213a;
+  --color-sobre-invertido: #ffffff;
   --color-acento: #f59e0b;
   --color-fondo: #f4f6f8;
   --color-superficie: #ffffff;
@@ -37,6 +47,9 @@
   --color-alerta: #b45309;
   --color-peligro: #dc2626;
   --color-info: #2563eb;
+  --color-alerta-claro: #fffbeb;
+  --color-peligro-claro: #fef2f2;
+  --color-info-claro: #eff6ff;
 
   --radius-tarjeta: 1.25rem;
   --radius-boton: 0.75rem;
@@ -139,10 +152,72 @@
   }
 }
 
+/*
+ * Modo oscuro: la noche sin reflectores. Fondos azul casi negro, superficies un paso más claras
+ * y el lima como única luz. `noche` sube un tono para que las piezas oscuras (marcadores,
+ * cabeceras, pie) sigan destacando sobre el fondo.
+ */
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+  --color-noche: #19243d;
+  --color-noche-suave: #223050;
+  --color-noche-borde: #2f3f60;
+  --color-volt-claro: #1c2a0d;
+
+  --color-primario: #a3e635;
+  --color-primario-oscuro: #bef264;
+  --color-primario-claro: #172310;
+  --color-sobre-primario: #0b1220;
+  --color-invertido: #a3e635;
+  --color-invertido-suave: #bef264;
+  --color-sobre-invertido: #0b1220;
+
+  --color-fondo: #080d18;
+  --color-superficie: #0f1626;
+  --color-tenue: #172033;
+  --color-texto: #e6ebf3;
+  --color-texto-suave: #93a0b5;
+  --color-borde: #243048;
+
+  --color-exito: #a3e635;
+  --color-alerta: #fbbf24;
+  --color-peligro: #f87171;
+  --color-info: #60a5fa;
+  --color-alerta-claro: #2a1d06;
+  --color-peligro-claro: #2c1215;
+  --color-info-claro: #0e1b33;
+
+  --shadow-flotante: 0 24px 48px -16px rgb(0 0 0 / 0.65), 0 6px 12px -6px rgb(0 0 0 / 0.4);
+}
+
+/*
+ * Cambio de tema: el tema nuevo se revela en un círculo que crece desde el botón
+ * (View Transitions; BotonTema fija --tema-x, --tema-y y --tema-r).
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: revelar-tema 700ms var(--ease-movimiento);
+}
+@keyframes revelar-tema {
+  from {
+    clip-path: circle(0 at var(--tema-x, 50%) var(--tema-y, 0));
+  }
+  to {
+    clip-path: circle(var(--tema-r, 150vmax) at var(--tema-x, 50%) var(--tema-y, 0));
+  }
+}
+
 @layer base {
   :root {
     color-scheme: light;
     accent-color: var(--color-primario);
+  }
+  :root[data-tema='oscuro'] {
+    color-scheme: dark;
   }
 
   html {
@@ -180,6 +255,9 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: #c3cad5 transparent;
+  }
+  [data-tema='oscuro'] * {
+    scrollbar-color: #2f3f60 transparent;
   }
 
   input,
