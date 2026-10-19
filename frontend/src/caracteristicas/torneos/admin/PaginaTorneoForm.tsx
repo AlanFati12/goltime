@@ -8,6 +8,7 @@ import { Campo, Casilla, CampoTexto } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { useSedesAdmin } from '@/caracteristicas/sedes/consultas'
 import { mensajeDeError } from '@/lib/api'
 
@@ -90,7 +91,7 @@ function Formulario({ detalle }: { detalle: DetalleTorneo | null }) {
   return (
     <div className="flex flex-col gap-4">
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">1. Datos del torneo</h2>
+        <h2 className="text-xl font-extrabold uppercase">1. Datos del torneo</h2>
         <Campo
           etiqueta="Nombre"
           value={nombre}
@@ -177,7 +178,7 @@ function Formulario({ detalle }: { detalle: DetalleTorneo | null }) {
       </Tarjeta>
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">2. Formato y reglas</h2>
+        <h2 className="text-xl font-extrabold uppercase">2. Formato y reglas</h2>
         {bloqueado && (
           <Alerta tipo="info">
             El fixture ya está generado: formato y estructura no se pueden cambiar. Descártalo desde
@@ -338,9 +339,14 @@ export function PaginaTorneoForm() {
   const { data, isPending, isError, error } = useTorneo(torneoId ?? 0, true)
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold sm:text-3xl">
-        {torneoId ? 'Editar torneo' : 'Nuevo torneo'}
-      </h1>
+      <EncabezadoPagina
+        titulo={torneoId ? 'Editar torneo' : 'Nuevo torneo'}
+        volver={
+          torneoId
+            ? { a: `/admin/torneos/${torneoId}`, texto: 'Volver al torneo' }
+            : { a: '/admin/torneos', texto: 'Torneos' }
+        }
+      />
       {torneoId && isPending && <Cargando texto="Cargando torneo…" />}
       {torneoId && isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {!torneoId && <Formulario detalle={null} />}

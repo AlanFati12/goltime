@@ -24,7 +24,7 @@ export function TarjetaPartido({ partido: p, ruta, acciones, mostrarTorneo }: Pr
   const gana = (id: number | null | undefined) =>
     p.ganadorInscripcionId != null && p.ganadorInscripcionId === id
   return (
-    <Tarjeta className="flex flex-col gap-2 p-4">
+    <Tarjeta className="hover:border-primario/40 flex flex-col gap-3 p-4 transition-colors duration-200 sm:p-5">
       <div className="text-texto-suave flex flex-wrap items-center justify-between gap-2 text-xs">
         <span>{mostrarTorneo ? `${p.torneo} · ${textoRonda(p)}` : textoRonda(p)}</span>
         <Insignia
@@ -48,7 +48,7 @@ export function TarjetaPartido({ partido: p, ruta, acciones, mostrarTorneo }: Pr
         >
           {nombreLado(p.local)}
         </span>
-        <span className="bg-primario-claro rounded-boton min-w-16 px-3 py-1 text-center text-lg font-bold">
+        <span className="bg-noche text-volt-vivo font-titulo min-w-16 rounded-xl px-3 py-1.5 text-center text-2xl leading-none font-extrabold tabular-nums">
           {marcador(p)}
         </span>
         <span

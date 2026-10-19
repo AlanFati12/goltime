@@ -175,7 +175,7 @@ export function FormularioBloqueo({
             {previa.conflictos.map((c) => (
               <li key={c.reservaId} className="px-3 py-2">
                 <div className="flex justify-between gap-2">
-                  <span className="font-mono font-medium">{c.codigo}</span>
+                  <span className="cifras font-medium font-semibold tracking-wide">{c.codigo}</span>
                   <span>{formatearCOP(c.precioFinal)}</span>
                 </div>
                 <div>{c.cliente}</div>
@@ -266,7 +266,7 @@ export function FormularioBloqueo({
               className={cn(
                 'rounded-boton border px-4 py-2 text-sm disabled:opacity-60',
                 tipo === t
-                  ? 'border-primario bg-primario text-white'
+                  ? 'border-primario bg-primario text-sobre-primario'
                   : 'border-borde bg-superficie',
               )}
             >
@@ -338,7 +338,7 @@ export function FormularioBloqueo({
                       className={cn(
                         'rounded-boton border px-3 py-1 text-sm',
                         activo
-                          ? 'border-primario bg-primario text-white'
+                          ? 'border-primario bg-primario text-sobre-primario'
                           : 'border-borde bg-superficie',
                       )}
                     >

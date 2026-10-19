@@ -5,14 +5,24 @@ import { cn } from '@/lib/utils'
 import type { Foto } from './tipos'
 
 /** Foto principal con miniaturas; si no hay fotos muestra un marcador. */
-export function Galeria({ fotos, alto = 'aspect-video' }: { fotos: Foto[]; alto?: string }) {
+export function Galeria({
+  fotos,
+  alto = 'aspect-video',
+  className,
+}: {
+  fotos: Foto[]
+  alto?: string
+  /** Clases extra para la imagen principal (por ejemplo, quitar el redondeo dentro de una tarjeta). */
+  className?: string
+}) {
   const [actual, setActual] = useState(0)
   if (fotos.length === 0) {
     return (
       <div
         className={cn(
-          'from-primario-claro to-primario/20 text-primario/60 rounded-tarjeta flex items-center justify-center bg-gradient-to-br',
+          'bg-noche text-volt/60 rounded-tarjeta flex items-center justify-center',
           alto,
+          className,
         )}
         role="img"
         aria-label="Sin fotos"
@@ -37,7 +47,12 @@ export function Galeria({ fotos, alto = 'aspect-video' }: { fotos: Foto[]; alto?
   const foto = fotos[Math.min(actual, fotos.length - 1)]
   return (
     <div className="flex flex-col gap-2">
-      <img src={foto.url} alt="" className={cn('rounded-tarjeta w-full object-cover', alto)} />
+      <img
+        key={foto.id}
+        src={foto.url}
+        alt=""
+        className={cn('rounded-tarjeta bg-tenue animate-velo w-full object-cover', alto, className)}
+      />
       {fotos.length > 1 && (
         <ul className="flex gap-2 overflow-x-auto">
           {fotos.map((f, i) => (
@@ -47,8 +62,8 @@ export function Galeria({ fotos, alto = 'aspect-video' }: { fotos: Foto[]; alto?
                 onClick={() => setActual(i)}
                 aria-label={`Ver foto ${i + 1}`}
                 className={cn(
-                  'rounded-boton overflow-hidden border-2',
-                  i === actual ? 'border-primario' : 'border-transparent',
+                  'presionable ring-offset-fondo overflow-hidden rounded-xl ring-2 ring-offset-2 transition-opacity duration-200',
+                  i === actual ? 'ring-volt' : 'opacity-60 ring-transparent hover:opacity-100',
                 )}
               >
                 <img src={f.url} alt="" className="h-14 w-20 object-cover" loading="lazy" />

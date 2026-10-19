@@ -25,6 +25,8 @@ import co.edu.usco.goltime.estadisticas.aplicacion.Estadisticas.HorasPico;
 import co.edu.usco.goltime.estadisticas.aplicacion.Estadisticas.ResumenConComparacion;
 import co.edu.usco.goltime.estadisticas.aplicacion.Estadisticas.Serie;
 import co.edu.usco.goltime.estadisticas.aplicacion.ServicioEstadisticas;
+import co.edu.usco.goltime.estadisticas.aplicacion.ServicioTablero;
+import co.edu.usco.goltime.estadisticas.aplicacion.Tablero;
 import co.edu.usco.goltime.estadisticas.dominio.Agrupacion;
 import co.edu.usco.goltime.estadisticas.dominio.PeriodoEstadistico;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,9 +41,18 @@ public class ControladorEstadisticas {
     private static final int DIAS_POR_DEFECTO = 30;
 
     private final ServicioEstadisticas estadisticas;
+    private final ServicioTablero tablero;
 
-    public ControladorEstadisticas(ServicioEstadisticas estadisticas) {
+    public ControladorEstadisticas(ServicioEstadisticas estadisticas, ServicioTablero tablero) {
         this.estadisticas = estadisticas;
+        this.tablero = tablero;
+    }
+
+    @GetMapping("/tablero")
+    @Operation(summary = "Tablero del administrador: hoy, cobros pendientes, próximos 7 días, estado de las canchas, torneos y clientes",
+            description = "Todo en hora de Bogotá. Las reservas de torneo se cuentan aparte de las de clientes.")
+    public Tablero.Resumen tablero() {
+        return tablero.resumen();
     }
 
     @GetMapping("/resumen")

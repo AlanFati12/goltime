@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { CalendarDays, Trophy, Users, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
-import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { PortadaPagina } from '@/componentes/ui/PortadaPagina'
+import { Revelar } from '@/componentes/ui/Revelar'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearDia } from '@/lib/formato'
 
@@ -21,32 +23,69 @@ const GRUPOS: { id: string; texto: string; estados: EstadoTorneo[] }[] = [
 ]
 
 export function TarjetaTorneo({ t, ruta }: { t: Torneo; ruta: string }) {
+  const lleno = t.cupoEquipos ? Math.min(100, (t.equiposInscritos / t.cupoEquipos) * 100) : null
   return (
-    <Tarjeta className="flex h-full flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <Link
+      to={ruta}
+      className="group bg-noche relative isolate flex h-full flex-col gap-5 overflow-hidden rounded-[1.75rem] p-6 text-white transition-transform duration-300 hover:-translate-y-1"
+    >
+      <Trophy
+        className="text-volt/10 group-hover:text-volt/20 absolute -top-6 -right-6 -z-10 size-40 -rotate-12 transition-[color,transform] duration-500 group-hover:rotate-0"
+        aria-hidden
+      />
+      <div className="flex flex-wrap gap-1.5">
         <Insignia tono={TONO_ESTADO_TORNEO[t.estado]}>{ETIQUETA_ESTADO_TORNEO[t.estado]}</Insignia>
-        <Insignia>{ETIQUETA_FORMATO[t.formato]}</Insignia>
+        <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold">
+          {ETIQUETA_FORMATO[t.formato]}
+        </span>
       </div>
-      <h2 className="text-lg font-semibold">
-        <Link to={ruta} className="hover:underline">
+      <div>
+        <h2 className="group-hover:text-volt-vivo text-4xl leading-[0.95] font-extrabold uppercase transition-colors duration-200">
           {t.nombre}
-        </Link>
-      </h2>
-      <p className="text-texto-suave text-sm">
-        {t.sedeNombre} · Fútbol {t.jugadoresPorEquipo} · {t.equiposInscritos}
-        {t.cupoEquipos ? ` de ${t.cupoEquipos}` : ''} equipos
-      </p>
-      {t.fechaInicio && (
-        <p className="text-sm capitalize">
-          {formatearDia(t.fechaInicio)}
-          {t.fechaFin ? ` → ${formatearDia(t.fechaFin)}` : ''}
+        </h2>
+        <p className="mt-2 text-white/60">
+          {t.sedeNombre} · Fútbol {t.jugadoresPorEquipo}
+        </p>
+      </div>
+      <div className="mt-auto flex flex-col gap-3 text-sm">
+        <div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="flex items-center gap-2 text-white/70">
+              <Users className="size-4" aria-hidden />
+              Equipos
+            </span>
+            <span className="font-titulo text-xl font-extrabold">
+              {t.equiposInscritos}
+              {t.cupoEquipos ? <span className="text-white/45"> / {t.cupoEquipos}</span> : ''}
+            </span>
+          </div>
+          {lleno != null && (
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="bg-volt h-full rounded-full" style={{ width: `${lleno}%` }} />
+            </div>
+          )}
+        </div>
+        {t.fechaInicio && (
+          <p className="flex items-center gap-2 text-white/70 capitalize">
+            <CalendarDays className="size-4" aria-hidden />
+            {formatearDia(t.fechaInicio)}
+            {t.fechaFin ? ` → ${formatearDia(t.fechaFin)}` : ''}
+          </p>
+        )}
+        {t.valorInscripcion > 0 && (
+          <p className="flex items-center gap-2 text-white/70">
+            <Wallet className="size-4" aria-hidden />
+            Inscripción {formatearCOP(t.valorInscripcion)}
+          </p>
+        )}
+      </div>
+      {t.campeon && (
+        <p className="bg-volt text-noche -mx-6 -mb-6 flex items-center gap-2 px-6 py-3 font-semibold">
+          <Trophy className="size-4" aria-hidden />
+          Campeón: {t.campeon}
         </p>
       )}
-      {t.valorInscripcion > 0 && (
-        <p className="text-sm">Inscripción: {formatearCOP(t.valorInscripcion)}</p>
-      )}
-      {t.campeon && <p className="text-sm font-medium">🏆 Campeón: {t.campeon}</p>}
-    </Tarjeta>
+    </Link>
   )
 }
 
@@ -58,13 +97,18 @@ export function PaginaTorneos() {
   const lista = data?.filter((t) => actual.estados.includes(t.estado)) ?? []
 
   return (
-    <div className="flex max-w-6xl flex-col gap-6">
-      <EncabezadoPagina titulo="Torneos" descripcion="Sigue las ligas y copas de nuestras sedes." />
+    <div className="flex flex-col gap-8">
+      <PortadaPagina titulo="Torneos" imagen="/img/arco-niebla.webp" compacta>
+        <p className="max-w-xl text-lg">
+          Ligas y copas de nuestras sedes: fixture, posiciones, goleadores y resultados.
+        </p>
+      </PortadaPagina>
       <Pestanas
         etiqueta="Estado del torneo"
         pestanas={GRUPOS.map((g) => ({
           id: g.id,
-          texto: `${g.texto} (${data?.filter((t) => g.estados.includes(t.estado)).length ?? 0})`,
+          texto: g.texto,
+          conteo: data?.filter((t) => g.estados.includes(t.estado)).length ?? 0,
         }))}
         actual={grupo}
         alCambiar={setGrupo}
@@ -72,15 +116,13 @@ export function PaginaTorneos() {
       {isPending && <Cargando texto="Cargando torneos…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && lista.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          No hay torneos en esta categoría.
-        </Tarjeta>
+        <EstadoVacio icono={Trophy} titulo="No hay torneos en esta categoría" />
       )}
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {lista.map((t) => (
-          <li key={t.id}>
+      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {lista.map((t, i) => (
+          <Revelar como="li" key={t.id} i={i}>
             <TarjetaTorneo t={t} ruta={`/torneos/${t.id}`} />
-          </li>
+          </Revelar>
         ))}
       </ul>
     </div>

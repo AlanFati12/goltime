@@ -1,3 +1,4 @@
+import { Clock, MapPin, SearchX } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -5,7 +6,8 @@ import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { useSedesPublicas } from '@/caracteristicas/sedes/consultas'
 import { HORAS } from '@/caracteristicas/sedes/constantes'
 import { Alerta } from '@/componentes/ui/Alerta'
-import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
+import { PortadaPagina } from '@/componentes/ui/PortadaPagina'
 import { Plegable } from '@/componentes/ui/Plegable'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
@@ -75,17 +77,16 @@ export function PaginaReservar() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <EncabezadoPagina
-        titulo="Reservar una cancha"
-        descripcion={
-          usuario
-            ? 'Elige sede y fecha, y toca un horario libre. El administrador confirmará tu solicitud.'
-            : 'Elige sede y fecha, y toca un horario libre. Para solicitarlo te pediremos iniciar sesión.'
-        }
-      />
+    <div className="flex flex-col gap-7">
+      <PortadaPagina titulo="Reserva tu cancha" imagen="/img/partido-tras-la-malla.webp" compacta>
+        <p className="max-w-xl text-lg">
+          {usuario
+            ? 'Elige sede y fecha, y toca un horario libre. La sede confirmará tu solicitud.'
+            : 'Elige sede y fecha, y toca un horario libre. Para solicitarlo te pediremos iniciar sesión.'}
+        </p>
+      </PortadaPagina>
 
-      <Tarjeta className="flex flex-col gap-4 p-4 sm:p-5">
+      <Tarjeta className="shadow-flotante relative z-10 mx-3 -mt-8 flex flex-col gap-4 p-4 sm:mx-8 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <CampoSelect
             etiqueta="Sede"
@@ -162,29 +163,40 @@ export function PaginaReservar() {
               onClick={() => cambiar({ fecha: d.fecha })}
               aria-pressed={d.fecha === fecha}
               className={cn(
-                'rounded-tarjeta border px-3 py-2 text-center text-sm whitespace-nowrap',
+                'presionable min-w-28 rounded-2xl border px-4 py-3 text-center text-sm whitespace-nowrap transition-[background-color,border-color,color] duration-200',
                 d.fecha === fecha
-                  ? 'border-primario bg-primario text-white'
-                  : 'border-borde bg-superficie hover:border-primario',
+                  ? 'border-invertido bg-invertido text-sobre-invertido'
+                  : 'border-borde bg-superficie hover:border-texto-suave/40',
               )}
             >
-              <span className="block font-medium capitalize">{formatearDia(d.fecha)}</span>
+              <span className="font-titulo block text-lg leading-tight font-bold uppercase">
+                {formatearDia(d.fecha)}
+              </span>
               <span
-                className={cn('text-xs', d.fecha === fecha ? 'text-white/80' : 'text-texto-suave')}
+                className={cn(
+                  'text-xs',
+                  'font-semibold',
+                  d.fecha === fecha
+                    ? 'text-volt-vivo oscuro:text-sobre-invertido'
+                    : d.horariosLibres > 0
+                      ? 'text-primario'
+                      : 'text-texto-suave',
+                )}
               >
-                {d.horariosLibres} libres
+                {d.horariosLibres > 0 ? `${d.horariosLibres} libres` : 'Sin cupos'}
               </span>
             </button>
           ))}
         </section>
       )}
 
-      <div className="text-texto-suave flex flex-wrap gap-4 text-xs" aria-hidden>
-        <span className="flex items-center gap-1">
-          <span className="border-primario bg-primario-claro size-3 rounded-sm border" /> Disponible
+      <div className="text-texto-suave flex flex-wrap gap-5 text-sm" aria-hidden>
+        <span className="flex items-center gap-1.5">
+          <span className="border-primario/50 bg-superficie size-3.5 rounded-md border" />{' '}
+          Disponible
         </span>
-        <span className="flex items-center gap-1">
-          <span className="bg-borde size-3 rounded-sm" /> Ocupado o bloqueado
+        <span className="flex items-center gap-1.5">
+          <span className="bg-tenue size-3.5 rounded-md" /> Ocupado o bloqueado
         </span>
       </div>
 
@@ -196,14 +208,14 @@ export function PaginaReservar() {
         <Alerta tipo="error">{mensajeDeError(disponibilidad.error)}</Alerta>
       )}
       {sedes.data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          Todavía no hay sedes para reservar.
-        </Tarjeta>
+        <EstadoVacio icono={MapPin} titulo="Todavía no hay sedes para reservar" />
       )}
       {disponibilidad.data?.canchas.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          No hay canchas con esas características.
-        </Tarjeta>
+        <EstadoVacio
+          icono={SearchX}
+          titulo="No hay canchas con esas características"
+          descripcion="Prueba con otra modalidad o con otra sede."
+        />
       )}
 
       <div className="flex flex-col gap-4">
@@ -213,15 +225,19 @@ export function PaginaReservar() {
             <Tarjeta
               key={c.canchaId}
               className={cn(
-                canchaResaltada === c.canchaId && 'border-primario ring-primario/30 ring-2',
+                'animate-velo',
+                canchaResaltada === c.canchaId && 'border-volt ring-volt/25 ring-4',
               )}
             >
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-lg font-semibold">
-                  {c.nombre}{' '}
-                  <span className="text-texto-suave text-sm font-normal">· {c.modalidad}</span>
-                </h2>
-                <span className="text-texto-suave text-xs">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl leading-none font-extrabold uppercase">{c.nombre}</h2>
+                  <span className="bg-volt text-noche font-titulo rounded-full px-2.5 py-0.5 text-base font-extrabold">
+                    {c.modalidad}
+                  </span>
+                </div>
+                <span className="text-texto-suave flex items-center gap-1.5 text-sm">
+                  <Clock className="size-3.5" aria-hidden />
                   Bloques de {c.duracionBloqueMin} min
                 </span>
               </div>
@@ -240,16 +256,26 @@ export function PaginaReservar() {
                         onClick={() => elegirSlot(c, s)}
                         aria-label={`${c.nombre}, ${formatearHora(s.inicio)}, ${libre ? formatearCOP(s.precio) : ETIQUETA_SLOT[s.estado]}`}
                         className={cn(
-                          'rounded-boton w-full border px-2 py-2 text-center text-sm',
+                          'group w-full rounded-2xl border px-2 py-3 text-center text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 active:scale-[0.97]',
                           libre
-                            ? 'border-primario bg-primario-claro text-primario-oscuro hover:bg-primario hover:text-white'
-                            : 'border-borde bg-borde/40 text-texto-suave cursor-not-allowed',
+                            ? 'border-primario/30 bg-superficie hover:border-volt hover:bg-volt hover:text-noche hover:shadow-volt hover:-translate-y-0.5'
+                            : 'bg-tenue text-texto-suave/70 cursor-not-allowed border-transparent',
                         )}
                       >
-                        <span className={cn('block font-medium', !libre && 'line-through')}>
+                        <span
+                          className={cn(
+                            'font-titulo block text-xl leading-none font-bold tabular-nums',
+                            !libre && 'font-normal line-through',
+                          )}
+                        >
                           {formatearHora(s.inicio)}
                         </span>
-                        <span className="block text-xs">
+                        <span
+                          className={cn(
+                            'mt-1 block text-xs font-semibold',
+                            libre && 'text-texto-suave group-hover:text-noche/75',
+                          )}
+                        >
                           {libre ? formatearCOP(s.precio) : ETIQUETA_SLOT[s.estado]}
                         </span>
                       </button>

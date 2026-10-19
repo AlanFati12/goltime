@@ -5,7 +5,7 @@ import { Alerta } from '@/componentes/ui/Alerta'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearHora, ZONA_HORARIA } from '@/lib/formato'
 
@@ -41,13 +41,12 @@ export function Cotizador({ cancha }: { cancha: Cancha }) {
   const { data, isFetching, isError, error } = useCotizacion(cancha.id, inicio, fin)
 
   return (
-    <Tarjeta className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold">¿Cuánto cuesta?</h2>
-        <p className="text-texto-suave text-sm">
-          Elige fecha, hora y duración para ver el precio con su desglose.
-        </p>
-      </div>
+    <Tarjeta className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+      <TituloTarjeta
+        className="mb-0"
+        titulo="¿Cuánto cuesta?"
+        descripcion="Elige fecha, hora y duración para ver el precio con su desglose."
+      />
       <div className="grid gap-3 sm:grid-cols-3">
         <Campo
           etiqueta="Fecha"
@@ -80,9 +79,15 @@ export function Cotizador({ cancha }: { cancha: Cancha }) {
       {isFetching && <Cargando texto="Calculando…" className="py-2" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && !isFetching && (
-        <div aria-live="polite" className="flex flex-col gap-2">
-          <p className="text-primario-oscuro text-2xl font-bold">{formatearCOP(data.total)}</p>
-          <ul className="text-texto-suave text-sm">
+        <div
+          aria-live="polite"
+          className="bg-noche animate-velo flex flex-col gap-2 rounded-2xl p-5 text-white"
+        >
+          <p className="text-sm font-semibold text-white/60">Total estimado</p>
+          <p className="font-titulo cifras text-volt-vivo text-5xl leading-none font-extrabold">
+            {formatearCOP(data.total)}
+          </p>
+          <ul className="text-sm text-white/60">
             {data.tramos.map((t) => (
               <li key={t.inicio}>
                 {formatearHora(t.inicio)} – {formatearHora(t.fin)} · {ORIGEN[t.origen]} a{' '}

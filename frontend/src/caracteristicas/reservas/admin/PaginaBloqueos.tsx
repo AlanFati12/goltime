@@ -1,3 +1,4 @@
+import { Ban, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { useSedesAdmin } from '@/caracteristicas/sedes/consultas'
@@ -10,6 +11,8 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Modal } from '@/componentes/ui/Modal'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 import { formatearDia, formatearFechaHora, fechaEnBogota } from '@/lib/formato'
 
@@ -50,18 +53,19 @@ export function PaginaBloqueos() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Bloqueos de horario</h1>
-        <Boton onClick={() => setFormulario({ bloqueo: null })}>Nuevo bloqueo</Boton>
-      </div>
-      <p className="text-texto-suave max-w-3xl text-sm">
-        Impide reservar en una sede o en canchas específicas (mantenimiento, evento privado,
-        torneo…). Si hay reservas en ese horario, verás la lista y deberás confirmar antes de que se
-        cancelen.
-      </p>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Bloqueos de horario"
+        descripcion="Impide reservar en una sede o en canchas específicas (mantenimiento, evento privado, torneo…). Si hay reservas en ese horario, verás la lista y deberás confirmar antes de que se cancelen."
+        acciones={
+          <Boton onClick={() => setFormulario({ bloqueo: null })}>
+            <Plus aria-hidden />
+            Nuevo bloqueo
+          </Boton>
+        }
+      />
 
-      <Tarjeta className="flex flex-wrap items-end gap-4">
+      <Tarjeta className="flex flex-wrap items-end gap-4 p-4 sm:p-4">
         <CampoSelect
           className="min-w-48"
           etiqueta="Sede"
@@ -88,13 +92,11 @@ export function PaginaBloqueos() {
 
       {isPending && <Cargando texto="Cargando bloqueos…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
-      {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">No hay bloqueos.</Tarjeta>
-      )}
+      {data?.length === 0 && <EstadoVacio icono={Ban} titulo="No hay bloqueos" />}
       <ul className="flex flex-col gap-3">
         {data?.map((b) => (
           <li key={b.id}>
-            <Tarjeta className="flex flex-wrap items-start justify-between gap-3 p-4">
+            <Tarjeta className="flex flex-wrap items-start justify-between gap-3 p-4 sm:p-5">
               <div className="flex flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Insignia tono={b.activo ? 'ambar' : 'gris'}>

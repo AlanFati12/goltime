@@ -68,7 +68,7 @@ public class ServicioPartidos {
     public record DatosResultado(int golesLocal, int golesVisitante, Integer penalesLocal, Integer penalesVisitante, Long figuraJugadorId) {
     }
 
-    public record DatosEvento(long inscripcionId, long jugadorId, TipoEvento tipo, int minuto, Long eventoRelacionadoId, String observacion) {
+    public record DatosEvento(long inscripcionId, long jugadorId, TipoEvento tipo, Integer minuto, Long eventoRelacionadoId, String observacion) {
     }
 
     // ===================================================================================
@@ -242,7 +242,7 @@ public class ServicioPartidos {
         if (!p.listoParaJugar() || p.wo() || p.estado() == EstadoPartido.BYE) {
             throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "Este partido no admite eventos.");
         }
-        if (d.minuto() < 0 || d.minuto() > 130) {
+        if (d.minuto() != null && (d.minuto() < 0 || d.minuto() > 130)) {
             throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "El minuto debe estar entre 0 y 130.");
         }
         if (!Objects.equals(p.localId(), d.inscripcionId()) && !Objects.equals(p.visitanteId(), d.inscripcionId())) {
@@ -259,7 +259,7 @@ public class ServicioPartidos {
             exigirEventosCoherentes(p);
         }
         auditoria.registrar("REGISTRAR_EVENTO", ENTIDAD, partidoId,
-                Map.of("tipo", d.tipo().name(), "minuto", d.minuto(), "jugadorId", d.jugadorId(), "eventoId", guardado.id()), null);
+                Map.of("tipo", d.tipo().name(), "minuto", d.minuto() == null ? "-" : d.minuto(), "jugadorId", d.jugadorId(), "eventoId", guardado.id()), null);
         return guardado;
     }
 
@@ -274,7 +274,7 @@ public class ServicioPartidos {
             throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "Elimina primero la asistencia ligada a este gol.");
         }
         partidos.eliminarEvento(eventoId);
-        auditoria.registrar("ELIMINAR_EVENTO", ENTIDAD, partidoId, Map.of("tipo", evento.tipo().name(), "minuto", evento.minuto()), null);
+        auditoria.registrar("ELIMINAR_EVENTO", ENTIDAD, partidoId, Map.of("tipo", evento.tipo().name(), "minuto", evento.minuto() == null ? "-" : evento.minuto()), null);
     }
 
     /** Una asistencia se liga a un gol del mismo equipo hecho por otro jugador; los demás eventos no se ligan. */

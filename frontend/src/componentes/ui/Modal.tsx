@@ -1,14 +1,19 @@
+import { X } from 'lucide-react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+
+import { cn } from '@/lib/utils'
 
 interface PropsModal {
   abierto: boolean
   titulo: string
   alCerrar: () => void
   children: ReactNode
+  /** Ancho máximo del diálogo; por defecto mediano. */
+  ancho?: 'md' | 'lg'
 }
 
 /** Diálogo modal accesible: cierra con Esc o al hacer clic fuera, y devuelve el foco al cerrar. */
-export function Modal({ abierto, titulo, alCerrar, children }: PropsModal) {
+export function Modal({ abierto, titulo, alCerrar, children, ancho = 'md' }: PropsModal) {
   const idTitulo = useId()
   const contenedor = useRef<HTMLDivElement>(null)
 
@@ -18,8 +23,11 @@ export function Modal({ abierto, titulo, alCerrar, children }: PropsModal) {
     contenedor.current?.focus()
     const alTeclear = (e: KeyboardEvent) => e.key === 'Escape' && alCerrar()
     document.addEventListener('keydown', alTeclear)
+    const desbordeAnterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', alTeclear)
+      document.body.style.overflow = desbordeAnterior
       previo?.focus()
     }
   }, [abierto, alCerrar])
@@ -27,7 +35,7 @@ export function Modal({ abierto, titulo, alCerrar, children }: PropsModal) {
   if (!abierto) return null
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      className="bg-noche/55 animate-velo fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-[3px] sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && alCerrar()}
     >
       <div
@@ -36,11 +44,24 @@ export function Modal({ abierto, titulo, alCerrar, children }: PropsModal) {
         aria-modal="true"
         aria-labelledby={idTitulo}
         tabIndex={-1}
-        className="bg-superficie text-texto rounded-tarjeta max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl outline-none"
+        className={cn(
+          'bg-superficie text-texto shadow-flotante animate-dialogo max-h-[92vh] w-full overflow-y-auto rounded-t-[1.75rem] p-6 outline-none sm:rounded-[1.75rem]',
+          ancho === 'lg' ? 'max-w-2xl' : 'max-w-lg',
+        )}
       >
-        <h2 id={idTitulo} className="mb-4 text-xl font-semibold">
-          {titulo}
-        </h2>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h2 id={idTitulo} className="text-2xl leading-tight font-extrabold uppercase">
+            {titulo}
+          </h2>
+          <button
+            type="button"
+            onClick={alCerrar}
+            aria-label="Cerrar diálogo"
+            className="text-texto-suave hover:bg-tenue hover:text-texto presionable -mt-1 -mr-2 rounded-full p-2"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
         {children}
       </div>
     </div>

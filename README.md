@@ -39,6 +39,20 @@ docker compose up --build
 | Correos de desarrollo (Mailpit) | <http://localhost:8025> |
 | PostgreSQL | `localhost:5433` |
 
+**Una sola versión:** la aplicación se usa siempre en <http://localhost:8081>. Después de cambiar código, reconstruye con `docker compose up --build -d`. El puerto 5173 (`npm run dev`) solo existe si alguien lo arranca a mano para desarrollar el front; no hace falta para probar.
+
+### Ver la base de datos con pgAdmin
+
+PostgreSQL corre dentro de Docker, así que no hay que instalarlo en el equipo. Para verla en pgAdmin, registra un servidor nuevo con: host `localhost`, puerto `5433`, base `goltime`, usuario `goltime` y la clave `DB_CLAVE` del `.env`. Los cambios de esquema se hacen solo con migraciones Flyway (`backend/src/main/resources/db/migration`), no a mano.
+
+### Base limpia para pruebas
+
+```bash
+./scripts/reiniciar-base.sh
+```
+
+Borra todos los datos (y las fotos subidas) y deja solo dos usuarios: el administrador de `ADMIN_CORREO` / `ADMIN_CLAVE` y un cliente de prueba (`CLIENTE_PRUEBA_CORREO` / `CLIENTE_PRUEBA_CLAVE`, que el script agrega a tu `.env` si no existen), con el correo verificado y habilitado para inscribir equipos.
+
 ### Datos de demostración
 
 Con el sistema arriba y la base de datos vacía (`docker compose down -v` antes, si ya la usaste):
@@ -73,6 +87,16 @@ cd backend && DB_URL=jdbc:postgresql://localhost:5433/goltime DB_CLAVE=... JWT_S
 cd frontend && npm install && npm run dev     # http://localhost:5173, con proxy a la API
 ```
 
+Para usar y probar la aplicación se usa una sola URL, <http://localhost:8081>. Después de cambiar el frontend, reconstruye ese contenedor:
+
+```bash
+docker compose up --build -d web
+```
+
+## Interfaz
+
+Tema visual «Partido nocturno» con modo claro y oscuro (botón de sol y luna en la barra superior; se recuerda en el navegador). Tokens de color, tipografía y movimiento en `frontend/src/estilos/index.css`. Ver [ADR 0016](docs/decisiones/0016-tema-partido-nocturno.md) y [ADR 0017](docs/decisiones/0017-modo-oscuro-y-carga-por-rutas.md).
+
 ## Pruebas
 
 ```bash
@@ -104,8 +128,8 @@ Las políticas (antelación, cancelación, expiración de solicitudes, recordato
 ## Usuarios de prueba
 
 - **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
-- **Clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
-- Los datos de demostración completos llegan en la Fase 9.
+- **Cliente de prueba:** lo crea `./scripts/reiniciar-base.sh` con `CLIENTE_PRUEBA_CORREO` y `CLIENTE_PRUEBA_CLAVE` del `.env`.
+- **Más clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
 
 ## Extras (Fase 8)
 

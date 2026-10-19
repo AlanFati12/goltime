@@ -34,11 +34,21 @@ public abstract class BaseReservasIT extends BaseIntegracion {
     }
 
     /**
-     * Fecha a {@code dias} días de hoy o, si cae en domingo, el lunes siguiente. Los domingos la sede cierra a las
-     * 20:00 (L-S cierra a las 23:00), y las pruebas reservan hasta las 23:00: así no dependen del día en que corran.
+     * El día hábil número {@code dias} contando desde hoy (negativo hacia atrás), sin contar domingos. Los domingos
+     * la sede cierra a las 20:00 (L-S cierra a las 23:00) y las pruebas reservan hasta las 23:00. Se cuentan días
+     * hábiles en vez de mover el domingo al lunes porque así cada {@code dias} da una fecha distinta: con el
+     * corrimiento, {@code diaHabil(n)} y {@code diaHabil(n + 1)} caían el mismo lunes según el día en que corrieran
+     * las pruebas, y la segunda reserva chocaba con la primera.
      */
     protected static LocalDate diaHabil(int dias) {
-        LocalDate fecha = enDias(dias);
+        LocalDate fecha = enDias(0);
+        int paso = dias < 0 ? -1 : 1;
+        for (int contados = 0; contados < Math.abs(dias); ) {
+            fecha = fecha.plusDays(paso);
+            if (fecha.getDayOfWeek() != java.time.DayOfWeek.SUNDAY) {
+                contados++;
+            }
+        }
         return fecha.getDayOfWeek() == java.time.DayOfWeek.SUNDAY ? fecha.plusDays(1) : fecha;
     }
 

@@ -10,6 +10,7 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 
 import { EditorHorario } from '../EditorHorario'
@@ -66,7 +67,7 @@ function FormularioDatos({ sede }: { sede: Sede | null }) {
 
   return (
     <Tarjeta>
-      <h2 className="mb-4 text-lg font-semibold">Datos de la sede</h2>
+      <h2 className="mb-4 text-base font-semibold">Datos de la sede</h2>
       <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
         <Campo etiqueta="Nombre" error={errors.nombre?.message} {...register('nombre')} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -140,26 +141,24 @@ export function PaginaSedeForm() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <Link to="/admin/sedes" className="text-texto-suave text-sm hover:underline">
-            ← Sedes
-          </Link>
-          <h1 className="text-2xl font-bold sm:text-3xl">{sede ? sede.nombre : 'Nueva sede'}</h1>
-        </div>
-        {sede && (
-          <Insignia tono={sede.activa ? 'verde' : 'rojo'}>
-            {sede.activa ? 'Activa' : 'Inactiva'}
-          </Insignia>
-        )}
-      </div>
+      <EncabezadoPagina
+        titulo={sede ? sede.nombre : 'Nueva sede'}
+        volver={{ a: '/admin/sedes', texto: 'Sedes' }}
+        acciones={
+          sede && (
+            <Insignia tono={sede.activa ? 'verde' : 'rojo'}>
+              {sede.activa ? 'Activa' : 'Inactiva'}
+            </Insignia>
+          )
+        }
+      />
 
       <FormularioDatos key={sede?.id ?? 'nueva'} sede={sede ?? null} />
 
       {sede && (
         <>
           <Tarjeta>
-            <h2 className="mb-1 text-lg font-semibold">Horario de operación</h2>
+            <h2 className="mb-1 text-base font-semibold">Horario de operación</h2>
             <p className="text-texto-suave mb-4 text-sm">
               Las canchas lo usan por defecto; cada una puede tener su propio horario.
             </p>
@@ -180,7 +179,7 @@ export function PaginaSedeForm() {
           </Tarjeta>
 
           <Tarjeta>
-            <h2 className="mb-4 text-lg font-semibold">Fotos</h2>
+            <h2 className="mb-4 text-base font-semibold">Fotos</h2>
             <GestorFotos
               fotos={sede.fotos}
               subiendo={fotos.subirASede.isPending}
@@ -204,7 +203,7 @@ export function PaginaSedeForm() {
 
           <Tarjeta>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Canchas ({sede.canchas.length})</h2>
+              <h2 className="text-xl font-extrabold uppercase">Canchas ({sede.canchas.length})</h2>
               <EnlaceBoton to={`/admin/canchas/nueva?sedeId=${sede.id}`} tamano="sm">
                 Nueva cancha
               </EnlaceBoton>
@@ -218,7 +217,7 @@ export function PaginaSedeForm() {
                     <span>
                       {c.nombre} <Insignia tono="verde">{c.modalidad}</Insignia>
                     </span>
-                    <Link to={`/admin/canchas/${c.id}`} className="text-primario underline">
+                    <Link to={`/admin/canchas/${c.id}`} className="enlace">
                       Editar
                     </Link>
                   </li>

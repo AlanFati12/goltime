@@ -7,11 +7,12 @@ import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { IndicadorClave } from '@/componentes/ui/IndicadorClave'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { mensajeDeError } from '@/lib/api'
 import { esquemaRestablecer, type DatosRestablecer } from '@/lib/validaciones'
 
 import { restablecerClave } from './servicioAutenticacion'
+import { TarjetaAcceso } from './TarjetaAcceso'
 
 export function PaginaRestablecerClave() {
   const [params] = useSearchParams()
@@ -27,25 +28,31 @@ export function PaginaRestablecerClave() {
 
   if (!token) {
     return (
-      <Tarjeta className="mx-auto w-full max-w-md">
+      <TarjetaAcceso
+        titulo="Enlace no válido"
+        pie={
+          <Link to="/olvide-clave" className="enlace">
+            Solicitar un enlace nuevo
+          </Link>
+        }
+      >
         <Alerta tipo="error">El enlace no es válido. Solicita uno nuevo.</Alerta>
-        <Link to="/olvide-clave" className="text-primario mt-4 inline-block text-sm underline">
-          Solicitar un enlace nuevo
-        </Link>
-      </Tarjeta>
+      </TarjetaAcceso>
     )
   }
 
   if (listo) {
     return (
-      <Tarjeta className="mx-auto w-full max-w-md">
-        <Alerta tipo="exito" className="mb-4">
-          Tu contraseña fue actualizada. Ya puedes ingresar con la nueva.
-        </Alerta>
-        <Link to="/ingresar" className="text-primario text-sm underline">
-          Ir a ingresar
-        </Link>
-      </Tarjeta>
+      <TarjetaAcceso titulo="Contraseña actualizada">
+        <div className="flex flex-col gap-4">
+          <Alerta tipo="exito">
+            Tu contraseña fue actualizada. Ya puedes ingresar con la nueva.
+          </Alerta>
+          <EnlaceBoton to="/ingresar" className="w-full">
+            Ir a ingresar
+          </EnlaceBoton>
+        </div>
+      </TarjetaAcceso>
     )
   }
 
@@ -60,8 +67,7 @@ export function PaginaRestablecerClave() {
   })
 
   return (
-    <Tarjeta className="mx-auto w-full max-w-md">
-      <h1 className="mb-5 text-2xl font-bold">Crear contraseña nueva</h1>
+    <TarjetaAcceso titulo="Crea una contraseña nueva">
       <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
         {error && <Alerta tipo="error">{error}</Alerta>}
         <div className="flex flex-col gap-2">
@@ -82,10 +88,10 @@ export function PaginaRestablecerClave() {
           error={errors.confirmacion?.message}
           {...register('confirmacion')}
         />
-        <Boton type="submit" disabled={isSubmitting}>
+        <Boton type="submit" variante="volt" tamano="lg" disabled={isSubmitting} className="w-full">
           {isSubmitting ? 'Guardando…' : 'Guardar contraseña'}
         </Boton>
       </form>
-    </Tarjeta>
+    </TarjetaAcceso>
   )
 }

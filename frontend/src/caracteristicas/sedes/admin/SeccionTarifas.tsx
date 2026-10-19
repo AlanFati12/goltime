@@ -131,7 +131,7 @@ export function SeccionTarifas({ cancha }: { cancha: Cancha }) {
                         className={cn(
                           'rounded-boton border px-3 py-1 text-sm',
                           activo
-                            ? 'bg-primario border-primario text-white'
+                            ? 'bg-primario border-primario text-sobre-primario'
                             : 'border-borde bg-superficie',
                         )}
                       >

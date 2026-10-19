@@ -1,60 +1,88 @@
-import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import {
+  Award,
+  Building2,
+  CalendarDays,
+  CalendarX2,
+  ChartColumn,
+  ExternalLink,
+  Flag,
+  LayoutDashboard,
+  ListChecks,
+  Megaphone,
+  Menu,
+  Repeat,
+  ScrollText,
+  Settings,
+  Shield,
+  Shirt,
+  Trophy,
+  Users,
+  X,
+  Ban,
+  type LucideIcon,
+} from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
 import { useSolicitudesPendientes } from '@/caracteristicas/admin/consultasAdmin'
+import { Cargando } from '@/componentes/ui/Cargando'
 import { cn } from '@/lib/utils'
 
+import { BarraCarga } from './BarraCarga'
+import { BotonTema } from './BotonTema'
+import { Logo } from './Logo'
 import { MenuUsuario } from './MenuUsuario'
 
 interface Enlace {
   a: string
   texto: string
+  icono: LucideIcon
   fin?: boolean
 }
 
 /** El menú va agrupado por tarea para que nadie tenga que recorrer 17 opciones planas. */
 const GRUPOS: { titulo?: string; enlaces: Enlace[] }[] = [
-  { enlaces: [{ a: '/admin', texto: 'Inicio', fin: true }] },
+  { enlaces: [{ a: '/admin', texto: 'Inicio', icono: LayoutDashboard, fin: true }] },
   {
     titulo: 'Operación',
     enlaces: [
-      { a: '/admin/agenda', texto: 'Agenda' },
-      { a: '/admin/reservas', texto: 'Reservas' },
-      { a: '/admin/series', texto: 'Recurrentes' },
-      { a: '/admin/bloqueos', texto: 'Bloqueos' },
+      { a: '/admin/agenda', texto: 'Agenda', icono: CalendarDays },
+      { a: '/admin/reservas', texto: 'Reservas', icono: ListChecks },
+      { a: '/admin/series', texto: 'Recurrentes', icono: Repeat },
+      { a: '/admin/bloqueos', texto: 'Bloqueos', icono: Ban },
     ],
   },
   {
     titulo: 'Competencias',
     enlaces: [
-      { a: '/admin/torneos', texto: 'Torneos' },
-      { a: '/admin/equipos', texto: 'Equipos' },
+      { a: '/admin/torneos', texto: 'Torneos', icono: Trophy },
+      { a: '/admin/equipos', texto: 'Equipos', icono: Shirt },
     ],
   },
   {
     titulo: 'Crecimiento',
     enlaces: [
-      { a: '/admin/estadisticas', texto: 'Estadísticas' },
-      { a: '/admin/promociones', texto: 'Promociones' },
-      { a: '/admin/premios', texto: 'Premios' },
+      { a: '/admin/estadisticas', texto: 'Estadísticas', icono: ChartColumn },
+      { a: '/admin/promociones', texto: 'Promociones', icono: Megaphone },
+      { a: '/admin/premios', texto: 'Premios', icono: Award },
     ],
   },
   {
     titulo: 'Negocio',
     enlaces: [
-      { a: '/admin/sedes', texto: 'Sedes' },
-      { a: '/admin/canchas', texto: 'Canchas' },
-      { a: '/admin/festivos', texto: 'Festivos' },
+      { a: '/admin/sedes', texto: 'Sedes', icono: Building2 },
+      { a: '/admin/canchas', texto: 'Canchas', icono: Flag },
+      { a: '/admin/festivos', texto: 'Festivos', icono: CalendarX2 },
     ],
   },
   {
     titulo: 'Sistema',
     enlaces: [
-      { a: '/admin/clientes', texto: 'Clientes' },
-      { a: '/admin/administradores', texto: 'Administradores' },
-      { a: '/admin/configuracion', texto: 'Configuración' },
-      { a: '/admin/auditoria', texto: 'Auditoría' },
+      { a: '/admin/clientes', texto: 'Clientes', icono: Users },
+      { a: '/admin/administradores', texto: 'Administradores', icono: Shield },
+      { a: '/admin/configuracion', texto: 'Configuración', icono: Settings },
+      { a: '/admin/auditoria', texto: 'Auditoría', icono: ScrollText },
     ],
   },
 ]
@@ -63,89 +91,121 @@ const GRUPOS: { titulo?: string; enlaces: Enlace[] }[] = [
 export function LayoutAdmin() {
   const [abierto, setAbierto] = useState(false)
   const pendientes = useSolicitudesPendientes().data?.totalElementos ?? 0
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  const navegacion = (
+    <nav
+      aria-label="Administración"
+      className="flex flex-col gap-5 px-3 pb-6"
+      onClick={() => setAbierto(false)}
+    >
+      {GRUPOS.map((g, i) => (
+        <div key={g.titulo ?? i} className="flex flex-col gap-0.5">
+          {g.titulo && (
+            <p className="px-3 pb-1.5 text-xs font-semibold text-white/35">{g.titulo}</p>
+          )}
+          {g.enlaces.map((e) => (
+            <NavLink
+              key={e.a}
+              to={e.a}
+              end={e.fin}
+              className={({ isActive }) =>
+                cn(
+                  'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-150',
+                  isActive
+                    ? 'bg-volt text-noche'
+                    : 'text-white/65 hover:bg-white/[0.06] hover:text-white',
+                )
+              }
+            >
+              <e.icono className="size-4 shrink-0" aria-hidden />
+              <span className="flex-1">{e.texto}</span>
+              {e.a === '/admin/reservas' && pendientes > 0 && (
+                <span className="bg-acento text-noche rounded-full px-2 text-xs font-bold">
+                  {pendientes}
+                </span>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+    </nav>
+  )
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <aside
-        className={cn(
-          'bg-primario-oscuro text-white md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:overflow-y-auto',
-          !abierto && 'max-md:sticky max-md:top-0 max-md:z-30',
-        )}
-      >
-        <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-5">
-          <Link to="/admin" className="flex flex-col leading-tight">
-            <span className="font-titulo text-xl font-bold">Goltime</span>
-            <span className="text-xs text-white/60">Administración</span>
-          </Link>
-          <button
-            type="button"
-            className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white/10 md:hidden"
-            aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={abierto}
-            onClick={() => setAbierto((a) => !a)}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden
-            >
-              {abierto ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-          </button>
-        </div>
-        <nav
-          aria-label="Administración"
-          onClick={() => setAbierto(false)}
-          className={cn('flex-col gap-5 px-3 pb-6', abierto ? 'flex' : 'hidden md:flex')}
-        >
-          {GRUPOS.map((g, i) => (
-            <div key={g.titulo ?? i} className="flex flex-col gap-0.5">
-              {g.titulo && (
-                <p className="px-3 pb-1 text-[0.7rem] font-semibold tracking-wider text-white/50 uppercase">
-                  {g.titulo}
-                </p>
-              )}
-              {g.enlaces.map((e) => (
-                <NavLink
-                  key={e.a}
-                  to={e.a}
-                  end={e.fin}
-                  className={({ isActive }) =>
-                    cn(
-                      'rounded-boton flex items-center justify-between px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white',
-                      isActive && 'bg-white/15 text-white',
-                    )
-                  }
-                >
-                  {e.texto}
-                  {e.a === '/admin/reservas' && pendientes > 0 && (
-                    <span className="bg-acento text-texto rounded-full px-2 text-xs font-bold">
-                      {pendientes}
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </nav>
+    <div className="flex min-h-screen">
+      {/* Barra lateral fija en escritorio */}
+      <aside className="bg-noche sticky top-0 hidden h-screen w-64 shrink-0 [scrollbar-color:#26324a_transparent] flex-col overflow-y-auto lg:flex">
+        <Link to="/admin" className="flex items-center gap-2 px-6 pt-6 pb-7">
+          <Logo claro />
+          <span className="bg-volt/15 text-volt-vivo rounded-full px-2 py-0.5 text-xs font-bold">
+            Admin
+          </span>
+        </Link>
+        {navegacion}
       </aside>
+
+      {/* Cajón en móvil y tableta */}
+      {abierto && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div
+            className="bg-noche/50 animate-velo absolute inset-0 backdrop-blur-[2px]"
+            onClick={() => setAbierto(false)}
+            aria-hidden
+          />
+          <aside className="bg-noche animate-cajon absolute inset-y-0 left-0 flex w-72 flex-col overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between px-5 py-5">
+              <Logo claro />
+              <button
+                type="button"
+                className="presionable rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                aria-label="Cerrar menú"
+                onClick={() => setAbierto(false)}
+              >
+                <X className="size-5" aria-hidden />
+              </button>
+            </div>
+            {navegacion}
+          </aside>
+        </div>
+      )}
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-borde bg-superficie flex items-center justify-between gap-3 border-b px-4 py-2.5 md:px-8">
-          <Link to="/" className="text-texto-suave hover:text-primario text-sm font-medium">
-            ← Ver el sitio
-          </Link>
+        <BarraCarga />
+        <header className="border-borde/70 bg-superficie/85 sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-md md:px-8">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="hover:bg-tenue presionable -ml-2 rounded-full p-2 lg:hidden"
+              aria-label="Abrir menú"
+              aria-expanded={abierto}
+              onClick={() => setAbierto(true)}
+            >
+              <Menu className="size-5" aria-hidden />
+            </button>
+            <Link
+              to="/"
+              className="text-texto-suave hover:text-texto hover:bg-tenue inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
+            >
+              <ExternalLink className="size-4" aria-hidden />
+              Ver el sitio
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <BotonTema />
             <CampanaNotificaciones />
             <MenuUsuario />
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8">
-          <div className="mx-auto w-full max-w-6xl">
-            <Outlet />
+        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
+          <div key={pathname} className="animate-entrada-pagina mx-auto w-full max-w-7xl">
+            <Suspense fallback={<Cargando className="min-h-[60vh]" />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

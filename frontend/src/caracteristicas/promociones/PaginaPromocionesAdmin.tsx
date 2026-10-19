@@ -1,3 +1,4 @@
+import { Megaphone, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { useSedesAdmin } from '@/caracteristicas/sedes/consultas'
@@ -10,6 +11,8 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Modal } from '@/componentes/ui/Modal'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearDia, hoyEnBogota, sumarDias } from '@/lib/formato'
 
@@ -285,20 +288,20 @@ export function PaginaPromocionesAdmin() {
   const hoy = hoyEnBogota()
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Promociones</h1>
-        <Boton onClick={() => setEditando({ promocion: null })}>Nueva promoción</Boton>
-      </div>
-      <p className="text-texto-suave max-w-3xl text-sm">
-        Descuentos por código o automáticos. En cada reserva se aplica un solo descuento: el de
-        mayor valor entre las promociones, el código y los premios de fidelidad.
-      </p>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Promociones"
+        descripcion="Descuentos por código o automáticos. En cada reserva se aplica un solo descuento: el de mayor valor entre las promociones, el código y los premios de fidelidad."
+        acciones={
+          <Boton onClick={() => setEditando({ promocion: null })}>
+            <Plus aria-hidden />
+            Nueva promoción
+          </Boton>
+        }
+      />
       {isPending && <Cargando texto="Cargando promociones…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
-      {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">Aún no hay promociones.</Tarjeta>
-      )}
+      {data?.length === 0 && <EstadoVacio icono={Megaphone} titulo="Aún no hay promociones" />}
       <ul className="flex flex-col gap-3">
         {data?.map((p) => (
           <li key={p.id}>

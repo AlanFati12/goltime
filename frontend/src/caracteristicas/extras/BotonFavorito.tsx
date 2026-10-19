@@ -1,3 +1,5 @@
+import { Heart } from 'lucide-react'
+
 import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { mensajeDeError } from '@/lib/api'
@@ -28,12 +30,18 @@ export function BotonFavorito({ canchaId, className }: { canchaId: number; class
         )
       }
       className={cn(
-        'rounded-boton border-borde hover:bg-primario-claro inline-flex size-9 items-center justify-center border text-lg',
-        marcada ? 'text-peligro' : 'text-texto-suave',
+        'border-borde bg-superficie hover:bg-tenue presionable inline-flex size-10 items-center justify-center rounded-full border transition-colors duration-200',
+        marcada ? 'text-peligro border-peligro/30' : 'text-texto-suave',
         className,
       )}
     >
-      {marcada ? '♥' : '♡'}
+      <Heart
+        className={cn(
+          'size-4 transition-transform duration-300',
+          marcada && 'scale-110 fill-current',
+        )}
+        aria-hidden
+      />
     </button>
   )
 }

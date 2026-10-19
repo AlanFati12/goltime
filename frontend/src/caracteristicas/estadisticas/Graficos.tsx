@@ -21,7 +21,7 @@ export function GraficoIngresos({ puntos, titulo }: { puntos: PuntoSerie[]; titu
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="flex items-baseline justify-between gap-2">
-        <span className="text-lg font-semibold">{titulo}</span>
+        <span className="font-titulo text-xl font-extrabold uppercase">{titulo}</span>
         <span className="text-texto-suave text-xs">Máximo {formatearCOP(maximo)}</span>
       </figcaption>
       <div className="relative">
@@ -61,7 +61,7 @@ export function GraficoIngresos({ puntos, titulo }: { puntos: PuntoSerie[]; titu
                   width={barra}
                   height={Math.max(h, p.ingresos > 0 ? 2 : 0)}
                   rx={3}
-                  className={activo === i ? 'fill-primario-oscuro' : 'fill-primario'}
+                  className={activo === i ? 'fill-noche' : 'fill-primario'}
                 />
                 {i % etiquetaCada === 0 && (
                   <text
@@ -90,7 +90,7 @@ export function GraficoIngresos({ puntos, titulo }: { puntos: PuntoSerie[]; titu
         )}
       </div>
       <details className="text-sm">
-        <summary className="text-primario cursor-pointer">Ver como tabla</summary>
+        <summary className="text-primario cursor-pointer font-medium">Ver como tabla</summary>
         <div className="mt-2 max-h-64 overflow-auto">
           <table className="w-full text-left">
             <thead>
@@ -130,7 +130,7 @@ export function MapaHorasPico({ datos }: { datos: HorasPico }) {
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="flex items-baseline justify-between gap-2">
-        <span className="text-lg font-semibold">Horas pico</span>
+        <span className="font-titulo text-xl font-extrabold uppercase">Horas pico</span>
         <span className="text-texto-suave text-xs" role="status">
           {activa
             ? `${DIAS[activa.dia - 1]} ${activa.hora}:00 · ${activa.n} reservas`
@@ -168,7 +168,7 @@ export function MapaHorasPico({ datos }: { datos: HorasPico }) {
                         key={h}
                         onMouseEnter={() => setActiva({ dia: i + 1, hora: h, n })}
                         onMouseLeave={() => setActiva(null)}
-                        className="bg-primario size-7 rounded-sm text-center"
+                        className="bg-primario size-7 rounded text-center"
                         style={{ opacity: n === 0 ? 0.07 : 0.25 + 0.75 * (n / datos.maximo) }}
                         title={`${d} ${h}:00 · ${n} reservas`}
                       >

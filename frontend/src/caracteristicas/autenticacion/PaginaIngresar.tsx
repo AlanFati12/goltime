@@ -6,11 +6,11 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo, Casilla } from '@/componentes/ui/Campo'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { esquemaIngreso, type DatosIngreso } from '@/lib/validaciones'
 
 import { useSesion } from './almacenSesion'
+import { TarjetaAcceso } from './TarjetaAcceso'
 import { ingresar, rutaInicial } from './servicioAutenticacion'
 
 export function PaginaIngresar() {
@@ -41,11 +41,18 @@ export function PaginaIngresar() {
   })
 
   return (
-    <Tarjeta className="mx-auto w-full max-w-md">
-      <h1 className="mb-1 text-2xl font-bold">Ingresar</h1>
-      <p className="text-texto-suave mb-5 text-sm">
-        Accede para reservar y gestionar tus partidos.
-      </p>
+    <TarjetaAcceso
+      titulo="Bienvenido de nuevo"
+      descripcion="Ingresa para reservar y gestionar tus partidos."
+      pie={
+        <>
+          ¿No tienes cuenta?{' '}
+          <Link to="/registro" className="enlace">
+            Regístrate gratis
+          </Link>
+        </>
+      }
+    >
       <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
         {error && <Alerta tipo="error">{error}</Alerta>}
         <Campo
@@ -64,20 +71,20 @@ export function PaginaIngresar() {
         />
         <div className="flex items-center justify-between">
           <Casilla etiqueta="Recordarme" {...register('recordarme')} />
-          <Link to="/olvide-clave" className="text-primario text-sm underline">
+          <Link to="/olvide-clave" className="enlace text-sm">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
-        <Boton type="submit" disabled={isSubmitting}>
+        <Boton
+          type="submit"
+          variante="volt"
+          tamano="lg"
+          disabled={isSubmitting}
+          className="mt-1 w-full"
+        >
           {isSubmitting ? 'Ingresando…' : 'Ingresar'}
         </Boton>
       </form>
-      <p className="text-texto-suave mt-5 text-center text-sm">
-        ¿No tienes cuenta?{' '}
-        <Link to="/registro" className="text-primario font-medium underline">
-          Regístrate
-        </Link>
-      </p>
-    </Tarjeta>
+    </TarjetaAcceso>
   )
 }

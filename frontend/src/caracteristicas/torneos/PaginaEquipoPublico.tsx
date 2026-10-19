@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 
 import { usePerfilEquipo } from './consultas'
@@ -13,27 +13,39 @@ export function PaginaEquipoPublico() {
   const id = Number(useParams().id)
   const { data, isPending, isError, error } = usePerfilEquipo(id)
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       {isPending && <Cargando texto="Cargando equipo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="flex items-center gap-3 text-3xl font-bold">
+          <header className="bg-noche relative isolate flex items-end gap-5 overflow-hidden rounded-[2rem] p-6 text-white sm:p-10">
             <span
-              className="size-6 rounded-full border"
-              style={{ backgroundColor: data.equipo.color ?? 'transparent' }}
+              className="absolute -top-20 -right-20 -z-10 size-72 rounded-full opacity-40 blur-3xl"
+              style={{ backgroundColor: data.equipo.color ?? 'var(--color-volt)' }}
               aria-hidden="true"
             />
-            {data.equipo.nombre}
-          </h1>
+            <span
+              className="size-16 shrink-0 rounded-2xl ring-4 ring-white/15 sm:size-20"
+              style={{ backgroundColor: data.equipo.color ?? 'var(--color-volt)' }}
+              aria-hidden="true"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white/60">Equipo</p>
+              <h1 className="text-[clamp(2.4rem,6vw,4.5rem)] leading-[0.9] font-extrabold uppercase">
+                {data.equipo.nombre}
+              </h1>
+            </div>
+          </header>
           <div className="grid gap-4 md:grid-cols-2">
-            <Tarjeta className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">Plantilla</h2>
-              <ul className="flex flex-col gap-1 text-sm">
+            <Tarjeta className="flex flex-col">
+              <TituloTarjeta titulo="Plantilla" className="mb-2" />
+              <ul className="divide-borde/70 flex flex-col divide-y text-sm">
                 {data.plantilla.map((j) => (
-                  <li key={j.id}>
-                    <span className="text-texto-suave inline-block w-8">{j.dorsal ?? ''}</span>
-                    <Link to={`/jugadores/${j.id}`} className="font-medium hover:underline">
+                  <li key={j.id} className="flex items-center gap-3 py-2">
+                    <span className="bg-noche text-volt-vivo font-titulo inline-flex size-9 items-center justify-center rounded-full text-base font-extrabold tabular-nums">
+                      {j.dorsal ?? '–'}
+                    </span>
+                    <Link to={`/jugadores/${j.id}`} className="hover:text-primario font-medium">
                       {j.nombre}
                     </Link>
                     {j.posicion && <span className="text-texto-suave"> · {j.posicion}</span>}
@@ -41,12 +53,12 @@ export function PaginaEquipoPublico() {
                 ))}
               </ul>
             </Tarjeta>
-            <Tarjeta className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">Torneos</h2>
-              <ul className="flex flex-col gap-1 text-sm">
+            <Tarjeta className="flex flex-col self-start">
+              <TituloTarjeta titulo="Torneos" className="mb-2" />
+              <ul className="divide-borde/70 flex flex-col divide-y text-sm">
                 {data.torneos.map((t) => (
-                  <li key={t.torneoId}>
-                    <Link to={`/torneos/${t.torneoId}`} className="font-medium hover:underline">
+                  <li key={t.torneoId} className="py-2">
+                    <Link to={`/torneos/${t.torneoId}`} className="hover:text-primario font-medium">
                       {t.nombre}
                     </Link>
                     <span className="text-texto-suave"> · {ETIQUETA_ESTADO_TORNEO[t.estado]}</span>
@@ -57,7 +69,7 @@ export function PaginaEquipoPublico() {
           </div>
           {data.partidos.length > 0 && (
             <section className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">Partidos recientes y próximos</h2>
+              <h2 className="text-3xl font-extrabold uppercase">Partidos recientes y próximos</h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {data.partidos.map((p) => (
                   <TarjetaPartido

@@ -1,5 +1,7 @@
+import { MarcaGoltime } from '@/componentes/layout/Logo'
 import { cn } from '@/lib/utils'
 
+/** Indicador de carga con la marca: las agujas del reloj giran dentro del círculo central. */
 export function Cargando({
   texto = 'Cargando…',
   className,
@@ -10,13 +12,22 @@ export function Cargando({
   return (
     <div
       role="status"
-      className={cn('text-texto-suave flex items-center gap-2 py-6 text-sm', className)}
+      className={cn(
+        'text-texto-suave flex flex-col items-center justify-center gap-3 py-14 text-sm font-medium',
+        className,
+      )}
     >
-      <span
-        className="border-primario size-4 animate-spin rounded-full border-2 border-t-transparent"
-        aria-hidden
-      />
+      <MarcaGoltime animado className="size-10" />
       {texto}
+    </div>
+  )
+}
+
+/** Bloque gris animado que ocupa el lugar del contenido mientras llega. */
+export function Esqueleto({ className }: { className?: string }) {
+  return (
+    <div aria-hidden className={cn('bg-tenue relative overflow-hidden rounded-xl', className)}>
+      <div className="animate-barrido oscuro:via-white/5 absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/70 to-transparent motion-reduce:hidden" />
     </div>
   )
 }

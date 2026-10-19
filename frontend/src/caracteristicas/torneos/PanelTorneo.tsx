@@ -1,7 +1,9 @@
+import { CalendarDays, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
@@ -86,17 +88,21 @@ export function PanelTorneo({
             <li key={i.id}>
               <Tarjeta className="flex items-center gap-3 p-4">
                 <span
-                  className={cn('size-4 shrink-0 rounded-full border')}
-                  style={{ backgroundColor: i.color ?? 'transparent' }}
+                  className={cn(
+                    'ring-borde ring-offset-superficie size-9 shrink-0 rounded-full ring-1 ring-offset-2',
+                  )}
+                  style={{ backgroundColor: i.color ?? 'var(--color-noche)' }}
                   aria-hidden="true"
                 />
-                <span className="font-medium">{i.equipo}</span>
+                <span className="font-semibold">{i.equipo}</span>
                 <span className="text-texto-suave ml-auto text-xs">{i.jugadores} jugadores</span>
               </Tarjeta>
             </li>
           ))}
           {detalle.inscripciones.length === 0 && (
-            <li className="text-texto-suave text-sm">Aún no hay equipos inscritos.</li>
+            <li className="col-span-full">
+              <EstadoVacio icono={Users} titulo="Aún no hay equipos inscritos" />
+            </li>
           )}
         </ul>
       )}
@@ -114,9 +120,11 @@ function Calendario({
   const jugables = partidos.filter((p) => p.estado !== 'BYE')
   if (jugables.length === 0) {
     return (
-      <p className="text-texto-suave text-sm">
-        Aún no hay partidos. El fixture se publica al generarlo.
-      </p>
+      <EstadoVacio
+        icono={CalendarDays}
+        titulo="Aún no hay partidos"
+        descripcion="El fixture se publica al generarlo."
+      />
     )
   }
   const porRonda = [
@@ -129,7 +137,7 @@ function Calendario({
     <div className="flex flex-col gap-6">
       {porRonda.map(([clave, lista]) => (
         <section key={clave} className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-2xl font-extrabold uppercase">
             {lista[0].nombreRonda ?? `Ronda ${lista[0].ronda}`}
           </h3>
           <div className="grid gap-3 md:grid-cols-2">

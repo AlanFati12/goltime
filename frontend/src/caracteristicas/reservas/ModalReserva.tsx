@@ -1,3 +1,4 @@
+import { CalendarClock } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -82,13 +83,19 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
   return (
     <Modal abierto titulo="Solicitar reserva" alCerrar={alCerrar}>
       <div className="flex flex-col gap-4">
-        <div className="bg-primario-claro rounded-boton p-3 text-sm">
-          <p className="font-semibold">
-            {cancha.sedeNombre} · {cancha.nombre} ({cancha.modalidad})
-          </p>
-          <p>
-            {formatearFechaHora(slot.inicio)} · {rangoHorario(slot.inicio, fin)}
-          </p>
+        <div className="bg-noche flex items-start gap-4 rounded-2xl p-5 text-white">
+          <span className="bg-volt text-noche flex size-11 shrink-0 items-center justify-center rounded-full">
+            <CalendarClock className="size-5" aria-hidden />
+          </span>
+          <div>
+            <p className="font-titulo text-2xl leading-none font-extrabold uppercase">
+              {cancha.nombre} · {cancha.modalidad}
+            </p>
+            <p className="mt-1 text-white/60">{cancha.sedeNombre}</p>
+            <p className="text-volt-vivo mt-2 font-semibold capitalize">
+              {formatearFechaHora(slot.inicio)} · {rangoHorario(slot.inicio, fin)}
+            </p>
+          </div>
         </div>
 
         <CampoSelect
@@ -107,12 +114,15 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
           {isFetching && <Cargando texto="Calculando precio…" className="py-1" />}
           {falloCotizacion && <Alerta tipo="error">{mensajeDeError(errorCotizacion)}</Alerta>}
           {cotizacion && !isFetching && (
-            <div>
-              <p className="text-primario-oscuro text-2xl font-bold">
-                {formatearCOP(cotizacion.total)}
-              </p>
+            <div className="bg-volt-claro animate-velo rounded-2xl px-5 py-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-primario-oscuro font-semibold">Total</p>
+                <p className="text-texto font-titulo cifras text-4xl leading-none font-extrabold">
+                  {formatearCOP(cotizacion.total)}
+                </p>
+              </div>
               {cotizacion.tramos.length > 1 && (
-                <p className="text-texto-suave text-xs">
+                <p className="text-texto-suave text-right text-xs">
                   Incluye {cotizacion.tramos.length} franjas de precio.
                 </p>
               )}
@@ -146,11 +156,12 @@ export function ModalReserva({ cancha, slot, alCerrar }: PropsModal) {
         </Alerta>
         {error && <Alerta tipo="error">{error}</Alerta>}
 
-        <div className="flex justify-end gap-2">
+        <div className="border-borde -mx-6 -mb-6 flex justify-end gap-2 border-t px-6 py-4">
           <Boton variante="secundario" onClick={alCerrar}>
             Cancelar
           </Boton>
           <Boton
+            variante="volt"
             onClick={enviar}
             disabled={
               solicitar.isPending ||

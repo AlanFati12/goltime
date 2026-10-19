@@ -13,7 +13,7 @@ function Cruce({ p, ruta }: { p: Partido; ruta: (p: Partido) => string }) {
   return (
     <Link
       to={ruta(p)}
-      className="border-borde bg-superficie rounded-boton hover:border-primario flex w-48 flex-col border text-sm shadow-sm"
+      className="border-borde bg-superficie hover:border-volt flex w-56 flex-col overflow-hidden rounded-2xl border text-sm transition-[border-color,transform] duration-200 hover:-translate-y-0.5"
       aria-label={`${nombreLado(p.local)} contra ${nombreLado(p.visitante)}: ${marcador(p)}`}
     >
       {filas.map((f, i) => (
@@ -24,13 +24,13 @@ function Cruce({ p, ruta }: { p: Partido; ruta: (p: Partido) => string }) {
             i === 0 && 'border-borde border-b',
             f.lado?.inscripcionId &&
               p.ganadorInscripcionId === f.lado.inscripcionId &&
-              'bg-primario-claro font-bold',
+              'bg-noche [&>span:last-child]:text-volt-vivo font-bold text-white',
           )}
         >
           <span className="truncate">
             {p.descanso && i === 1 ? 'Descansa' : nombreLado(f.lado)}
           </span>
-          <span>{f.goles ?? ''}</span>
+          <span className="font-titulo text-base font-extrabold tabular-nums">{f.goles ?? ''}</span>
         </span>
       ))}
       {textoPenales(p) && (
@@ -60,9 +60,7 @@ export function Llaves({ partidos, ruta }: { partidos: Partido[]; ruta: (p: Part
             className="flex shrink-0 flex-col gap-2"
             aria-label={lista[0].nombreRonda ?? `Ronda ${ronda}`}
           >
-            <h3 className="text-texto-suave text-center text-xs font-semibold tracking-wide uppercase">
-              {lista[0].nombreRonda}
-            </h3>
+            <h3 className="text-center text-lg font-extrabold uppercase">{lista[0].nombreRonda}</h3>
             <div className="flex flex-1 flex-col justify-around gap-4">
               {lista
                 .sort((a, b) => a.numeroLlave - b.numeroLlave)
@@ -75,9 +73,7 @@ export function Llaves({ partidos, ruta }: { partidos: Partido[]; ruta: (p: Part
       </div>
       {tercero.map((p) => (
         <section key={p.id} className="flex flex-col gap-2">
-          <h3 className="text-texto-suave text-xs font-semibold tracking-wide uppercase">
-            Tercer puesto
-          </h3>
+          <h3 className="text-lg font-extrabold uppercase">Tercer puesto</h3>
           <Cruce p={p} ruta={ruta} />
         </section>
       ))}

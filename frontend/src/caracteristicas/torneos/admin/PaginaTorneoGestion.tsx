@@ -1,3 +1,4 @@
+import { ChevronDown, Eye } from 'lucide-react'
 import { useAccionesSolicitud } from '@/caracteristicas/extras/consultas'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -11,23 +12,63 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { MenuDesplegable } from '@/componentes/ui/MenuDesplegable'
+import { estilosBoton } from '@/componentes/ui/estilosBoton'
 import { estiloItemMenu } from '@/componentes/ui/estilosMenu'
 import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Modal } from '@/componentes/ui/Modal'
 import { ModalMotivo } from '@/componentes/ui/ModalMotivo'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 
 import {
   useAccionesPlantilla,
   useAccionesTorneo,
+  useDetalleSolicitud,
   useEquipos,
   usePlantillaTorneo,
   useTorneo,
+  type DatosEdicionJugador,
 } from '../consultas'
 import { PanelTorneo } from '../PanelTorneo'
 import { ResumenTorneo } from '../PaginaTorneoDetalle'
 import type { DetalleTorneo, EstadoTorneo, Inscripcion } from '../tipos'
+import { ListaJugadores } from './Jugadores'
+import { ListaPartidosAdmin } from './ListaPartidosAdmin'
+
+const datosNuevo = (d: DatosEdicionJugador) => ({
+  nombres: d.nombres.trim(),
+  apellidos: d.apellidos.trim(),
+  documento: d.documento.trim() || undefined,
+  posicion: d.posicion.trim() || undefined,
+  dorsal: d.dorsal,
+})
+
+/** Plantilla del equipo en este torneo, editable mientras el torneo no haya terminado. */
+function PlantillaEditable({
+  torneoId,
+  inscripcionId,
+  editable,
+}: {
+  torneoId: number
+  inscripcionId: number
+  editable: boolean
+}) {
+  const plantilla = usePlantillaTorneo(torneoId, inscripcionId)
+  const { agregar, quitar, editar } = useAccionesPlantilla(torneoId, inscripcionId)
+  if (plantilla.isPending) return <Cargando texto="Cargando plantilla…" />
+  if (plantilla.isError) return <Alerta tipo="error">{mensajeDeError(plantilla.error)}</Alerta>
+  return (
+    <ListaJugadores
+      jugadores={plantilla.data}
+      ocupado={agregar.isPending || quitar.isPending || editar.isPending}
+      alEditar={
+        editable ? (jugadorId, datos) => editar.mutateAsync({ jugadorId, datos }) : undefined
+      }
+      alQuitar={editable ? (jugadorId) => quitar.mutateAsync(jugadorId) : undefined}
+      alAgregar={editable ? (d) => agregar.mutateAsync(datosNuevo(d)) : undefined}
+    />
+  )
+}
 
 function ModalPlantilla({
   torneoId,
@@ -40,77 +81,167 @@ function ModalPlantilla({
   editable: boolean
   alCerrar: () => void
 }) {
-  const plantilla = usePlantillaTorneo(torneoId, inscripcion.id)
-  const { agregar, quitar } = useAccionesPlantilla(torneoId, inscripcion.id)
-  const [nombres, setNombres] = useState('')
-  const [apellidos, setApellidos] = useState('')
-  const [dorsal, setDorsal] = useState('')
-  const error = (e: unknown) => avisar.error(mensajeDeError(e))
-
   return (
-    <Modal abierto titulo={`Plantilla de ${inscripcion.equipo}`} alCerrar={alCerrar}>
+    <Modal abierto ancho="lg" titulo={`Plantilla de ${inscripcion.equipo}`} alCerrar={alCerrar}>
       <div className="flex flex-col gap-4">
-        {plantilla.isPending && <Cargando texto="Cargando plantilla…" />}
-        <ul className="flex flex-col gap-1 text-sm">
-          {plantilla.data?.map((j) => (
-            <li key={j.id} className="border-borde flex items-center justify-between border-b py-1">
-              <span>
-                <span className="text-texto-suave inline-block w-8">{j.dorsal ?? ''}</span>
-                {j.nombreCompleto}
-              </span>
-              {editable && (
-                <Boton
-                  tamano="sm"
-                  variante="fantasma"
-                  onClick={() => quitar.mutate(j.id, { onError: error })}
-                >
-                  Quitar
-                </Boton>
-              )}
-            </li>
-          ))}
-        </ul>
-        {editable && (
-          <div className="grid grid-cols-[1fr_1fr_5rem_auto] items-end gap-2">
-            <Campo
-              etiqueta="Nombres"
-              value={nombres}
-              onChange={(e) => setNombres(e.target.value)}
-            />
-            <Campo
-              etiqueta="Apellidos"
-              value={apellidos}
-              onChange={(e) => setApellidos(e.target.value)}
-            />
-            <Campo
-              etiqueta="Dorsal"
-              inputMode="numeric"
-              value={dorsal}
-              onChange={(e) => setDorsal(e.target.value.replace(/\D/g, '').slice(0, 2))}
-            />
-            <Boton
-              disabled={!nombres.trim() || !apellidos.trim() || agregar.isPending}
-              onClick={() =>
-                agregar.mutate(
-                  { nombres, apellidos, dorsal: dorsal === '' ? null : Number(dorsal) },
-                  {
-                    onSuccess: () => {
-                      setNombres('')
-                      setApellidos('')
-                      setDorsal('')
-                    },
-                    onError: error,
-                  },
-                )
-              }
-            >
-              Agregar
-            </Boton>
-          </div>
-        )}
+        <p className="text-texto-suave text-sm">
+          Cambios solo para este torneo. Los datos personales del jugador (nombre, documento) se
+          corrigen en todos sus equipos.
+        </p>
+        <PlantillaEditable torneoId={torneoId} inscripcionId={inscripcion.id} editable={editable} />
         <div className="flex justify-end">
           <Boton variante="secundario" onClick={alCerrar}>
             Cerrar
+          </Boton>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+/** Todo lo de una solicitud para decidir: equipo, responsable y plantilla (que se puede corregir antes de aprobar). */
+function ModalRevisarSolicitud({
+  detalle,
+  inscripcion,
+  alCerrar,
+}: {
+  detalle: DetalleTorneo
+  inscripcion: Inscripcion
+  alCerrar: () => void
+}) {
+  const t = detalle.torneo
+  const solicitud = useDetalleSolicitud(t.id, inscripcion.id)
+  const { aprobar, rechazar } = useAccionesSolicitud()
+  const [rechazando, setRechazando] = useState(false)
+  const error = (e: unknown) => avisar.error(mensajeDeError(e))
+  const d = solicitud.data
+  const faltan = d ? Math.max(0, t.jugadoresPorEquipo - d.jugadores.length) : 0
+  const conDocumento = d?.jugadores.filter((j) => j.documento).length ?? 0
+
+  if (rechazando) {
+    return (
+      <ModalMotivo
+        titulo="Rechazar solicitud"
+        descripcion={`La inscripción de ${inscripcion.equipo} no será aprobada y su responsable recibirá el motivo.`}
+        textoConfirmar="Rechazar"
+        alConfirmar={async (motivo) => {
+          await rechazar
+            .mutateAsync({ torneoId: t.id, inscripcionId: inscripcion.id, motivo })
+            .then(() => {
+              avisar.exito('Solicitud rechazada.')
+              alCerrar()
+            }, error)
+        }}
+        alCerrar={() => setRechazando(false)}
+      />
+    )
+  }
+
+  return (
+    <Modal abierto ancho="lg" titulo={`Solicitud de ${inscripcion.equipo}`} alCerrar={alCerrar}>
+      <div className="flex flex-col gap-5">
+        {solicitud.isPending && <Cargando texto="Cargando solicitud…" />}
+        {solicitud.isError && <Alerta tipo="error">{mensajeDeError(solicitud.error)}</Alerta>}
+        {d && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="border-borde rounded-boton border p-4">
+                <p className="text-texto-suave mb-2 text-xs font-medium tracking-wide uppercase">
+                  Equipo
+                </p>
+                <p className="flex items-center gap-2 font-semibold">
+                  <span
+                    className="ring-borde size-4 rounded ring-1"
+                    style={{ backgroundColor: d.equipo.color ?? 'transparent' }}
+                    aria-hidden
+                  />
+                  {d.equipo.nombre}
+                </p>
+                <dl className="text-texto-suave mt-2 flex flex-col gap-1 text-sm">
+                  <div>
+                    <dt className="inline">Delegado: </dt>
+                    <dd className="text-texto inline">{d.equipo.delegadoNombre ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline">Teléfono: </dt>
+                    <dd className="text-texto inline">{d.equipo.delegadoTelefono ?? '—'}</dd>
+                  </div>
+                </dl>
+              </div>
+              <div className="border-borde rounded-boton border p-4">
+                <p className="text-texto-suave mb-2 text-xs font-medium tracking-wide uppercase">
+                  Quién lo solicita
+                </p>
+                {d.responsable ? (
+                  <>
+                    <p className="font-semibold">{d.responsable.nombre}</p>
+                    <p className="text-texto-suave mt-1 text-sm break-all">
+                      {d.responsable.correo}
+                    </p>
+                    <p className="text-texto-suave text-sm">
+                      {d.responsable.telefono ?? 'Sin celular'}
+                    </p>
+                    {!d.responsable.activo && (
+                      <Insignia tono="rojo" className="mt-2">
+                        Cuenta desactivada
+                      </Insignia>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-texto-suave text-sm">Sin cliente responsable.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Insignia tono={faltan > 0 ? 'ambar' : 'verde'}>
+                {d.jugadores.length} jugadores (mínimo {t.jugadoresPorEquipo})
+              </Insignia>
+              <Insignia tono={conDocumento === d.jugadores.length ? 'verde' : 'gris'}>
+                {conDocumento} de {d.jugadores.length} con documento
+              </Insignia>
+              {t.cupoEquipos != null && (
+                <Insignia>
+                  Cupos: {detalle.inscripciones.length} de {t.cupoEquipos}
+                </Insignia>
+              )}
+            </div>
+            {faltan > 0 && (
+              <Alerta tipo="aviso">
+                Le faltan {faltan} jugador(es) para el mínimo del torneo. Puedes agregarlos aquí
+                antes de aprobar.
+              </Alerta>
+            )}
+
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Plantilla</h3>
+              <PlantillaEditable torneoId={t.id} inscripcionId={inscripcion.id} editable />
+            </div>
+          </>
+        )}
+        <div className="border-borde -mx-6 -mb-6 flex flex-wrap justify-end gap-2 border-t px-6 py-4">
+          <Boton variante="secundario" onClick={alCerrar}>
+            Cerrar
+          </Boton>
+          <Boton variante="peligro" disabled={!d} onClick={() => setRechazando(true)}>
+            Rechazar
+          </Boton>
+          <Boton
+            disabled={!d || aprobar.isPending}
+            onClick={() =>
+              aprobar.mutate(
+                { torneoId: t.id, inscripcionId: inscripcion.id },
+                {
+                  onSuccess: () => {
+                    avisar.exito(`${inscripcion.equipo} quedó inscrito.`)
+                    alCerrar()
+                  },
+                  onError: error,
+                },
+              )
+            }
+          >
+            Aprobar inscripción
           </Boton>
         </div>
       </div>
@@ -133,7 +264,7 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-xl font-extrabold uppercase">
         Equipos inscritos ({detalle.inscripciones.length}
         {t.cupoEquipos ? ` de ${t.cupoEquipos}` : ''})
       </h2>
@@ -141,7 +272,7 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
         {detalle.inscripciones.map((i) => (
           <li
             key={i.id}
-            className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
+            className="border-borde/70 flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0 last:pb-0"
           >
             <span className="flex items-center gap-2">
               <span
@@ -238,54 +369,45 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
 }
 
 function SeccionSolicitudes({ detalle }: { detalle: DetalleTorneo }) {
-  const { aprobar, rechazar } = useAccionesSolicitud()
-  const [rechazando, setRechazando] = useState<Inscripcion | null>(null)
+  const [revisando, setRevisando] = useState<Inscripcion | null>(null)
   const solicitudes = detalle.solicitudes ?? []
   if (solicitudes.length === 0) return null
-  const error = (e: unknown) => avisar.error(mensajeDeError(e))
   return (
-    <Tarjeta className="border-alerta flex flex-col gap-3 border-2">
-      <h2 className="text-lg font-semibold">Solicitudes de inscripción ({solicitudes.length})</h2>
+    <Tarjeta className="border-alerta/40 bg-alerta-claro/40 flex flex-col gap-3">
+      <TituloTarjeta
+        className="mb-0"
+        titulo={`Solicitudes de inscripción (${solicitudes.length})`}
+        descripcion="Revisa el equipo, quién lo inscribe y sus jugadores antes de aprobar o rechazar."
+      />
       <ul className="flex flex-col gap-2">
         {solicitudes.map((s) => (
           <li
             key={s.id}
-            className="border-borde flex flex-wrap items-center justify-between gap-2 border-b pb-2"
+            className="border-borde/70 flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0 last:pb-0"
           >
-            <span>
-              <span className="font-medium">{s.equipo}</span>{' '}
-              <Insignia>{s.jugadores} jugadores</Insignia>
+            <span className="flex items-center gap-2">
+              <span
+                className="ring-borde size-3 rounded-full ring-1"
+                style={{ backgroundColor: s.color ?? 'transparent' }}
+                aria-hidden="true"
+              />
+              <span className="font-medium">{s.equipo}</span>
+              <Insignia tono={s.jugadores < detalle.torneo.jugadoresPorEquipo ? 'ambar' : 'gris'}>
+                {s.jugadores} jugadores
+              </Insignia>
             </span>
-            <span className="flex gap-2">
-              <Boton
-                tamano="sm"
-                onClick={() =>
-                  aprobar.mutate(
-                    { torneoId: detalle.torneo.id, inscripcionId: s.id },
-                    { onSuccess: () => avisar.exito('Equipo inscrito.'), onError: error },
-                  )
-                }
-              >
-                Aprobar
-              </Boton>
-              <Boton tamano="sm" variante="secundario" onClick={() => setRechazando(s)}>
-                Rechazar
-              </Boton>
-            </span>
+            <Boton tamano="sm" onClick={() => setRevisando(s)}>
+              <Eye aria-hidden />
+              Revisar
+            </Boton>
           </li>
         ))}
       </ul>
-      {rechazando && (
-        <ModalMotivo
-          titulo="Rechazar solicitud"
-          descripcion={`La inscripción de ${rechazando.equipo} no será aprobada y su responsable recibirá el motivo.`}
-          textoConfirmar="Rechazar"
-          alConfirmar={async (motivo) => {
-            await rechazar
-              .mutateAsync({ torneoId: detalle.torneo.id, inscripcionId: rechazando.id, motivo })
-              .then(() => setRechazando(null), error)
-          }}
-          alCerrar={() => setRechazando(null)}
+      {revisando && (
+        <ModalRevisarSolicitud
+          detalle={detalle}
+          inscripcion={revisando}
+          alCerrar={() => setRevisando(null)}
         />
       )}
     </Tarjeta>
@@ -302,7 +424,7 @@ function SeccionFixture({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Fixture</h2>
+      <h2 className="text-xl font-extrabold uppercase">Fixture</h2>
       <p className="text-texto-suave text-sm">
         {hay
           ? `${detalle.partidosTotales} partidos generados, ${detalle.partidosJugados} jugados.`
@@ -386,15 +508,13 @@ export function PaginaTorneoGestion() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link to="/admin/torneos" className="text-primario text-sm hover:underline">
-        ← Torneos
-      </Link>
       {isPending && <Cargando texto="Cargando torneo…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
           <EncabezadoPagina
             titulo={data.torneo.nombre}
+            volver={{ a: '/admin/torneos', texto: 'Torneos' }}
             acciones={
               <>
                 {ACCIONES[data.torneo.estado]
@@ -411,7 +531,13 @@ export function PaginaTorneoGestion() {
                 {!terminado && (
                   <MenuDesplegable
                     etiqueta="Más acciones del torneo"
-                    boton={<span className="px-2 text-sm font-medium">Más ▾</span>}
+                    claseBoton={estilosBoton({ variante: 'secundario' })}
+                    boton={
+                      <>
+                        Más
+                        <ChevronDown aria-hidden />
+                      </>
+                    }
                   >
                     <Link
                       role="menuitem"
@@ -457,9 +583,13 @@ export function PaginaTorneoGestion() {
           {pestana === 'fixture' && <SeccionFixture detalle={data} />}
           {pestana === 'partidos' && (
             <>
-              <p className="text-texto-suave text-sm">
-                Abre un partido para programarlo, registrar el resultado y sus eventos.
-              </p>
+              {data.torneo.estado !== 'EN_CURSO' && data.partidosTotales > 0 && !terminado && (
+                <Alerta tipo="info">
+                  Para cargar resultados, goles y tarjetas, inicia el torneo con el botón «Iniciar
+                  torneo» de arriba.
+                </Alerta>
+              )}
+              <ListaPartidosAdmin torneoId={id} enCurso={data.torneo.estado === 'EN_CURSO'} />
               <PanelTorneo detalle={data} admin />
             </>
           )}

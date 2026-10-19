@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 
 import { useEstadisticas } from './consultas'
+import { IconoTarjeta } from './IconoEvento'
+import { cn } from '@/lib/utils'
 
 function Lista({
   titulo,
@@ -12,25 +15,46 @@ function Lista({
 }: {
   titulo: string
   vacio: string
-  filas: { clave: number; jugadorId: number; jugador: string; equipo: string; valor: string }[]
+  filas: { clave: number; jugadorId: number; jugador: string; equipo: string; valor: ReactNode }[]
 }) {
   return (
     <Tarjeta className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold">{titulo}</h3>
+      <h3 className="text-2xl font-extrabold uppercase">{titulo}</h3>
       {filas.length === 0 ? (
         <p className="text-texto-suave text-sm">{vacio}</p>
       ) : (
         <ol className="flex flex-col gap-1 text-sm">
           {filas.map((f, i) => (
-            <li key={f.clave} className="flex items-center justify-between gap-2">
-              <span>
-                <span className="text-texto-suave mr-2 inline-block w-5">{i + 1}.</span>
-                <Link to={`/jugadores/${f.jugadorId}`} className="font-medium hover:underline">
+            <li
+              key={f.clave}
+              className={cn(
+                'flex items-center justify-between gap-2 rounded-xl px-3 py-2',
+                i === 0 &&
+                  'bg-noche [&_a:hover]:text-volt-vivo text-white [&_.text-texto-suave]:text-white/55',
+              )}
+            >
+              <span className="min-w-0">
+                <span
+                  className={cn(
+                    'font-titulo mr-2 inline-block w-5 text-lg font-extrabold',
+                    i === 0 ? 'text-volt-vivo' : 'text-texto-suave',
+                  )}
+                >
+                  {i + 1}
+                </span>
+                <Link to={`/jugadores/${f.jugadorId}`} className="hover:text-primario font-medium">
                   {f.jugador}
                 </Link>
                 <span className="text-texto-suave"> · {f.equipo}</span>
               </span>
-              <span className="font-bold">{f.valor}</span>
+              <span
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums',
+                  i === 0 ? 'bg-volt text-noche' : 'bg-tenue',
+                )}
+              >
+                {f.valor}
+              </span>
             </li>
           ))}
         </ol>
@@ -82,7 +106,12 @@ export function PanelEstadisticas({
           jugadorId: g.jugadorId,
           jugador: g.jugador,
           equipo: g.equipo,
-          valor: `🟨 ${g.amarillas}  🟥 ${g.rojas}`,
+          valor: (
+            <>
+              <IconoTarjeta className="h-3 w-2.5" /> {g.amarillas}
+              <IconoTarjeta roja className="ml-1 h-3 w-2.5" /> {g.rojas}
+            </>
+          ),
         }))}
       />
     </div>

@@ -12,7 +12,8 @@ import { Campo } from '@/componentes/ui/Campo'
 import { IndicadorClave } from '@/componentes/ui/IndicadorClave'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Insignia } from '@/componentes/ui/Insignia'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { api, mensajeDeError } from '@/lib/api'
 import {
   esquemaCambioClave,
@@ -49,7 +50,7 @@ function FormularioDatos({ usuario }: { usuario: Usuario }) {
 
   return (
     <Tarjeta>
-      <h2 className="mb-4 text-lg font-semibold">Mis datos</h2>
+      <TituloTarjeta titulo="Mis datos" descripcion="Así te verán los administradores." />
       <form
         onSubmit={handleSubmit((d) => guardar.mutate(d))}
         noValidate
@@ -116,10 +117,10 @@ function FormularioClave() {
 
   return (
     <Tarjeta>
-      <h2 className="mb-1 text-lg font-semibold">Cambiar contraseña</h2>
-      <p className="text-texto-suave mb-4 text-sm">
-        Al cambiarla se cerrarán tus sesiones en todos los dispositivos.
-      </p>
+      <TituloTarjeta
+        titulo="Cambiar contraseña"
+        descripcion="Al cambiarla se cerrarán tus sesiones en todos los dispositivos."
+      />
       <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
         {error && <Alerta tipo="error">{error}</Alerta>}
         <Campo
@@ -157,13 +158,15 @@ function FormularioClave() {
 export function PaginaPerfil() {
   const usuario = useSesion((s) => s.usuario)!
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold sm:text-3xl">Mi perfil</h1>
-        <Insignia tono={usuario.correoVerificado ? 'verde' : 'ambar'}>
-          {usuario.correoVerificado ? 'Correo verificado' : 'Correo sin verificar'}
-        </Insignia>
-      </div>
+    <div className="flex max-w-2xl flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Mi perfil"
+        acciones={
+          <Insignia tono={usuario.correoVerificado ? 'verde' : 'ambar'}>
+            {usuario.correoVerificado ? 'Correo verificado' : 'Correo sin verificar'}
+          </Insignia>
+        }
+      />
       <FormularioDatos usuario={usuario} />
       <FormularioClave />
     </div>

@@ -17,13 +17,13 @@ export function Interruptor({ activo, alCambiar, etiqueta, deshabilitado }: Prop
       disabled={deshabilitado}
       onClick={() => alCambiar(!activo)}
       className={cn(
-        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50',
-        activo ? 'bg-primario' : 'bg-borde',
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50',
+        activo ? 'bg-primario' : 'bg-texto-suave/35',
       )}
     >
       <span
         className={cn(
-          'inline-block size-5 rounded-full bg-white shadow transition-transform',
+          'inline-block size-5 rounded-full bg-white shadow transition-transform duration-300 ease-[var(--ease-salida)]',
           activo ? 'translate-x-5' : 'translate-x-0.5',
         )}
       />

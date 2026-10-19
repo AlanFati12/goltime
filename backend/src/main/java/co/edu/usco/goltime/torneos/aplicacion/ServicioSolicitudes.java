@@ -13,6 +13,7 @@ import co.edu.usco.goltime.notificaciones.aplicacion.Notificador;
 import co.edu.usco.goltime.torneos.aplicacion.Modelos.Equipo;
 import co.edu.usco.goltime.torneos.aplicacion.Modelos.EstadoInscripcion;
 import co.edu.usco.goltime.torneos.aplicacion.Modelos.Inscripcion;
+import co.edu.usco.goltime.torneos.aplicacion.Modelos.JugadorConDorsal;
 import co.edu.usco.goltime.torneos.aplicacion.RepositorioTorneos.SolicitudDeCliente;
 import co.edu.usco.goltime.torneos.dominio.EstadoTorneo;
 import co.edu.usco.goltime.torneos.dominio.Torneo;
@@ -55,6 +56,25 @@ public class ServicioSolicitudes {
     }
 
     public record MisSolicitudes(boolean habilitado, List<SolicitudDeCliente> solicitudes) {
+    }
+
+    /** Cliente responsable del equipo, para que el administrador sepa quién pide la inscripción. */
+    public record Responsable(long id, String nombre, String correo, String telefono, boolean activo) {
+    }
+
+    /** Todo lo que el administrador necesita revisar antes de aprobar o rechazar una solicitud. */
+    public record DetalleSolicitud(Inscripcion inscripcion, Equipo equipo, Responsable responsable, List<JugadorConDorsal> jugadores) {
+    }
+
+    @Transactional(readOnly = true)
+    public DetalleSolicitud detalle(long torneoId, long inscripcionId) {
+        Inscripcion i = torneos.buscarInscripcion(inscripcionId).filter(x -> x.torneoId() == torneoId)
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "La solicitud no existe en este torneo."));
+        Equipo equipo = equipos.buscar(i.equipoId()).orElseThrow();
+        Responsable responsable = equipo.usuarioResponsableId() == null ? null
+                : usuarios.buscarPorId(equipo.usuarioResponsableId())
+                        .map(u -> new Responsable(u.id(), u.nombres() + " " + u.apellidos(), u.correo(), u.telefono(), u.activo())).orElse(null);
+        return new DetalleSolicitud(i, equipo, responsable, torneos.plantillaDe(inscripcionId));
     }
 
     @Transactional(readOnly = true)

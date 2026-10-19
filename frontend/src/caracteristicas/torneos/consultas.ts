@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 
 import type {
   DetalleEquipo,
+  DetalleSolicitud,
   DetallePartido,
   DetalleTorneo,
   Estadisticas,
@@ -167,8 +168,36 @@ export function useAccionesEquipo() {
         (await api.delete<DetalleEquipo>(`/admin/equipos/${p.id}/jugadores/${p.jugadorId}`)).data,
       onSuccess: refrescar,
     }),
+    /** Corrige los datos del jugador y su dorsal en la plantilla habitual del equipo. */
+    editarJugador: useMutation({
+      mutationFn: async (p: { id: number; jugadorId: number; datos: DatosEdicionJugador }) => {
+        await api.put(`/admin/jugadores/${p.jugadorId}`, datosPersona(p.datos))
+        return (
+          await api.put<DetalleEquipo>(`/admin/equipos/${p.id}/jugadores/${p.jugadorId}/dorsal`, {
+            dorsal: p.datos.dorsal,
+          })
+        ).data
+      },
+      onSuccess: refrescar,
+    }),
   }
 }
+
+/** Datos editables de un jugador: su persona (vale para todos sus equipos) y el dorsal en este equipo. */
+export interface DatosEdicionJugador {
+  nombres: string
+  apellidos: string
+  documento: string
+  posicion: string
+  dorsal: number | null
+}
+
+const datosPersona = (d: DatosEdicionJugador) => ({
+  nombres: d.nombres.trim(),
+  apellidos: d.apellidos.trim(),
+  documento: d.documento.trim() || undefined,
+  posicion: d.posicion.trim() || undefined,
+})
 
 // ===================== Administración: torneos =====================
 
@@ -279,8 +308,28 @@ export function useAccionesPlantilla(torneoId: number, inscripcionId: number) {
         (await api.delete<JugadorEquipo[]>(`${ruta}/${jugadorId}`)).data,
       onSuccess: refrescar,
     }),
+    editar: useMutation({
+      mutationFn: async (p: { jugadorId: number; datos: DatosEdicionJugador }) => {
+        await api.put(`/admin/jugadores/${p.jugadorId}`, datosPersona(p.datos))
+        return (
+          await api.put<JugadorEquipo[]>(`${ruta}/${p.jugadorId}/dorsal`, {
+            dorsal: p.datos.dorsal,
+          })
+        ).data
+      },
+      onSuccess: refrescar,
+    }),
   }
 }
+
+export const useDetalleSolicitud = (torneoId: number, inscripcionId: number | null) =>
+  useQuery({
+    queryKey: ['torneos', 'solicitud', torneoId, inscripcionId],
+    enabled: inscripcionId !== null,
+    queryFn: async () =>
+      (await api.get<DetalleSolicitud>(`/admin/torneos/${torneoId}/solicitudes/${inscripcionId}`))
+        .data,
+  })
 
 // ===================== Administración: partidos =====================
 
@@ -304,7 +353,7 @@ export interface DatosEvento {
   inscripcionId: number
   jugadorId: number
   tipo: TipoEvento
-  minuto: number
+  minuto?: number | null
   eventoRelacionadoId?: number | null
   observacion?: string
 }

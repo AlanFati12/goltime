@@ -1,3 +1,5 @@
+import { BellPlus } from 'lucide-react'
+
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { mensajeDeError } from '@/lib/api'
 
@@ -24,7 +26,7 @@ export function BotonEspera({
     return (
       <button
         type="button"
-        className="text-primario mt-1 text-xs underline"
+        className="text-primario mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline"
         onClick={() => salir.mutate(actual.id, { onError: error })}
       >
         {actual.estado === 'NOTIFICADA' ? '¡Se liberó! Quitar aviso' : 'Esperando · quitar aviso'}
@@ -34,7 +36,7 @@ export function BotonEspera({
   return (
     <button
       type="button"
-      className="text-primario mt-1 text-xs underline"
+      className="text-texto-suave hover:text-primario mt-1 inline-flex items-center gap-1 text-xs font-medium"
       disabled={unirse.isPending}
       onClick={() =>
         unirse.mutate(
@@ -46,6 +48,7 @@ export function BotonEspera({
         )
       }
     >
+      <BellPlus className="size-3.5" aria-hidden />
       Avisarme si se libera
     </button>
   )

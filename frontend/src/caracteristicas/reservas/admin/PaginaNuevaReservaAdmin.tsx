@@ -11,6 +11,7 @@ import { Campo, CampoTexto } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearHora, hoyEnBogota } from '@/lib/formato'
 import { cn } from '@/lib/utils'
@@ -97,20 +98,15 @@ export function PaginaNuevaReservaAdmin() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-      <div>
-        <Link to="/admin/reservas" className="text-texto-suave text-sm hover:underline">
-          ← Reservas
-        </Link>
-        <h1 className="text-2xl font-bold sm:text-3xl">Nueva reserva</h1>
-        <p className="text-texto-suave text-sm">
-          Queda confirmada de inmediato. Puedes reservar con poca antelación y sin el límite de
-          reservas por cliente.
-        </p>
-      </div>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Nueva reserva"
+        volver={{ a: '/admin/reservas', texto: 'Reservas' }}
+        descripcion="Queda confirmada de inmediato. Puedes reservar con poca antelación y sin el límite de reservas por cliente."
+      />
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">1. Cancha y horario</h2>
+        <h2 className="text-xl font-extrabold uppercase">1. Cancha y horario</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <CampoSelect
             etiqueta="Sede"
@@ -166,7 +162,7 @@ export function PaginaNuevaReservaAdmin() {
                         className={cn(
                           'rounded-boton w-full border px-1 py-1 text-xs',
                           activo
-                            ? 'border-primario bg-primario text-white'
+                            ? 'border-primario bg-primario text-sobre-primario'
                             : libre
                               ? 'border-primario bg-primario-claro text-primario-oscuro'
                               : 'border-borde bg-borde/40 text-texto-suave line-through',
@@ -182,7 +178,7 @@ export function PaginaNuevaReservaAdmin() {
           ))}
         </div>
         {cancha && slot && fin && (
-          <div className="bg-primario-claro rounded-boton flex flex-wrap items-end gap-4 p-3 text-sm">
+          <div className="bg-primario-claro/60 rounded-boton flex flex-wrap items-end gap-4 px-4 py-3 text-sm">
             <CampoSelect
               etiqueta="Duración"
               value={minutos}
@@ -209,7 +205,7 @@ export function PaginaNuevaReservaAdmin() {
       </Tarjeta>
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">2. Cliente</h2>
+        <h2 className="text-xl font-extrabold uppercase">2. Cliente</h2>
         <div role="radiogroup" aria-label="Tipo de cliente" className="flex gap-2">
           {(['registrado', 'mostrador'] as const).map((t) => (
             <button
@@ -221,7 +217,7 @@ export function PaginaNuevaReservaAdmin() {
               className={cn(
                 'rounded-boton border px-4 py-2 text-sm',
                 tipoCliente === t
-                  ? 'border-primario bg-primario text-white'
+                  ? 'border-primario bg-primario text-sobre-primario'
                   : 'border-borde bg-superficie',
               )}
             >
@@ -248,7 +244,7 @@ export function PaginaNuevaReservaAdmin() {
                     onClick={() => setClienteId(c.id)}
                     aria-pressed={clienteId === c.id}
                     className={cn(
-                      'hover:bg-primario-claro w-full px-3 py-2 text-left',
+                      'hover:bg-tenue w-full px-3 py-2 text-left',
                       clienteId === c.id && 'bg-primario-claro font-medium',
                     )}
                   >
@@ -292,7 +288,7 @@ export function PaginaNuevaReservaAdmin() {
                     <button
                       key={m.id}
                       type="button"
-                      className="border-borde hover:bg-primario-claro rounded-full border px-3 py-1 text-xs"
+                      className="border-borde hover:bg-tenue rounded-full border px-3 py-1 text-xs"
                       onClick={() => (setNombre(m.nombre), setTelefono(m.telefono ?? ''))}
                     >
                       {m.nombre} · {m.telefono}

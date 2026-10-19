@@ -1,3 +1,4 @@
+import { Bell, BellOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -60,46 +61,35 @@ export function CampanaNotificaciones() {
         onClick={() => setAbierta((a) => !a)}
         aria-label={noLeidas > 0 ? `Notificaciones, ${noLeidas} sin leer` : 'Notificaciones'}
         aria-expanded={abierta}
-        className="hover:bg-primario-claro text-texto relative inline-flex size-9 items-center justify-center rounded-full"
+        className="hover:bg-tenue text-texto-suave hover:text-texto relative inline-flex size-9 items-center justify-center rounded-full"
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="size-5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-        </svg>
+        <Bell className="size-5" aria-hidden />
         {noLeidas > 0 && (
-          <span className="bg-peligro absolute -top-0.5 -right-0.5 flex min-w-5 items-center justify-center rounded-full px-1 text-[0.65rem] font-bold text-white">
+          <span className="bg-peligro ring-superficie absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[0.6rem] font-bold text-white ring-2">
             {noLeidas > 99 ? '99+' : noLeidas}
           </span>
         )}
       </button>
 
       {abierta && (
-        <div className="border-borde bg-superficie rounded-tarjeta absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden border shadow-lg">
-          <div className="border-borde flex items-center justify-between border-b px-3 py-2 text-sm">
+        <div className="border-borde bg-superficie rounded-tarjeta shadow-flotante absolute right-0 z-40 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden border">
+          <div className="border-borde flex items-center justify-between border-b px-4 py-3 text-sm">
             <span className="font-semibold">Notificaciones</span>
             {noLeidas > 0 && (
               <button
                 type="button"
                 onClick={() => leerTodas.mutate()}
-                className="text-primario text-xs underline"
+                className="text-primario hover:text-primario-oscuro text-xs font-medium"
               >
                 Marcar todas como leídas
               </button>
             )}
           </div>
           {data?.contenido.length === 0 && (
-            <p className="text-texto-suave px-3 py-6 text-center text-sm">
+            <div className="text-texto-suave flex flex-col items-center gap-2 px-4 py-10 text-center text-sm">
+              <BellOff className="size-5" aria-hidden />
               No tienes notificaciones.
-            </p>
+            </div>
           )}
           <ul className="max-h-80 overflow-y-auto">
             {data?.contenido.map((n) => (
@@ -108,8 +98,8 @@ export function CampanaNotificaciones() {
                   type="button"
                   onClick={() => abrir(n)}
                   className={cn(
-                    'hover:bg-primario-claro w-full px-3 py-2 text-left text-sm',
-                    !n.leida && 'bg-primario-claro/50',
+                    'hover:bg-tenue border-borde/60 w-full border-b px-4 py-3 text-left text-sm',
+                    !n.leida && 'bg-primario-claro/40',
                   )}
                 >
                   <span className="flex items-start gap-2">
@@ -121,8 +111,8 @@ export function CampanaNotificaciones() {
                     )}
                     <span>
                       <span className="block font-medium">{n.titulo}</span>
-                      <span className="text-texto-suave block text-xs">{n.mensaje}</span>
-                      <span className="text-texto-suave block text-[0.7rem] capitalize">
+                      <span className="text-texto-suave mt-0.5 block text-xs">{n.mensaje}</span>
+                      <span className="text-texto-suave/80 mt-1 block text-[0.7rem] capitalize">
                         {formatearFechaHora(n.creadoEn)}
                       </span>
                     </span>
@@ -134,7 +124,7 @@ export function CampanaNotificaciones() {
           <Link
             to="/notificaciones"
             onClick={() => setAbierta(false)}
-            className="border-borde text-primario block border-t px-3 py-2 text-center text-sm underline"
+            className="text-primario hover:bg-tenue block px-4 py-2.5 text-center text-sm font-medium"
           >
             Ver todas
           </Link>

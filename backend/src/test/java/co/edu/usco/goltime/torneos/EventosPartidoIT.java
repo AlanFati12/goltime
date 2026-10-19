@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 class EventosPartidoIT extends BaseTorneosIT {
 
-    private Map<String, Object> evento(long inscripcion, long jugador, String tipo, int minuto, Long relacionado) {
+    private Map<String, Object> evento(long inscripcion, long jugador, String tipo, Integer minuto, Long relacionado) {
         Map<String, Object> m = new HashMap<>();
         m.put("inscripcionId", inscripcion);
         m.put("jugadorId", jugador);
@@ -136,5 +136,25 @@ class EventosPartidoIT extends BaseTorneosIT {
         esperarEstado(postear("/api/v1/admin/torneos", cliente.token(), cuerpoTorneo("LIGA")), 403);
         esperarEstado(obtener("/api/v1/admin/torneos", null), 401);
         esperarEstado(obtener("/api/v1/publico/torneos", null), 200);
+    }
+
+    @Test
+    void elMinutoEsOpcionalYLosEventosSinMinutoVanAlFinal() throws Exception {
+        List<Long> ids = torneoConEquipos(cuerpoTorneo("LIGA"), 2);
+        long torneoId = ids.get(0);
+        generarFixture(torneoId);
+        iniciar(torneoId);
+        Map<String, Object> p = partidos(torneoId).get(0);
+        long partido = idPartido(p);
+        long insLocal = inscripcionLocal(p);
+        List<Long> deLocal = jugadoresDe(torneoId, insLocal);
+
+        esperarEstado(agregar(partido, evento(insLocal, deLocal.get(0), "GOL", null, null)), 201);
+        MvcResult r = agregar(partido, evento(insLocal, deLocal.get(1), "AMARILLA", 30, null));
+
+        esperarEstado(r, 201);
+        assertThat((Integer) leer(r, "$.eventos[0].minuto")).isEqualTo(30);
+        assertThat(((Map<?, ?>) leer(r, "$.eventos[1]")).containsKey("minuto")).isFalse(); // los nulos no viajan en el JSON
+        assertThat((String) leer(r, "$.eventos[1].tipo")).isEqualTo("GOL");
     }
 }

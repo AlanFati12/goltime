@@ -113,7 +113,8 @@ export interface EventoPartido {
   jugador: string
   dorsal: number | null
   tipo: TipoEvento
-  minuto: number
+  /** Opcional: el administrador puede registrar un gol o una tarjeta sin el minuto exacto. */
+  minuto?: number | null
   eventoRelacionadoId: number | null
   observacion: string | null
 }
@@ -255,4 +256,22 @@ export interface ResumenFixture {
   grupos: number
   partidos: number
   descansos: number
+}
+
+/** Persona responsable del equipo que pidió la inscripción. */
+export interface ResponsableSolicitud {
+  id: number
+  nombre: string
+  correo: string
+  telefono?: string | null
+  activo: boolean
+}
+
+/** Lo que el administrador revisa antes de aprobar o rechazar una solicitud de inscripción. */
+export interface DetalleSolicitud {
+  inscripcionId: number
+  estado: 'SOLICITADA' | 'APROBADA' | 'RECHAZADA' | 'RETIRADA'
+  equipo: Equipo
+  responsable?: ResponsableSolicitud | null
+  jugadores: JugadorEquipo[]
 }

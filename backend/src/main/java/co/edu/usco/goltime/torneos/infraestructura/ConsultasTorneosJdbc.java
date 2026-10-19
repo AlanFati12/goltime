@@ -83,9 +83,9 @@ class ConsultasTorneosJdbc implements ConsultasTorneos {
                 JOIN equipos eq ON eq.id = i.equipo_id
                 JOIN jugadores j ON j.id = e.jugador_id
                 LEFT JOIN plantillas_torneo pt ON pt.inscripcion_id = e.inscripcion_id AND pt.jugador_id = e.jugador_id
-                WHERE e.partido_id = ? ORDER BY e.minuto, e.id""", (rs, n) -> new VistaEvento(rs.getLong("id"), rs.getLong("partido_id"),
+                WHERE e.partido_id = ? ORDER BY e.minuto NULLS LAST, e.id""", (rs, n) -> new VistaEvento(rs.getLong("id"), rs.getLong("partido_id"),
                 rs.getLong("inscripcion_id"), rs.getString("equipo_nombre"), rs.getLong("jugador_id"), rs.getString("jugador_nombre"),
-                (Integer) rs.getObject("dorsal"), TipoEvento.valueOf(rs.getString("tipo")), rs.getInt("minuto"),
+                (Integer) rs.getObject("dorsal"), TipoEvento.valueOf(rs.getString("tipo")), (Integer) rs.getObject("minuto"),
                 (Long) rs.getObject("evento_relacionado_id"), rs.getString("observacion")), partidoId);
     }
 

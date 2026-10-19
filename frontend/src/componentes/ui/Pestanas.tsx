@@ -23,7 +23,7 @@ export function Pestanas<T extends string>({
     <div
       role="tablist"
       aria-label={etiqueta}
-      className="border-borde flex gap-1 overflow-x-auto border-b"
+      className="border-borde flex gap-6 overflow-x-auto border-b"
     >
       {pestanas.map((p) => (
         <button
@@ -33,18 +33,57 @@ export function Pestanas<T extends string>({
           aria-selected={actual === p.id}
           onClick={() => alCambiar(p.id)}
           className={cn(
-            '-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
+            '-mb-px flex items-center gap-2 border-b-[3px] pt-1 pb-3 text-[0.95rem] font-semibold whitespace-nowrap transition-colors duration-200',
             actual === p.id
-              ? 'border-primario text-primario-oscuro'
+              ? 'border-volt text-texto'
               : 'text-texto-suave hover:text-texto border-transparent',
           )}
         >
           {p.texto}
           {p.conteo != null && p.conteo > 0 && (
-            <span className="bg-acento text-texto rounded-full px-2 text-xs font-bold">
+            <span
+              className={cn(
+                'rounded-full px-1.5 text-xs font-semibold',
+                actual === p.id ? 'bg-invertido text-sobre-invertido' : 'bg-tenue text-texto-suave',
+              )}
+            >
               {p.conteo}
             </span>
           )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Control segmentado: para alternar entre pocas vistas de lo mismo (día/semana, lista/tarjetas). */
+export function Segmentado<T extends string>({
+  etiqueta,
+  opciones,
+  actual,
+  alCambiar,
+}: {
+  etiqueta: string
+  opciones: { id: T; texto: string }[]
+  actual: T
+  alCambiar: (id: T) => void
+}) {
+  return (
+    <div role="group" aria-label={etiqueta} className="bg-tenue inline-flex rounded-full p-1">
+      {opciones.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          aria-pressed={actual === o.id}
+          onClick={() => alCambiar(o.id)}
+          className={cn(
+            'rounded-full px-4 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200',
+            actual === o.id
+              ? 'bg-invertido text-sobre-invertido'
+              : 'text-texto-suave hover:text-texto',
+          )}
+        >
+          {o.texto}
         </button>
       ))}
     </div>

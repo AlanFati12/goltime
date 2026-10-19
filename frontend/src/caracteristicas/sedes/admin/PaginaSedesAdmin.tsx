@@ -1,5 +1,5 @@
+import { Building2, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Alerta } from '@/componentes/ui/Alerta'
@@ -8,6 +8,8 @@ import { Cargando } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Insignia } from '@/componentes/ui/Insignia'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
+import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 
 import { ModalCambioEstado } from '../ModalCambioEstado'
@@ -20,53 +22,55 @@ export function PaginaSedesAdmin() {
   const [objetivo, setObjetivo] = useState<Sede | null>(null)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold sm:text-3xl">Sedes</h1>
-        <EnlaceBoton to="/admin/sedes/nueva">Nueva sede</EnlaceBoton>
-      </div>
+    <div className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Sedes"
+        descripcion="Ubicaciones del negocio, con su horario, servicios y canchas."
+        acciones={
+          <EnlaceBoton to="/admin/sedes/nueva">
+            <Plus aria-hidden />
+            Nueva sede
+          </EnlaceBoton>
+        }
+      />
       {isPending && <Cargando texto="Cargando sedes…" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
-        <Tarjeta className="text-texto-suave text-center text-sm">
-          Aún no hay sedes. Crea la primera.
-        </Tarjeta>
+        <EstadoVacio icono={Building2} titulo="Aún no hay sedes" descripcion="Crea la primera." />
       )}
       {data && data.length > 0 && (
-        <Tarjeta className="overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead className="border-borde text-texto-suave border-b text-xs uppercase">
+        <Tarjeta className="overflow-x-auto p-0 sm:p-0">
+          <table className="tabla">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Sede</th>
-                <th className="px-4 py-3">Canchas</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th>Sede</th>
+                <th>Canchas</th>
+                <th>Estado</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {data.map((s) => (
-                <tr key={s.id} className="border-borde border-b last:border-0">
-                  <td className="px-4 py-3">
+                <tr key={s.id}>
+                  <td>
                     <div className="font-medium">{s.nombre}</div>
                     <div className="text-texto-suave text-xs">
                       {s.direccion} · {s.ciudad}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{s.canchas.length}</td>
-                  <td className="px-4 py-3">
+                  <td>{s.canchas.length}</td>
+                  <td>
                     {s.activa ? (
                       <Insignia tono="verde">Activa</Insignia>
                     ) : (
                       <Insignia tono="rojo">Inactiva</Insignia>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="flex justify-end gap-2">
-                      <Link to={`/admin/sedes/${s.id}`}>
-                        <Boton tamano="sm" variante="secundario" tabIndex={-1}>
-                          Editar
-                        </Boton>
-                      </Link>
+                      <EnlaceBoton to={`/admin/sedes/${s.id}`} tamano="sm" variante="secundario">
+                        Editar
+                      </EnlaceBoton>
                       <Boton tamano="sm" variante="secundario" onClick={() => setObjetivo(s)}>
                         {s.activa ? 'Desactivar' : 'Reactivar'}
                       </Boton>

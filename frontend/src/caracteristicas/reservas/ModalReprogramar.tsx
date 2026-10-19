@@ -118,7 +118,7 @@ export function ModalReprogramar({
                         className={cn(
                           'rounded-boton w-full border px-1 py-1 text-xs',
                           activo
-                            ? 'border-primario bg-primario text-white'
+                            ? 'border-primario bg-primario text-sobre-primario'
                             : libre
                               ? 'border-primario bg-primario-claro text-primario-oscuro'
                               : 'border-borde bg-borde/40 text-texto-suave line-through',
@@ -135,7 +135,7 @@ export function ModalReprogramar({
         </div>
 
         {elegido && fin && (
-          <div aria-live="polite" className="bg-primario-claro rounded-boton p-3 text-sm">
+          <div aria-live="polite" className="bg-primario-claro/60 rounded-boton px-4 py-3 text-sm">
             <p>
               Nuevo horario:{' '}
               <strong className="capitalize">{formatearFechaHora(elegido.inicio)}</strong> ·{' '}
