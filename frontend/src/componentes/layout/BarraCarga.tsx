@@ -2,9 +2,12 @@ import { useIsFetching } from '@tanstack/react-query'
 
 import { cn } from '@/lib/utils'
 
-/** Línea fina en la parte superior mientras hay consultas en curso. */
+/**
+ * Línea fina en la parte superior mientras una pantalla carga datos por primera vez. Los
+ * refrescos en segundo plano (notificaciones, tablero) no la muestran: ya hay algo en pantalla.
+ */
 export function BarraCarga() {
-  const cargando = useIsFetching() > 0
+  const cargando = useIsFetching({ predicate: (q) => q.state.data === undefined }) > 0
   return (
     <div
       aria-hidden

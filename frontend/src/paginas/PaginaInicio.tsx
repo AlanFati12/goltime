@@ -483,6 +483,7 @@ function FilaPartido({ partido: p }: { partido: Partido }) {
 
 function Premios() {
   const { data } = usePromocionesPublicas()
+  const esAdmin = useSesion((s) => s.usuario?.rol === 'ADMIN')
   const promos = (data ?? []).slice(0, 3)
   return (
     <section aria-labelledby="titulo-premios" className="contenedor py-24 sm:py-36">
@@ -535,9 +536,11 @@ function Premios() {
               Ver promociones
               <ArrowRight aria-hidden />
             </EnlaceBoton>
-            <EnlaceBoton to="/mis-premios" variante="claro" tamano="lg">
-              Mis premios
-            </EnlaceBoton>
+            {!esAdmin && (
+              <EnlaceBoton to="/mis-premios" variante="claro" tamano="lg">
+                Mis premios
+              </EnlaceBoton>
+            )}
           </Revelar>
         </div>
       </div>

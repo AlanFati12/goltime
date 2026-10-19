@@ -44,9 +44,13 @@ const CREDITOS_FOTOS = [
 
 export function LayoutPublico() {
   const usuario = useSesion((s) => s.usuario)
-  const [menuAbierto, setMenuAbierto] = useState(false)
   const [arriba, setArriba] = useState(true)
   const { pathname } = useLocation()
+  // El menú móvil queda abierto solo en la ruta donde se abrió: al navegar (por el menú, el logo
+  // o cualquier enlace) se cierra solo.
+  const [menuEnRuta, setMenuEnRuta] = useState<string | null>(null)
+  const menuAbierto = menuEnRuta === pathname
+  const cerrarMenu = () => setMenuEnRuta(null)
   const esCliente = usuario && usuario.rol !== 'ADMIN'
   const enlaces = esCliente ? [...ENLACES, ...ENLACES_CLIENTE] : ENLACES
   const esAcceso = RUTAS_ACCESO.includes(pathname)
@@ -179,7 +183,7 @@ export function LayoutPublico() {
               )}
               aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={menuAbierto}
-              onClick={() => setMenuAbierto((a) => !a)}
+              onClick={() => setMenuEnRuta(menuAbierto ? null : pathname)}
             >
               {menuAbierto ? (
                 <X className="size-5" aria-hidden />
@@ -195,7 +199,7 @@ export function LayoutPublico() {
       {menuAbierto && (
         <nav
           aria-label="Principal móvil"
-          onClick={() => setMenuAbierto(false)}
+          onClick={cerrarMenu}
           className="bg-noche animate-velo fixed inset-x-0 top-[72px] bottom-0 z-30 flex flex-col overflow-y-auto px-6 pt-8 pb-10 md:hidden"
         >
           <ul className="flex flex-col">
