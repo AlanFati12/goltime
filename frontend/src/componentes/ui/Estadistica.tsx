@@ -22,20 +22,21 @@ export function Estadistica({
   return (
     <div
       className={cn(
-        'border-borde bg-superficie rounded-tarjeta shadow-suave flex flex-col gap-2 border p-5',
-        destacado && 'border-acento/50 bg-amber-50/60',
+        'border-borde/80 bg-superficie rounded-tarjeta flex flex-col gap-2 border p-5',
+        destacado &&
+          'bg-noche border-noche [&_p.valor]:text-volt-vivo text-white [&_p]:text-white/70',
         className,
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-texto-suave text-sm font-medium">{etiqueta}</p>
         {Icono && (
-          <span className="bg-tenue text-texto-suave flex size-8 items-center justify-center rounded-lg">
+          <span className="bg-primario-claro text-primario flex size-9 items-center justify-center rounded-full">
             <Icono className="size-4" aria-hidden />
           </span>
         )}
       </div>
-      <p className="font-titulo text-2xl font-bold tracking-tight">{valor}</p>
+      <p className="valor font-titulo cifras text-[2.1rem] leading-none font-extrabold">{valor}</p>
       {nota && <p className="text-texto-suave text-xs">{nota}</p>}
     </div>
   )

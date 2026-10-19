@@ -21,16 +21,16 @@ export function EstadoVacio({
   return (
     <div
       className={cn(
-        'border-borde bg-superficie rounded-tarjeta flex flex-col items-center gap-3 border border-dashed px-6 py-12 text-center',
+        'bg-superficie rounded-tarjeta flex flex-col items-center gap-4 px-6 py-14 text-center',
         className,
       )}
     >
-      <span className="bg-tenue text-texto-suave flex size-11 items-center justify-center rounded-full">
-        <Icono className="size-5" aria-hidden />
+      <span className="bg-primario-claro text-primario flex size-14 items-center justify-center rounded-full">
+        <Icono className="size-6" aria-hidden />
       </span>
       <div>
-        <p className="font-medium">{titulo}</p>
-        {descripcion && <p className="text-texto-suave mt-1 text-sm">{descripcion}</p>}
+        <p className="font-titulo text-xl font-bold uppercase">{titulo}</p>
+        {descripcion && <p className="text-texto-suave mx-auto mt-1 max-w-md">{descripcion}</p>}
       </div>
       {accion}
     </div>

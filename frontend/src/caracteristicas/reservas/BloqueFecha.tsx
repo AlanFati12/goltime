@@ -8,11 +8,11 @@ export function BloqueFecha({ fecha }: { fecha: string }) {
       .format(d)
       .replace('.', '')
   return (
-    <div className="border-borde bg-superficie flex w-14 shrink-0 flex-col items-center overflow-hidden rounded-xl border text-center">
-      <span className="bg-primario w-full py-0.5 text-[0.65rem] font-semibold text-white uppercase">
+    <div className="border-borde bg-superficie flex w-14 shrink-0 flex-col items-center overflow-hidden rounded-2xl border text-center">
+      <span className="bg-noche text-volt-vivo w-full py-0.5 text-[0.65rem] font-bold uppercase">
         {parte({ month: 'short' })}
       </span>
-      <span className="font-titulo pt-1 text-xl leading-none font-bold">
+      <span className="font-titulo cifras pt-1 text-2xl leading-none font-extrabold">
         {parte({ day: 'numeric' })}
       </span>
       <span className="text-texto-suave pb-1 text-[0.65rem] capitalize">

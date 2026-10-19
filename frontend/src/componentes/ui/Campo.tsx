@@ -3,9 +3,9 @@ import { useId, type InputHTMLAttributes, type Ref, type TextareaHTMLAttributes 
 import { cn } from '@/lib/utils'
 
 export const estiloEntrada =
-  'border-borde bg-superficie text-texto placeholder:text-texto-suave/60 shadow-suave w-full rounded-boton border px-3 py-2 text-sm transition-colors hover:border-texto-suave/40 focus-visible:border-primario focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primario/10 disabled:bg-tenue disabled:text-texto-suave aria-[invalid=true]:border-peligro aria-[invalid=true]:focus-visible:ring-peligro/10'
+  'border-borde bg-superficie text-texto placeholder:text-texto-suave/70 w-full rounded-boton border px-3.5 py-2 text-[0.95rem] transition-[border-color,box-shadow] duration-200 hover:border-texto-suave/40 focus-visible:border-primario focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-volt/25 disabled:bg-tenue disabled:text-texto-suave aria-[invalid=true]:border-peligro aria-[invalid=true]:focus-visible:ring-peligro/15'
 
-const estiloEtiqueta = 'text-texto text-sm font-medium'
+const estiloEtiqueta = 'text-texto text-sm font-semibold'
 
 interface PropsBase {
   etiqueta: string
@@ -30,7 +30,7 @@ export function Campo({
       <input
         id={id}
         ref={ref}
-        className={cn(estiloEntrada, 'h-10')}
+        className={cn(estiloEntrada, 'h-11')}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : ayuda ? `${id}-ayuda` : undefined}
         {...resto}

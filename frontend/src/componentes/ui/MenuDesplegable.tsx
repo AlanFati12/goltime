@@ -50,7 +50,7 @@ export function MenuDesplegable({
           role="menu"
           onClick={() => setAbierto(false)}
           className={cn(
-            'border-borde bg-superficie rounded-tarjeta shadow-flotante absolute right-0 z-40 mt-2 w-64 border p-1.5',
+            'border-borde bg-superficie shadow-flotante animate-menu absolute right-0 z-40 mt-2 w-64 origin-top-right rounded-2xl border p-1.5',
             className,
           )}
         >

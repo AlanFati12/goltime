@@ -19,7 +19,7 @@ export function CampoSelect({
   const id = useId()
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-texto text-sm font-medium">
+      <label htmlFor={id} className="text-texto text-sm font-semibold">
         {etiqueta}
       </label>
       <div className="relative">
@@ -27,7 +27,7 @@ export function CampoSelect({
           id={id}
           ref={ref}
           aria-invalid={error ? true : undefined}
-          className={cn(estiloEntrada, 'h-10 cursor-pointer appearance-none pr-9')}
+          className={cn(estiloEntrada, 'h-11 cursor-pointer appearance-none pr-9')}
           {...resto}
         >
           {children}

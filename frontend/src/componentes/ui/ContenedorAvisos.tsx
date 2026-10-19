@@ -13,19 +13,19 @@ export function ContenedorAvisos() {
         <div
           key={a.id}
           role={a.tipo === 'error' ? 'alert' : 'status'}
-          className="border-borde bg-superficie rounded-tarjeta shadow-flotante flex items-start gap-3 border px-4 py-3 text-sm"
+          className="bg-noche shadow-flotante animate-aviso flex items-start gap-3 rounded-2xl px-4 py-3.5 text-sm text-white"
         >
           {a.tipo === 'exito' ? (
-            <CircleCheck className="text-exito mt-px size-5 shrink-0" aria-hidden />
+            <CircleCheck className="text-volt mt-px size-5 shrink-0" aria-hidden />
           ) : (
-            <CircleAlert className="text-peligro mt-px size-5 shrink-0" aria-hidden />
+            <CircleAlert className="mt-px size-5 shrink-0 text-red-400" aria-hidden />
           )}
           <span className="flex-1">{a.texto}</span>
           <button
             type="button"
             onClick={() => quitar(a.id)}
             aria-label="Cerrar aviso"
-            className="text-texto-suave hover:text-texto"
+            className="text-white/60 hover:text-white"
           >
             <X className="size-4" aria-hidden />
           </button>

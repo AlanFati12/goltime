@@ -1,11 +1,12 @@
-import { MapPin, MessageCircle, Phone } from 'lucide-react'
+import { CalendarPlus, Check, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Cargando } from '@/componentes/ui/Cargando'
+import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
-import { Insignia } from '@/componentes/ui/Insignia'
-import { Migas } from '@/componentes/ui/Migas'
+import { InsigniaFoto, PortadaPagina } from '@/componentes/ui/PortadaPagina'
+import { Revelar } from '@/componentes/ui/Revelar'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 
@@ -13,6 +14,7 @@ import { Galeria } from './Galeria'
 import { HorarioTabla } from './HorarioTabla'
 import { TarjetaCancha } from './TarjetaCancha'
 import { useSedePublica } from './consultas'
+import { horarioDeHoy, modalidadesDe } from './horario'
 
 export function PaginaSedeDetalle() {
   const id = Number(useParams().id)
@@ -34,70 +36,114 @@ export function PaginaSedeDetalle() {
     )
   }
 
+  const hoy = horarioDeHoy(sede.horario)
+
   return (
-    <div className="flex flex-col gap-6">
-      <Migas items={[{ texto: 'Sedes', a: '/sedes' }, { texto: sede.nombre }]} />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <Galeria fotos={sede.fotos} />
-        <Tarjeta className="flex flex-col gap-4">
-          <div>
-            <h1 className="text-2xl font-bold sm:text-[1.75rem]">{sede.nombre}</h1>
-            <p className="text-texto-suave mt-1 flex items-center gap-1.5 text-sm">
-              <MapPin className="size-4 shrink-0" aria-hidden />
-              {sede.direccion} · {sede.ciudad}
-            </p>
+    <div className="flex flex-col gap-12">
+      <PortadaPagina
+        titulo={sede.nombre}
+        imagen={sede.fotos[0]?.url ?? '/img/cancha-aerea.webp'}
+        alt={`Sede ${sede.nombre}`}
+        volver={{ a: '/sedes', texto: 'Sedes' }}
+        acciones={
+          <EnlaceBoton to={`/reservar?sedeId=${sede.id}`} variante="volt" tamano="lg">
+            <CalendarPlus aria-hidden />
+            Reservar en esta sede
+          </EnlaceBoton>
+        }
+      >
+        <p className="flex items-center gap-1.5 text-lg">
+          <MapPin className="size-5 shrink-0" aria-hidden />
+          {sede.direccion} · {sede.ciudad}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {modalidadesDe(sede).map((m) => (
+            <InsigniaFoto key={m}>{m}</InsigniaFoto>
+          ))}
+          <InsigniaFoto>
+            <span className={hoy.abiertaAhora ? 'text-volt-vivo' : undefined}>{hoy.texto}</span>
+          </InsigniaFoto>
+        </div>
+      </PortadaPagina>
+
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <section aria-labelledby="titulo-canchas" className="flex flex-col gap-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 id="titulo-canchas" className="text-4xl font-extrabold uppercase">
+              Canchas
+            </h2>
+            <span className="text-texto-suave font-semibold">
+              {sede.canchas.length} {sede.canchas.length === 1 ? 'cancha' : 'canchas'}
+            </span>
           </div>
-          {sede.descripcion && <p className="text-texto-suave text-sm">{sede.descripcion}</p>}
-          <div className="flex flex-wrap gap-1.5">
-            {sede.servicios.map((s) => (
-              <Insignia key={s} tono="verde">
-                {s}
-              </Insignia>
+          {sede.canchas.length === 0 && (
+            <EstadoVacio titulo="Esta sede aún no tiene canchas disponibles" />
+          )}
+          <div className="grid gap-5 sm:grid-cols-2">
+            {sede.canchas.map((c, i) => (
+              <Revelar key={c.id} i={i}>
+                <TarjetaCancha cancha={c} />
+              </Revelar>
             ))}
           </div>
-          {(sede.telefono || sede.whatsapp) && (
-            <div className="flex flex-wrap gap-2">
-              {sede.telefono && (
-                <a
-                  href={`tel:${sede.telefono}`}
-                  className="border-borde hover:bg-tenue rounded-boton inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
-                >
-                  <Phone className="text-texto-suave size-4" aria-hidden />
-                  {sede.telefono}
-                </a>
+          {sede.fotos.length > 1 && (
+            <div className="mt-6 flex flex-col gap-4">
+              <h2 className="text-4xl font-extrabold uppercase">Fotos</h2>
+              <Galeria fotos={sede.fotos} />
+            </div>
+          )}
+        </section>
+
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
+          {sede.descripcion && (
+            <Tarjeta>
+              <h2 className="text-xl font-extrabold uppercase">La sede</h2>
+              <p className="text-texto-suave mt-2">{sede.descripcion}</p>
+              {sede.servicios.length > 0 && (
+                <ul className="mt-4 grid grid-cols-2 gap-2">
+                  {sede.servicios.map((s) => (
+                    <li key={s} className="flex items-center gap-2 text-sm font-semibold">
+                      <span className="bg-volt-claro text-primario flex size-5 items-center justify-center rounded-full">
+                        <Check className="size-3" aria-hidden />
+                      </span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
               )}
+            </Tarjeta>
+          )}
+          <Tarjeta>
+            <h2 className="mb-3 text-xl font-extrabold uppercase">Horario</h2>
+            <HorarioTabla dias={sede.horario} />
+          </Tarjeta>
+          {(sede.telefono || sede.whatsapp) && (
+            <div className="bg-noche flex flex-col gap-3 rounded-[1.25rem] p-5 text-white">
+              <h2 className="text-xl font-extrabold uppercase">¿Preguntas?</h2>
               {sede.whatsapp && (
                 <a
-                  className="border-borde hover:bg-tenue rounded-boton inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
+                  className="bg-volt text-noche presionable inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold"
                   href={`https://wa.me/${sede.whatsapp.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <MessageCircle className="size-4 text-emerald-600" aria-hidden />
-                  WhatsApp
+                  <MessageCircle className="size-4" aria-hidden />
+                  Escribir por WhatsApp
+                </a>
+              )}
+              {sede.telefono && (
+                <a
+                  href={`tel:${sede.telefono}`}
+                  className="presionable inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-5 py-3 font-semibold hover:bg-white/10"
+                >
+                  <Phone className="size-4" aria-hidden />
+                  {sede.telefono}
                 </a>
               )}
             </div>
           )}
-          <div className="border-borde border-t pt-4">
-            <h2 className="mb-2 text-sm font-semibold">Horario de atención</h2>
-            <HorarioTabla dias={sede.horario} />
-          </div>
-        </Tarjeta>
+        </aside>
       </div>
-      <section aria-labelledby="titulo-canchas">
-        <h2 id="titulo-canchas" className="mb-4 text-xl font-bold">
-          Canchas <span className="text-texto-suave font-normal">({sede.canchas.length})</span>
-        </h2>
-        {sede.canchas.length === 0 && (
-          <EstadoVacio titulo="Esta sede aún no tiene canchas disponibles" />
-        )}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sede.canchas.map((c) => (
-            <TarjetaCancha key={c.id} cancha={c} />
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

@@ -1,83 +1,312 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&display=swap');
 @import 'tailwindcss';
 
 /*
- * Tokens de diseño de Goltime. Para cambiar la identidad visual basta con editar estas variables;
- * los componentes solo usan clases semánticas (bg-primario, text-texto-suave, etc.).
- * Paleta neutra con un solo color de marca: el verde se reserva para acciones y estados.
+ * Tokens de diseño de Goltime, tema «Partido nocturno» (ADR 0016).
+ * La idea: una cancha sintética de noche bajo los reflectores. El azul medianoche es la noche,
+ * el lima es la luz. Los componentes solo usan clases semánticas (bg-primario, text-texto-suave…),
+ * así que cambiar la identidad es cambiar estas variables.
+ *
+ * - volt: el lima vivo de las acciones principales; siempre con texto `noche` encima.
+ * - primario: el lima profundo para estados activos, enlaces y selecciones dentro de la app;
+ *   admite texto blanco encima y se lee como texto sobre blanco (contraste ≥ 4,5:1).
  */
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-titulo: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-titulo: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
 
-  --color-primario: #059669;
-  --color-primario-oscuro: #065f46;
-  --color-primario-claro: #ecfdf5;
+  --color-noche: #0b1220;
+  --color-noche-suave: #16213a;
+  --color-noche-borde: #26324a;
+  --color-volt: #84cc16;
+  --color-volt-vivo: #a3e635;
+  --color-volt-claro: #ecfccb;
+
+  --color-primario: #4d7c0f;
+  --color-primario-oscuro: #3f6212;
+  --color-primario-claro: #f0fadc;
   --color-acento: #f59e0b;
-  --color-fondo: #f7f8fa;
+  --color-fondo: #f4f6f8;
   --color-superficie: #ffffff;
-  --color-tenue: #f2f4f7;
-  --color-texto: #101828;
-  --color-texto-suave: #667085;
-  --color-borde: #e4e7ec;
+  --color-tenue: #eef1f5;
+  --color-texto: #0f172a;
+  --color-texto-suave: #5b6576;
+  --color-borde: #e2e8f0;
 
-  --color-exito: #059669;
+  --color-exito: #4d7c0f;
   --color-alerta: #b45309;
   --color-peligro: #dc2626;
   --color-info: #2563eb;
 
-  --radius-tarjeta: 0.875rem;
-  --radius-boton: 0.5rem;
+  --radius-tarjeta: 1.25rem;
+  --radius-boton: 0.75rem;
 
-  --shadow-suave: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.04);
-  --shadow-flotante: 0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.06);
+  /* Las superficies en reposo se separan por tono, no por sombra; la sombra es para lo que flota. */
+  --shadow-suave: 0 1px 0 rgb(15 23 42 / 0.03);
+  --shadow-flotante: 0 24px 48px -16px rgb(11 18 32 / 0.28), 0 6px 12px -6px rgb(11 18 32 / 0.12);
+  --shadow-volt: 0 10px 28px -10px rgb(132 204 22 / 0.7);
+
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-movimiento: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-cajon: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --animate-entrada-pagina: entrada-pagina 420ms var(--ease-salida) both;
+  --animate-barrido: barrido 1.4s var(--ease-movimiento) infinite;
+  --animate-latido: latido 2.4s ease-in-out infinite;
+  --animate-girar-lento: spin 1.6s linear infinite;
+  --animate-velo: velo 240ms ease-out both;
+  --animate-dialogo: dialogo 380ms var(--ease-cajon) both;
+  --animate-menu: menu 180ms var(--ease-salida) both;
+  --animate-aviso: aviso 420ms var(--ease-cajon) both;
+  --animate-subir: subir 700ms var(--ease-salida) both;
+  --animate-deslizar: deslizar 36s linear infinite;
+  --animate-acercar: acercar 1.6s var(--ease-salida) both;
+
+  @keyframes acercar {
+    from {
+      transform: scale(1.08);
+      opacity: 0.4;
+    }
+  }
+  @keyframes deslizar {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes velo {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes dialogo {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+  }
+  @keyframes menu {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+  @keyframes aviso {
+    from {
+      opacity: 0;
+      transform: translateY(110%);
+    }
+  }
+  @keyframes subir {
+    from {
+      opacity: 0;
+      transform: translateY(32px);
+      filter: blur(8px);
+    }
+  }
+
+  @keyframes entrada-pagina {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes barrido {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+  @keyframes latido {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
 }
 
 @layer base {
   :root {
     color-scheme: light;
+    accent-color: var(--color-primario);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    @apply bg-fondo text-texto font-sans antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    @apply bg-fondo text-texto font-sans text-[0.95rem] antialiased;
+    font-feature-settings: 'tnum' 0;
+    text-rendering: optimizeLegibility;
   }
 
   h1,
   h2,
   h3 {
-    @apply font-titulo tracking-tight;
+    @apply font-titulo tracking-[-0.01em] text-balance;
+  }
+
+  /* Cifras alineadas en tablas, marcadores y precios. */
+  table,
+  .cifras {
+    font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
-    @apply outline-primario outline-2 outline-offset-2;
+    @apply outline-primario rounded-[0.35rem] outline-2 outline-offset-2;
   }
 
   ::selection {
-    @apply bg-primario/20;
+    @apply bg-volt text-noche;
+  }
+
+  /* Barras de desplazamiento con la paleta en lugar de las del sistema. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #c3cad5 transparent;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-primario);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    /* Con movimiento reducido, las entradas solo se desvanecen: sin desplazamiento ni escala. */
+    .animate-dialogo,
+    .animate-menu,
+    .animate-aviso,
+    .animate-subir,
+    .animate-entrada-pagina {
+      animation-name: velo !important;
+    }
   }
 }
 
 @layer components {
-  /* Tabla de datos: cabecera discreta, filas separadas por líneas finas y resaltado al pasar. */
+  /* Tabla de datos: cabecera discreta y filas separadas por un cambio leve de tono. */
   .tabla {
     @apply w-full text-left text-sm;
   }
   .tabla thead th {
-    @apply text-texto-suave bg-tenue/60 border-borde border-b px-4 py-2.5 text-xs font-medium whitespace-nowrap;
+    @apply text-texto-suave bg-tenue border-borde border-b px-4 py-3 text-xs font-semibold whitespace-nowrap;
   }
   .tabla tbody td {
-    @apply border-borde border-b px-4 py-3 align-middle;
+    @apply border-borde/70 border-b px-4 py-3 align-middle;
   }
   .tabla tbody tr:last-child td {
     @apply border-b-0;
   }
   .tabla tbody tr {
-    @apply hover:bg-tenue/50 transition-colors;
+    @apply hover:bg-primario-claro/50 transition-colors duration-150;
   }
 
   /* Enlace de texto dentro de párrafos. */
   .enlace {
-    @apply text-primario hover:text-primario-oscuro font-medium underline-offset-4 hover:underline;
+    @apply text-primario hover:text-primario-oscuro decoration-primario/40 font-semibold underline underline-offset-4 transition-colors;
+  }
+
+  /* Contenedor de página: un solo par de márgenes en todo el sitio. */
+  .contenedor {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Título grande de sección en páginas públicas. */
+  .titulo-seccion {
+    @apply font-titulo text-[2.5rem] leading-[0.95] font-extrabold tracking-[-0.02em] uppercase sm:text-6xl;
+  }
+
+  /*
+   * Revelado al hacer scroll. El contenido es visible por defecto: solo se oculta cuando hay JS
+   * (clase `js` en <html>) y todavía no entró en pantalla. Cada hijo puede escalonarse con --i.
+   */
+  .revelar {
+    transition:
+      opacity 700ms var(--ease-salida),
+      transform 900ms var(--ease-salida),
+      filter 700ms var(--ease-salida);
+    transition-delay: calc(var(--i, 0) * 80ms);
+  }
+  :where(html.js) .revelar:not(.visible) {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(6px);
+  }
+  /* Revelado de imágenes: se descubren de abajo hacia arriba, como una luz que se enciende. */
+  .revelar-imagen {
+    transition: clip-path 1100ms var(--ease-movimiento);
+    transition-delay: calc(var(--i, 0) * 80ms);
+    clip-path: inset(0 0 0 0);
+  }
+  :where(html.js) .revelar-imagen:not(.visible) {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .revelar,
+    .revelar-imagen {
+      transition: opacity 200ms ease;
+      transition-delay: 0ms;
+    }
+    :where(html.js) .revelar:not(.visible) {
+      transform: none;
+      filter: none;
+    }
+    :where(html.js) .revelar-imagen:not(.visible) {
+      clip-path: inset(0 0 0 0);
+      opacity: 0;
+    }
+  }
+
+  /* Imagen con desplazamiento lento ligado al scroll (solo donde el navegador lo soporta). */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .paralaje {
+        animation: paralaje linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+    }
+  }
+  @keyframes paralaje {
+    from {
+      transform: translateY(-8%) scale(1.12);
+    }
+    to {
+      transform: translateY(8%) scale(1.12);
+    }
+  }
+
+  /* Grano fino sobre fotos oscuras para unificar fotografías de distintas fuentes. */
+  .grano::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+}
+
+@layer utilities {
+  /* Retroalimentación al presionar cualquier control. */
+  .presionable {
+    transition: transform 160ms var(--ease-salida);
+  }
+  .presionable:active {
+    transform: scale(0.97);
   }
 }

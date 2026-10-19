@@ -20,7 +20,7 @@ export function Galeria({
     return (
       <div
         className={cn(
-          'text-primario/50 rounded-tarjeta flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100/70',
+          'bg-noche text-volt/60 rounded-tarjeta flex items-center justify-center',
           alto,
           className,
         )}
@@ -48,9 +48,10 @@ export function Galeria({
   return (
     <div className="flex flex-col gap-2">
       <img
+        key={foto.id}
         src={foto.url}
         alt=""
-        className={cn('rounded-tarjeta bg-tenue w-full object-cover', alto, className)}
+        className={cn('rounded-tarjeta bg-tenue animate-velo w-full object-cover', alto, className)}
       />
       {fotos.length > 1 && (
         <ul className="flex gap-2 overflow-x-auto">
@@ -61,8 +62,8 @@ export function Galeria({
                 onClick={() => setActual(i)}
                 aria-label={`Ver foto ${i + 1}`}
                 className={cn(
-                  'rounded-boton overflow-hidden ring-2 ring-offset-2 transition-opacity',
-                  i === actual ? 'ring-primario' : 'opacity-70 ring-transparent hover:opacity-100',
+                  'presionable overflow-hidden rounded-xl ring-2 ring-offset-2 transition-opacity duration-200',
+                  i === actual ? 'ring-volt' : 'opacity-60 ring-transparent hover:opacity-100',
                 )}
               >
                 <img src={f.url} alt="" className="h-14 w-20 object-cover" loading="lazy" />

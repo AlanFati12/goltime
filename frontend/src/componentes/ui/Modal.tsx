@@ -35,7 +35,7 @@ export function Modal({ abierto, titulo, alCerrar, children, ancho = 'md' }: Pro
   if (!abierto) return null
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="bg-noche/55 animate-velo fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-[3px] sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && alCerrar()}
     >
       <div
@@ -45,19 +45,19 @@ export function Modal({ abierto, titulo, alCerrar, children, ancho = 'md' }: Pro
         aria-labelledby={idTitulo}
         tabIndex={-1}
         className={cn(
-          'bg-superficie text-texto shadow-flotante max-h-[92vh] w-full overflow-y-auto rounded-t-2xl p-6 outline-none sm:rounded-2xl',
+          'bg-superficie text-texto shadow-flotante animate-dialogo max-h-[92vh] w-full overflow-y-auto rounded-t-[1.75rem] p-6 outline-none sm:rounded-[1.75rem]',
           ancho === 'lg' ? 'max-w-2xl' : 'max-w-lg',
         )}
       >
         <div className="mb-5 flex items-start justify-between gap-4">
-          <h2 id={idTitulo} className="text-lg font-semibold">
+          <h2 id={idTitulo} className="text-2xl leading-tight font-extrabold uppercase">
             {titulo}
           </h2>
           <button
             type="button"
             onClick={alCerrar}
             aria-label="Cerrar diálogo"
-            className="text-texto-suave hover:bg-tenue hover:text-texto -mt-1 -mr-2 rounded-lg p-1.5"
+            className="text-texto-suave hover:bg-tenue hover:text-texto presionable -mt-1 -mr-2 rounded-full p-2"
           >
             <X className="size-4" aria-hidden />
           </button>

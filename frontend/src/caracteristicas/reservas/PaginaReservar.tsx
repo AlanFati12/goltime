@@ -6,9 +6,8 @@ import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { useSedesPublicas } from '@/caracteristicas/sedes/consultas'
 import { HORAS } from '@/caracteristicas/sedes/constantes'
 import { Alerta } from '@/componentes/ui/Alerta'
-import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
-import { Insignia } from '@/componentes/ui/Insignia'
+import { PortadaPagina } from '@/componentes/ui/PortadaPagina'
 import { Plegable } from '@/componentes/ui/Plegable'
 import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
@@ -78,17 +77,16 @@ export function PaginaReservar() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <EncabezadoPagina
-        titulo="Reservar una cancha"
-        descripcion={
-          usuario
-            ? 'Elige sede y fecha, y toca un horario libre. El administrador confirmará tu solicitud.'
-            : 'Elige sede y fecha, y toca un horario libre. Para solicitarlo te pediremos iniciar sesión.'
-        }
-      />
+    <div className="flex flex-col gap-7">
+      <PortadaPagina titulo="Reserva tu cancha" imagen="/img/partido-tras-la-malla.webp" compacta>
+        <p className="max-w-xl text-lg">
+          {usuario
+            ? 'Elige sede y fecha, y toca un horario libre. La sede confirmará tu solicitud.'
+            : 'Elige sede y fecha, y toca un horario libre. Para solicitarlo te pediremos iniciar sesión.'}
+        </p>
+      </PortadaPagina>
 
-      <Tarjeta className="flex flex-col gap-4 p-4 sm:p-5">
+      <Tarjeta className="shadow-flotante relative z-10 mx-3 -mt-8 flex flex-col gap-4 p-4 sm:mx-8 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <CampoSelect
             etiqueta="Sede"
@@ -165,18 +163,21 @@ export function PaginaReservar() {
               onClick={() => cambiar({ fecha: d.fecha })}
               aria-pressed={d.fecha === fecha}
               className={cn(
-                'rounded-tarjeta min-w-24 border px-4 py-2.5 text-center text-sm whitespace-nowrap transition-colors',
+                'presionable min-w-28 rounded-2xl border px-4 py-3 text-center text-sm whitespace-nowrap transition-[background-color,border-color,color] duration-200',
                 d.fecha === fecha
-                  ? 'border-texto bg-texto text-white'
+                  ? 'border-noche bg-noche text-white'
                   : 'border-borde bg-superficie hover:border-texto-suave/40',
               )}
             >
-              <span className="block font-semibold capitalize">{formatearDia(d.fecha)}</span>
+              <span className="font-titulo block text-lg leading-tight font-bold uppercase">
+                {formatearDia(d.fecha)}
+              </span>
               <span
                 className={cn(
                   'text-xs',
+                  'font-semibold',
                   d.fecha === fecha
-                    ? 'text-white/70'
+                    ? 'text-volt-vivo'
                     : d.horariosLibres > 0
                       ? 'text-primario'
                       : 'text-texto-suave',
@@ -189,12 +190,13 @@ export function PaginaReservar() {
         </section>
       )}
 
-      <div className="text-texto-suave flex flex-wrap gap-4 text-xs" aria-hidden>
+      <div className="text-texto-suave flex flex-wrap gap-5 text-sm" aria-hidden>
         <span className="flex items-center gap-1.5">
-          <span className="border-primario/40 bg-superficie size-3 rounded border" /> Disponible
+          <span className="border-primario/50 bg-superficie size-3.5 rounded-md border" />{' '}
+          Disponible
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="bg-tenue size-3 rounded" /> Ocupado o bloqueado
+          <span className="bg-tenue size-3.5 rounded-md" /> Ocupado o bloqueado
         </span>
       </div>
 
@@ -223,15 +225,18 @@ export function PaginaReservar() {
             <Tarjeta
               key={c.canchaId}
               className={cn(
-                canchaResaltada === c.canchaId && 'border-primario ring-primario/15 ring-4',
+                'animate-velo',
+                canchaResaltada === c.canchaId && 'border-volt ring-volt/25 ring-4',
               )}
             >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold">{c.nombre}</h2>
-                  <Insignia tono="verde">{c.modalidad}</Insignia>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl leading-none font-extrabold uppercase">{c.nombre}</h2>
+                  <span className="bg-volt text-noche font-titulo rounded-full px-2.5 py-0.5 text-base font-extrabold">
+                    {c.modalidad}
+                  </span>
                 </div>
-                <span className="text-texto-suave flex items-center gap-1 text-xs">
+                <span className="text-texto-suave flex items-center gap-1.5 text-sm">
                   <Clock className="size-3.5" aria-hidden />
                   Bloques de {c.duracionBloqueMin} min
                 </span>
@@ -251,15 +256,15 @@ export function PaginaReservar() {
                         onClick={() => elegirSlot(c, s)}
                         aria-label={`${c.nombre}, ${formatearHora(s.inicio)}, ${libre ? formatearCOP(s.precio) : ETIQUETA_SLOT[s.estado]}`}
                         className={cn(
-                          'rounded-boton group w-full border px-2 py-2.5 text-center text-sm transition-all',
+                          'group w-full rounded-2xl border px-2 py-3 text-center text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 active:scale-[0.97]',
                           libre
-                            ? 'border-primario/30 bg-superficie hover:border-primario hover:bg-primario hover:shadow-suave hover:text-white'
+                            ? 'border-primario/30 bg-superficie hover:border-volt hover:bg-volt hover:text-noche hover:shadow-volt hover:-translate-y-0.5'
                             : 'bg-tenue text-texto-suave/70 cursor-not-allowed border-transparent',
                         )}
                       >
                         <span
                           className={cn(
-                            'block font-semibold tabular-nums',
+                            'font-titulo block text-xl leading-none font-bold tabular-nums',
                             !libre && 'font-normal line-through',
                           )}
                         >
@@ -267,8 +272,8 @@ export function PaginaReservar() {
                         </span>
                         <span
                           className={cn(
-                            'block text-xs',
-                            libre && 'text-texto-suave group-hover:text-white/85',
+                            'mt-1 block text-xs font-semibold',
+                            libre && 'text-texto-suave group-hover:text-noche/75',
                           )}
                         >
                           {libre ? formatearCOP(s.precio) : ETIQUETA_SLOT[s.estado]}

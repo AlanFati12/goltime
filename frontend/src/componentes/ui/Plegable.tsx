@@ -27,13 +27,13 @@ export function Plegable({
         className="text-texto-suave hover:text-texto flex items-center gap-1.5 text-sm font-medium"
       >
         <ChevronRight
-          className={cn('size-4 transition-transform', abierto && 'rotate-90')}
+          className={cn('size-4 transition-transform duration-200', abierto && 'rotate-90')}
           aria-hidden
         />
         {titulo}
         {resumen && !abierto && <span className="text-xs font-normal">{resumen}</span>}
       </button>
-      {abierto && <div className="mt-3">{children}</div>}
+      {abierto && <div className="animate-menu mt-3">{children}</div>}
     </div>
   )
 }
