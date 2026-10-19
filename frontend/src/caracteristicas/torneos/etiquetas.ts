@@ -63,13 +63,3 @@ export const ETIQUETA_EVENTO: Record<TipoEvento, string> = {
   ROJA: 'Tarjeta roja',
   FALTA: 'Falta',
 }
-
-export const ICONO_EVENTO: Record<TipoEvento, string> = {
-  GOL: '⚽',
-  GOL_PENAL: '⚽',
-  AUTOGOL: '⚽',
-  ASISTENCIA: '👟',
-  AMARILLA: '🟨',
-  ROJA: '🟥',
-  FALTA: '✋',
-}

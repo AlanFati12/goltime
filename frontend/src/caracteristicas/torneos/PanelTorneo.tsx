@@ -88,11 +88,11 @@ export function PanelTorneo({
             <li key={i.id}>
               <Tarjeta className="flex items-center gap-3 p-4">
                 <span
-                  className={cn('size-4 shrink-0 rounded-full border')}
-                  style={{ backgroundColor: i.color ?? 'transparent' }}
+                  className={cn('ring-borde size-9 shrink-0 rounded-full ring-1 ring-offset-2')}
+                  style={{ backgroundColor: i.color ?? 'var(--color-noche)' }}
                   aria-hidden="true"
                 />
-                <span className="font-medium">{i.equipo}</span>
+                <span className="font-semibold">{i.equipo}</span>
                 <span className="text-texto-suave ml-auto text-xs">{i.jugadores} jugadores</span>
               </Tarjeta>
             </li>
@@ -135,7 +135,7 @@ function Calendario({
     <div className="flex flex-col gap-6">
       {porRonda.map(([clave, lista]) => (
         <section key={clave} className="flex flex-col gap-2">
-          <h3 className="text-base font-semibold">
+          <h3 className="text-2xl font-extrabold uppercase">
             {lista[0].nombreRonda ?? `Ronda ${lista[0].ronda}`}
           </h3>
           <div className="grid gap-3 md:grid-cols-2">

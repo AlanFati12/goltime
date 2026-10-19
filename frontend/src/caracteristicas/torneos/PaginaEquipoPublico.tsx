@@ -18,21 +18,31 @@ export function PaginaEquipoPublico() {
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && (
         <>
-          <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-[1.75rem]">
+          <header className="bg-noche relative isolate flex items-end gap-5 overflow-hidden rounded-[2rem] p-6 text-white sm:p-10">
             <span
-              className="ring-borde size-8 rounded-xl ring-1"
-              style={{ backgroundColor: data.equipo.color ?? 'transparent' }}
+              className="absolute -top-20 -right-20 -z-10 size-72 rounded-full opacity-40 blur-3xl"
+              style={{ backgroundColor: data.equipo.color ?? 'var(--color-volt)' }}
               aria-hidden="true"
             />
-            {data.equipo.nombre}
-          </h1>
+            <span
+              className="size-16 shrink-0 rounded-2xl ring-4 ring-white/15 sm:size-20"
+              style={{ backgroundColor: data.equipo.color ?? 'var(--color-volt)' }}
+              aria-hidden="true"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white/60">Equipo</p>
+              <h1 className="text-[clamp(2.4rem,6vw,4.5rem)] leading-[0.9] font-extrabold uppercase">
+                {data.equipo.nombre}
+              </h1>
+            </div>
+          </header>
           <div className="grid gap-4 md:grid-cols-2">
             <Tarjeta className="flex flex-col">
               <TituloTarjeta titulo="Plantilla" className="mb-2" />
               <ul className="divide-borde/70 flex flex-col divide-y text-sm">
                 {data.plantilla.map((j) => (
                   <li key={j.id} className="flex items-center gap-3 py-2">
-                    <span className="bg-tenue text-texto-suave inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold tabular-nums">
+                    <span className="bg-noche text-volt-vivo font-titulo inline-flex size-9 items-center justify-center rounded-full text-base font-extrabold tabular-nums">
                       {j.dorsal ?? '–'}
                     </span>
                     <Link to={`/jugadores/${j.id}`} className="hover:text-primario font-medium">
@@ -59,7 +69,7 @@ export function PaginaEquipoPublico() {
           </div>
           {data.partidos.length > 0 && (
             <section className="flex flex-col gap-2">
-              <h2 className="text-base font-semibold">Partidos recientes y próximos</h2>
+              <h2 className="text-3xl font-extrabold uppercase">Partidos recientes y próximos</h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {data.partidos.map((p) => (
                   <TarjetaPartido

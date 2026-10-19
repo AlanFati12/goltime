@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Boton } from '@/componentes/ui/Boton'
@@ -12,17 +12,18 @@ import { mensajeDeError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 import { useAccionesPartido, usePlantillaTorneo } from '../consultas'
-import { ETIQUETA_EVENTO, ICONO_EVENTO } from '../etiquetas'
+import { ETIQUETA_EVENTO } from '../etiquetas'
+import { IconoBalon, IconoEvento, IconoTarjeta } from '../IconoEvento'
 import type { DetallePartido, EventoPartido, JugadorEquipo, Lado, TipoEvento } from '../tipos'
 import { golesDePlanilla, nombreLado } from '../utilidades'
 
 const error = (e: unknown) => avisar.error(mensajeDeError(e))
 
-const ACCIONES_RAPIDAS: { tipo: TipoEvento; texto: string; clase: string }[] = [
+const ACCIONES_RAPIDAS: { tipo: TipoEvento; texto: ReactNode; clase: string }[] = [
   { tipo: 'GOL', texto: 'Gol', clase: 'hover:bg-primario-claro hover:text-primario-oscuro' },
   { tipo: 'ASISTENCIA', texto: 'Asist.', clase: 'hover:bg-blue-50 hover:text-info' },
-  { tipo: 'AMARILLA', texto: '🟨', clase: 'hover:bg-amber-50' },
-  { tipo: 'ROJA', texto: '🟥', clase: 'hover:bg-red-50' },
+  { tipo: 'AMARILLA', texto: <IconoTarjeta />, clase: 'hover:bg-amber-50' },
+  { tipo: 'ROJA', texto: <IconoTarjeta roja />, clase: 'hover:bg-red-50' },
 ]
 
 const contar = (eventos: EventoPartido[], jugadorId: number, tipos: TipoEvento[]) =>
@@ -76,10 +77,26 @@ function ColumnaEquipo({
                 <span className="block truncate font-medium">{j.nombreCompleto}</span>
                 {(goles || asistencias || amarillas || rojas) > 0 && (
                   <span className="text-texto-suave flex gap-2 text-xs">
-                    {goles > 0 && <span>⚽ {goles}</span>}
-                    {asistencias > 0 && <span>👟 {asistencias}</span>}
-                    {amarillas > 0 && <span>🟨 {amarillas}</span>}
-                    {rojas > 0 && <span>🟥 {rojas}</span>}
+                    {goles > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <IconoBalon className="size-3.5" /> {goles}
+                      </span>
+                    )}
+                    {asistencias > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <IconoEvento tipo="ASISTENCIA" className="size-3.5" /> {asistencias}
+                      </span>
+                    )}
+                    {amarillas > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <IconoTarjeta className="h-3 w-2.5" /> {amarillas}
+                      </span>
+                    )}
+                    {rojas > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <IconoTarjeta roja className="h-3 w-2.5" /> {rojas}
+                      </span>
+                    )}
                   </span>
                 )}
               </span>
@@ -353,7 +370,7 @@ export function PlanillaPartido({
                   <span className="bg-tenue w-12 shrink-0 rounded-full py-0.5 text-center text-xs font-semibold tabular-nums">
                     {e.minuto != null ? `${e.minuto}'` : '—'}
                   </span>
-                  <span aria-hidden>{ICONO_EVENTO[e.tipo]}</span>
+                  <IconoEvento tipo={e.tipo} />
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{e.jugador}</span>
                     <span className="text-texto-suave">

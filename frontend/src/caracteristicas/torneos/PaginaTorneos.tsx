@@ -3,12 +3,12 @@ import { CalendarDays, Trophy, Users, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
-import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
+import { PortadaPagina } from '@/componentes/ui/PortadaPagina'
+import { Revelar } from '@/componentes/ui/Revelar'
 import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { Pestanas } from '@/componentes/ui/Pestanas'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Insignia } from '@/componentes/ui/Insignia'
-import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearDia } from '@/lib/formato'
 
@@ -23,54 +23,68 @@ const GRUPOS: { id: string; texto: string; estados: EstadoTorneo[] }[] = [
 ]
 
 export function TarjetaTorneo({ t, ruta }: { t: Torneo; ruta: string }) {
+  const lleno = t.cupoEquipos ? Math.min(100, (t.equiposInscritos / t.cupoEquipos) * 100) : null
   return (
-    <Link to={ruta} className="group block h-full">
-      <Tarjeta className="flex h-full flex-col gap-3 transition-all group-hover:shadow-md">
-        <div className="flex items-start justify-between gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <Trophy className="size-5" aria-hidden />
-          </span>
-          <div className="flex flex-wrap justify-end gap-1.5">
-            <Insignia tono={TONO_ESTADO_TORNEO[t.estado]}>
-              {ETIQUETA_ESTADO_TORNEO[t.estado]}
-            </Insignia>
-            <Insignia>{ETIQUETA_FORMATO[t.formato]}</Insignia>
-          </div>
-        </div>
+    <Link
+      to={ruta}
+      className="group bg-noche relative isolate flex h-full flex-col gap-5 overflow-hidden rounded-[1.75rem] p-6 text-white transition-transform duration-300 hover:-translate-y-1"
+    >
+      <Trophy
+        className="text-volt/10 group-hover:text-volt/20 absolute -top-6 -right-6 -z-10 size-40 -rotate-12 transition-[color,transform] duration-500 group-hover:rotate-0"
+        aria-hidden
+      />
+      <div className="flex flex-wrap gap-1.5">
+        <Insignia tono={TONO_ESTADO_TORNEO[t.estado]}>{ETIQUETA_ESTADO_TORNEO[t.estado]}</Insignia>
+        <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold">
+          {ETIQUETA_FORMATO[t.formato]}
+        </span>
+      </div>
+      <div>
+        <h2 className="group-hover:text-volt-vivo text-4xl leading-[0.95] font-extrabold uppercase transition-colors duration-200">
+          {t.nombre}
+        </h2>
+        <p className="mt-2 text-white/60">
+          {t.sedeNombre} · Fútbol {t.jugadoresPorEquipo}
+        </p>
+      </div>
+      <div className="mt-auto flex flex-col gap-3 text-sm">
         <div>
-          <h2 className="group-hover:text-primario text-base font-semibold">{t.nombre}</h2>
-          <p className="text-texto-suave mt-0.5 text-sm">
-            {t.sedeNombre} · Fútbol {t.jugadoresPorEquipo}
-          </p>
-        </div>
-        <ul className="text-texto-suave mt-auto flex flex-col gap-1.5 text-sm">
-          <li className="flex items-center gap-2">
-            <Users className="size-4" aria-hidden />
-            <span>
-              {t.equiposInscritos}
-              {t.cupoEquipos ? ` de ${t.cupoEquipos}` : ''} equipos
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="flex items-center gap-2 text-white/70">
+              <Users className="size-4" aria-hidden />
+              Equipos
             </span>
-          </li>
-          {t.fechaInicio && (
-            <li className="flex items-center gap-2">
-              <CalendarDays className="size-4" aria-hidden />
-              <span className="capitalize">
-                {formatearDia(t.fechaInicio)}
-                {t.fechaFin ? ` → ${formatearDia(t.fechaFin)}` : ''}
-              </span>
-            </li>
+            <span className="font-titulo text-xl font-extrabold">
+              {t.equiposInscritos}
+              {t.cupoEquipos ? <span className="text-white/45"> / {t.cupoEquipos}</span> : ''}
+            </span>
+          </div>
+          {lleno != null && (
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="bg-volt h-full rounded-full" style={{ width: `${lleno}%` }} />
+            </div>
           )}
-          {t.valorInscripcion > 0 && (
-            <li className="flex items-center gap-2">
-              <Wallet className="size-4" aria-hidden />
-              <span>Inscripción {formatearCOP(t.valorInscripcion)}</span>
-            </li>
-          )}
-        </ul>
-        {t.campeon && (
-          <p className="border-borde border-t pt-3 text-sm font-medium">🏆 Campeón: {t.campeon}</p>
+        </div>
+        {t.fechaInicio && (
+          <p className="flex items-center gap-2 text-white/70 capitalize">
+            <CalendarDays className="size-4" aria-hidden />
+            {formatearDia(t.fechaInicio)}
+            {t.fechaFin ? ` → ${formatearDia(t.fechaFin)}` : ''}
+          </p>
         )}
-      </Tarjeta>
+        {t.valorInscripcion > 0 && (
+          <p className="flex items-center gap-2 text-white/70">
+            <Wallet className="size-4" aria-hidden />
+            Inscripción {formatearCOP(t.valorInscripcion)}
+          </p>
+        )}
+      </div>
+      {t.campeon && (
+        <p className="bg-volt text-noche -mx-6 -mb-6 flex items-center gap-2 px-6 py-3 font-semibold">
+          <Trophy className="size-4" aria-hidden />
+          Campeón: {t.campeon}
+        </p>
+      )}
     </Link>
   )
 }
@@ -83,8 +97,12 @@ export function PaginaTorneos() {
   const lista = data?.filter((t) => actual.estados.includes(t.estado)) ?? []
 
   return (
-    <div className="flex flex-col gap-6">
-      <EncabezadoPagina titulo="Torneos" descripcion="Sigue las ligas y copas de nuestras sedes." />
+    <div className="flex flex-col gap-8">
+      <PortadaPagina titulo="Torneos" imagen="/img/arco-niebla.webp" compacta>
+        <p className="max-w-xl text-lg">
+          Ligas y copas de nuestras sedes: fixture, posiciones, goleadores y resultados.
+        </p>
+      </PortadaPagina>
       <Pestanas
         etiqueta="Estado del torneo"
         pestanas={GRUPOS.map((g) => ({
@@ -100,11 +118,11 @@ export function PaginaTorneos() {
       {data && lista.length === 0 && (
         <EstadoVacio icono={Trophy} titulo="No hay torneos en esta categoría" />
       )}
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {lista.map((t) => (
-          <li key={t.id}>
+      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {lista.map((t, i) => (
+          <Revelar como="li" key={t.id} i={i}>
             <TarjetaTorneo t={t} ruta={`/torneos/${t.id}`} />
-          </li>
+          </Revelar>
         ))}
       </ul>
     </div>
