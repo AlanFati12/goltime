@@ -106,7 +106,7 @@ export function PaginaNuevaReservaAdmin() {
       />
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold">1. Cancha y horario</h2>
+        <h2 className="text-xl font-extrabold uppercase">1. Cancha y horario</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <CampoSelect
             etiqueta="Sede"
@@ -205,7 +205,7 @@ export function PaginaNuevaReservaAdmin() {
       </Tarjeta>
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold">2. Cliente</h2>
+        <h2 className="text-xl font-extrabold uppercase">2. Cliente</h2>
         <div role="radiogroup" aria-label="Tipo de cliente" className="flex gap-2">
           {(['registrado', 'mostrador'] as const).map((t) => (
             <button

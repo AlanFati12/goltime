@@ -264,7 +264,7 @@ function SeccionEquipos({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-base font-semibold">
+      <h2 className="text-xl font-extrabold uppercase">
         Equipos inscritos ({detalle.inscripciones.length}
         {t.cupoEquipos ? ` de ${t.cupoEquipos}` : ''})
       </h2>
@@ -424,7 +424,7 @@ function SeccionFixture({ detalle }: { detalle: DetalleTorneo }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3">
-      <h2 className="text-base font-semibold">Fixture</h2>
+      <h2 className="text-xl font-extrabold uppercase">Fixture</h2>
       <p className="text-texto-suave text-sm">
         {hay
           ? `${detalle.partidosTotales} partidos generados, ${detalle.partidosJugados} jugados.`

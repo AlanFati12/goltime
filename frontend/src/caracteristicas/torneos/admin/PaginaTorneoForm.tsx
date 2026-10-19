@@ -91,7 +91,7 @@ function Formulario({ detalle }: { detalle: DetalleTorneo | null }) {
   return (
     <div className="flex flex-col gap-4">
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold">1. Datos del torneo</h2>
+        <h2 className="text-xl font-extrabold uppercase">1. Datos del torneo</h2>
         <Campo
           etiqueta="Nombre"
           value={nombre}
@@ -178,7 +178,7 @@ function Formulario({ detalle }: { detalle: DetalleTorneo | null }) {
       </Tarjeta>
 
       <Tarjeta className="flex flex-col gap-4">
-        <h2 className="text-base font-semibold">2. Formato y reglas</h2>
+        <h2 className="text-xl font-extrabold uppercase">2. Formato y reglas</h2>
         {bloqueado && (
           <Alerta tipo="info">
             El fixture ya está generado: formato y estructura no se pueden cambiar. Descártalo desde

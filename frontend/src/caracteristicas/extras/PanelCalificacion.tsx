@@ -24,7 +24,7 @@ export function PanelCalificacion({ reservaId }: { reservaId: number }) {
 
   return (
     <Tarjeta className="flex flex-col gap-3 print:hidden">
-      <h2 className="text-base font-semibold">
+      <h2 className="text-xl font-extrabold uppercase">
         {actual ? 'Tu calificación' : '¿Cómo estuvo la cancha?'}
       </h2>
       <div role="radiogroup" aria-label="Calificación en estrellas" className="flex gap-1">

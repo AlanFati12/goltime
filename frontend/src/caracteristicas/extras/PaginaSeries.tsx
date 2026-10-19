@@ -86,7 +86,7 @@ function FormularioSerie() {
 
   return (
     <Tarjeta className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold">Nueva serie</h2>
+      <h2 className="text-xl font-extrabold uppercase">Nueva serie</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <CampoSelect
           etiqueta="Sede"
@@ -280,7 +280,7 @@ export function PaginaSeries() {
       />
       <FormularioSerie />
       <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Series creadas</h2>
+        <h2 className="text-xl font-extrabold uppercase">Series creadas</h2>
         {isPending && <Cargando texto="Cargando series…" />}
         {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
         {data?.length === 0 && (

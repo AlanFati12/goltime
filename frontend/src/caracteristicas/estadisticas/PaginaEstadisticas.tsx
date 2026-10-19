@@ -283,7 +283,7 @@ export function PaginaEstadisticas() {
               )}
             </Tarjeta>
             <Tarjeta className="flex flex-col gap-2">
-              <h2 className="text-base font-semibold">Clientes frecuentes</h2>
+              <h2 className="text-xl font-extrabold uppercase">Clientes frecuentes</h2>
               {clientes.data?.length === 0 && (
                 <p className="text-texto-suave text-sm">Sin reservas completadas en el periodo.</p>
               )}

@@ -31,7 +31,7 @@ export function ListaPartidosAdmin({ torneoId, enCurso }: { torneoId: number; en
     <Tarjeta className="flex flex-col overflow-hidden p-0 sm:p-0">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-3">
         <div>
-          <h2 className="text-base font-semibold">Partidos</h2>
+          <h2 className="text-xl font-extrabold uppercase">Partidos</h2>
           <p className="text-texto-suave text-sm">
             Abre la planilla para programar, registrar el resultado y quién marcó o asistió.
           </p>

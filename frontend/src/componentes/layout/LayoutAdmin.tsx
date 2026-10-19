@@ -28,6 +28,7 @@ import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaN
 import { useSolicitudesPendientes } from '@/caracteristicas/admin/consultasAdmin'
 import { cn } from '@/lib/utils'
 
+import { BarraCarga } from './BarraCarga'
 import { Logo } from './Logo'
 import { MenuUsuario } from './MenuUsuario'
 
@@ -103,9 +104,7 @@ export function LayoutAdmin() {
       {GRUPOS.map((g, i) => (
         <div key={g.titulo ?? i} className="flex flex-col gap-0.5">
           {g.titulo && (
-            <p className="text-texto-suave/80 px-3 pb-1.5 text-[0.7rem] font-semibold tracking-wider uppercase">
-              {g.titulo}
-            </p>
+            <p className="px-3 pb-1.5 text-xs font-semibold text-white/35">{g.titulo}</p>
           )}
           {g.enlaces.map((e) => (
             <NavLink
@@ -114,17 +113,17 @@ export function LayoutAdmin() {
               end={e.fin}
               className={({ isActive }) =>
                 cn(
-                  'rounded-boton group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors',
+                  'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-150',
                   isActive
-                    ? 'bg-primario-claro text-primario-oscuro'
-                    : 'text-texto-suave hover:bg-tenue hover:text-texto',
+                    ? 'bg-volt text-noche'
+                    : 'text-white/65 hover:bg-white/[0.06] hover:text-white',
                 )
               }
             >
               <e.icono className="size-4 shrink-0" aria-hidden />
               <span className="flex-1">{e.texto}</span>
               {e.a === '/admin/reservas' && pendientes > 0 && (
-                <span className="bg-acento rounded-full px-1.5 text-xs font-bold text-white">
+                <span className="bg-acento text-noche rounded-full px-2 text-xs font-bold">
                   {pendientes}
                 </span>
               )}
@@ -138,10 +137,10 @@ export function LayoutAdmin() {
   return (
     <div className="flex min-h-screen">
       {/* Barra lateral fija en escritorio */}
-      <aside className="border-borde bg-superficie sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r lg:flex">
-        <Link to="/admin" className="flex items-center gap-2 px-6 pt-6 pb-6">
-          <Logo />
-          <span className="bg-tenue text-texto-suave rounded-md px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase">
+      <aside className="bg-noche sticky top-0 hidden h-screen w-64 shrink-0 [scrollbar-color:#26324a_transparent] flex-col overflow-y-auto lg:flex">
+        <Link to="/admin" className="flex items-center gap-2 px-6 pt-6 pb-7">
+          <Logo claro />
+          <span className="bg-volt/15 text-volt-vivo rounded-full px-2 py-0.5 text-xs font-bold">
             Admin
           </span>
         </Link>
@@ -152,16 +151,16 @@ export function LayoutAdmin() {
       {abierto && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/40"
+            className="bg-noche/50 animate-velo absolute inset-0 backdrop-blur-[2px]"
             onClick={() => setAbierto(false)}
             aria-hidden
           />
-          <aside className="bg-superficie absolute inset-y-0 left-0 flex w-72 flex-col overflow-y-auto shadow-xl">
+          <aside className="bg-noche animate-cajon absolute inset-y-0 left-0 flex w-72 flex-col overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between px-5 py-5">
-              <Logo />
+              <Logo claro />
               <button
                 type="button"
-                className="hover:bg-tenue rounded-boton p-2"
+                className="presionable rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
                 aria-label="Cerrar menú"
                 onClick={() => setAbierto(false)}
               >
@@ -174,11 +173,12 @@ export function LayoutAdmin() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-borde bg-superficie/85 sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-md md:px-8">
+        <BarraCarga />
+        <header className="border-borde/70 sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-white/85 px-4 backdrop-blur-md md:px-8">
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="hover:bg-tenue rounded-boton -ml-2 p-2 lg:hidden"
+              className="hover:bg-tenue presionable -ml-2 rounded-full p-2 lg:hidden"
               aria-label="Abrir menú"
               aria-expanded={abierto}
               onClick={() => setAbierto(true)}
@@ -187,7 +187,7 @@ export function LayoutAdmin() {
             </button>
             <Link
               to="/"
-              className="text-texto-suave hover:text-texto inline-flex items-center gap-1.5 text-sm font-medium"
+              className="text-texto-suave hover:text-texto hover:bg-tenue inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
             >
               <ExternalLink className="size-4" aria-hidden />
               Ver el sitio
@@ -199,7 +199,7 @@ export function LayoutAdmin() {
           </div>
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-6xl">
+          <div key={pathname} className="animate-entrada-pagina mx-auto w-full max-w-7xl">
             <Outlet />
           </div>
         </main>

@@ -135,7 +135,7 @@ export function PaginaConfiguracion() {
       {data &&
         GRUPOS.map((g) => (
           <Tarjeta key={g.titulo} className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold">{g.titulo}</h2>
+            <h2 className="text-xl font-extrabold uppercase">{g.titulo}</h2>
             <ul className="flex flex-col gap-4">
               {g.claves
                 .map((c) => porClave.get(c))

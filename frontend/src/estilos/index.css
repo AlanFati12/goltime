@@ -61,6 +61,13 @@
   --animate-subir: subir 700ms var(--ease-salida) both;
   --animate-deslizar: deslizar 36s linear infinite;
   --animate-acercar: acercar 1.6s var(--ease-salida) both;
+  --animate-cajon: cajon 420ms var(--ease-cajon) both;
+
+  @keyframes cajon {
+    from {
+      transform: translateX(-100%);
+    }
+  }
 
   @keyframes acercar {
     from {
@@ -189,7 +196,8 @@
     .animate-menu,
     .animate-aviso,
     .animate-subir,
-    .animate-entrada-pagina {
+    .animate-entrada-pagina,
+    .animate-cajon {
       animation-name: velo !important;
     }
   }

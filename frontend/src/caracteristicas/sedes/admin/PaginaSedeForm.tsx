@@ -203,7 +203,7 @@ export function PaginaSedeForm() {
 
           <Tarjeta>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Canchas ({sede.canchas.length})</h2>
+              <h2 className="text-xl font-extrabold uppercase">Canchas ({sede.canchas.length})</h2>
               <EnlaceBoton to={`/admin/canchas/nueva?sedeId=${sede.id}`} tamano="sm">
                 Nueva cancha
               </EnlaceBoton>

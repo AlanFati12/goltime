@@ -24,3 +24,10 @@
 - **Prompt:** "Se realizó este proyecto que tiene un frontend que cambiaré pero quiero probar la página con un front que se vea más limpio, más agradable e intuitivo, así que por favor revisa las pantallas que hay y modifica todo el frontend […]".
 - **Resultado:** nuevo sistema visual y rediseño de todas las pantallas en la rama `feat/frontend-limpio`; ver [ADR 0014](../decisiones/0014-frontend-de-pruebas-limpio.md).
 - **Qué se verificó:** `npm test`, `npm run lint` y `npm run build` pasan; revisión visual en el navegador como administrador (escritorio y móvil). Las pantallas solo de cliente (mis reservas, favoritas, premios) no se revisaron con sesión de cliente.
+
+## Rediseño «Partido nocturno» (18/oct/2026)
+
+- **Prompts:** primero se pidió probar en Figma la paleta «Partido nocturno» (Midnight & Volt) en la página de inicio y luego una versión más minimalista. Después: "Descarga e instala en el proyecto las skills de diseño Impeccable y la de Emil Kowalski y añade también taste skill, animation designer, css animations, UI animation, luego de esto rediseña la web completamente […] imágenes o animaciones muy profesionales […] responsive […] pantallas de carga […] logo […] animación de scroll".
+- **Resultado:** archivo de Figma con la v1 y la v2 de la portada; skills instaladas localmente (no versionadas); rediseño de todo el frontend en la rama `feat/rediseno-visual`. Ver [ADR 0016](../decisiones/0016-tema-partido-nocturno.md).
+- **Controles humanos:** la IA pidió confirmación antes de descargar las skills (repositorio, tamaño y licencia de cada una) y antes de bajar las fotos (archivo, autor y peso). No ejecutó los scripts de las skills.
+- **Qué se verificó:** `npm test` (66 pruebas), `npm run lint` sin errores, `npm run build`, y revisión en el navegador de portada, sedes, cancha, reservar, torneos, partido, promociones, acceso y 404 en escritorio (1440 px) y móvil (375 px), sin desbordes horizontales. El panel de administración no se revisó con sesión porque la clave del administrador está en `.env`.

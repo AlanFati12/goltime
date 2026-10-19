@@ -24,7 +24,6 @@ import { rangoHorario } from '@/caracteristicas/reservas/utilidades'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Boton } from '@/componentes/ui/Boton'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Estadistica } from '@/componentes/ui/Estadistica'
 import { Insignia } from '@/componentes/ui/Insignia'
@@ -92,10 +91,10 @@ function Pendiente({
     <Link
       to={a}
       className={cn(
-        'rounded-boton inline-flex items-center gap-2 border px-3 py-2 text-sm font-medium transition-colors',
-        tono === 'ambar' && 'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100',
-        tono === 'rojo' && 'border-red-200 bg-red-50 text-red-900 hover:bg-red-100',
-        tono === 'azul' && 'border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100',
+        'presionable inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur-md transition-colors',
+        tono === 'ambar' && 'bg-amber-400/15 text-amber-200 hover:bg-amber-400/25',
+        tono === 'rojo' && 'bg-red-500/15 text-red-200 hover:bg-red-500/25',
+        tono === 'azul' && 'bg-blue-400/15 text-blue-200 hover:bg-blue-400/25',
       )}
     >
       <Icono className="size-4" aria-hidden />
@@ -139,7 +138,7 @@ function Atencion({ t, pendientes }: { t: Tablero; pendientes: number }) {
     )
   if (avisos.length === 0) {
     return (
-      <div className="text-primario-oscuro bg-primario-claro/60 rounded-boton flex items-center gap-2 px-4 py-3 text-sm font-medium">
+      <div className="text-volt-vivo flex items-center gap-2 text-sm font-semibold">
         <CircleCheck className="size-4" aria-hidden />
         Nada urgente: no hay solicitudes, reembolsos ni partidos pendientes.
       </div>
@@ -168,17 +167,21 @@ function CanchasAhora({ canchas }: { canchas: Tablero['canchas'] }) {
       <ul className="divide-borde divide-y">
         {canchas.map((c) => (
           <li key={c.canchaId} className="flex items-center gap-3 px-5 py-3">
-            <span
-              className={cn(
-                'size-2.5 shrink-0 rounded-full',
-                c.estado === 'MANTENIMIENTO'
-                  ? 'bg-amber-500'
-                  : c.enUso
-                    ? 'bg-peligro'
-                    : 'bg-primario',
+            <span className="relative flex size-2.5 shrink-0" aria-hidden>
+              {c.enUso && c.estado !== 'MANTENIMIENTO' && (
+                <span className="bg-peligro absolute inset-0 animate-ping rounded-full opacity-50 motion-reduce:animate-none" />
               )}
-              aria-hidden
-            />
+              <span
+                className={cn(
+                  'relative size-2.5 rounded-full',
+                  c.estado === 'MANTENIMIENTO'
+                    ? 'bg-amber-500'
+                    : c.enUso
+                      ? 'bg-peligro'
+                      : 'bg-volt',
+                )}
+              />
+            </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{c.cancha}</p>
               <p className="text-texto-suave truncate text-xs">{c.sede}</p>
@@ -230,17 +233,14 @@ function ProximosDias({ dias }: { dias: Tablero['proximosDias'] }) {
             <li key={d.fecha} className="flex flex-col items-center gap-1.5">
               <span className="text-xs font-semibold tabular-nums">{d.reservas}</span>
               <div
-                className="bg-tenue flex h-28 w-full max-w-10 flex-col justify-end overflow-hidden rounded-md"
+                className="bg-tenue flex h-32 w-full max-w-10 flex-col justify-end overflow-hidden rounded-full"
                 title={`${formatearDia(d.fecha)}: ${confirmadas} confirmadas, ${d.pendientes} pendientes`}
               >
                 <div
                   className="bg-amber-400"
                   style={{ height: `${(100 * d.pendientes) / maximo}%` }}
                 />
-                <div
-                  className="bg-primario"
-                  style={{ height: `${(100 * confirmadas) / maximo}%` }}
-                />
+                <div className="bg-volt" style={{ height: `${(100 * confirmadas) / maximo}%` }} />
               </div>
               <span className="text-texto-suave text-[0.7rem] capitalize">
                 {formatearDia(d.fecha).split(' ')[0]}
@@ -251,10 +251,10 @@ function ProximosDias({ dias }: { dias: Tablero['proximosDias'] }) {
       </ul>
       <div className="text-texto-suave mt-3 flex gap-4 text-xs" aria-hidden>
         <span className="flex items-center gap-1.5">
-          <span className="bg-primario size-2.5 rounded-sm" /> Confirmadas
+          <span className="bg-volt size-2.5 rounded-full" /> Confirmadas
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-sm bg-amber-400" /> Pendientes
+          <span className="size-2.5 rounded-full bg-amber-400" /> Pendientes
         </span>
       </div>
     </Tarjeta>
@@ -356,25 +356,35 @@ export function PaginaPanelAdmin() {
 
   return (
     <div className="flex flex-col gap-6">
-      <EncabezadoPagina
-        titulo={`${saludo()}, ${usuario.nombres.split(' ')[0] || nombreCompleto(usuario)}`}
-        descripcion={<span className="inline-block first-letter:uppercase">{fechaLarga()}</span>}
-        acciones={
-          <>
-            <EnlaceBoton to="/admin/agenda" variante="secundario">
+      <header className="bg-noche relative isolate flex flex-col gap-6 overflow-hidden rounded-[2rem] p-6 text-white sm:p-9">
+        <img
+          src="/img/hero-cancha-nocturna.webp"
+          alt=""
+          className="absolute inset-0 -z-10 size-full object-cover opacity-30"
+        />
+        <div className="from-noche via-noche/85 absolute inset-0 -z-10 bg-gradient-to-r to-transparent" />
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="text-volt-vivo font-semibold first-letter:uppercase">{fechaLarga()}</p>
+            <h1 className="mt-1 text-[clamp(2.4rem,5vw,4rem)] leading-[0.9] font-extrabold uppercase">
+              {saludo()}, {usuario.nombres.split(' ')[0] || nombreCompleto(usuario)}
+            </h1>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <EnlaceBoton to="/admin/agenda" variante="claro">
               <CalendarDays aria-hidden />
               Ver agenda
             </EnlaceBoton>
-            <EnlaceBoton to="/admin/reservas/nueva">
+            <EnlaceBoton to="/admin/reservas/nueva" variante="volt">
               <Plus aria-hidden />
               Nueva reserva
             </EnlaceBoton>
-          </>
-        }
-      />
+          </div>
+        </div>
+        {t && <Atencion t={t} pendientes={totalPendientes} />}
+      </header>
 
       {tablero.isPending && <Cargando texto="Cargando el tablero…" />}
-      {t && <Atencion t={t} pendientes={totalPendientes} />}
 
       {t && (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -418,7 +428,7 @@ export function PaginaPanelAdmin() {
         <div className="flex flex-col gap-6">
           <section aria-labelledby="titulo-pendientes" className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
-              <h2 id="titulo-pendientes" className="text-base font-semibold">
+              <h2 id="titulo-pendientes" className="text-2xl font-extrabold uppercase">
                 Solicitudes por aprobar
               </h2>
               {totalPendientes > 5 && (
@@ -457,6 +467,7 @@ export function PaginaPanelAdmin() {
                   </div>
                   <Boton
                     tamano="sm"
+                    variante="volt"
                     disabled={aprobar.isPending}
                     onClick={() =>
                       aprobar.mutate(r.id, {
@@ -473,7 +484,7 @@ export function PaginaPanelAdmin() {
           </section>
 
           <section aria-labelledby="titulo-hoy" className="flex flex-col gap-3">
-            <h2 id="titulo-hoy" className="text-base font-semibold">
+            <h2 id="titulo-hoy" className="text-2xl font-extrabold uppercase">
               Hoy en las canchas
             </h2>
             <Tarjeta className="divide-borde divide-y p-0 sm:p-0">
@@ -491,7 +502,9 @@ export function PaginaPanelAdmin() {
                   className="hover:bg-tenue/60 flex items-center justify-between gap-3 px-5 py-3.5"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium tabular-nums">{rangoHorario(r.inicio, r.fin)}</p>
+                    <p className="font-titulo text-lg font-bold tabular-nums">
+                      {rangoHorario(r.inicio, r.fin)}
+                    </p>
                     <p className="text-texto-suave truncate text-sm">
                       {r.cancha.nombre} · {r.cliente.nombre}
                     </p>
@@ -542,8 +555,8 @@ export function PaginaPanelAdmin() {
                   { texto: 'Nuevos 7 días', valor: t.clientes.nuevosSemana },
                   { texto: 'Nuevos del mes', valor: t.clientes.nuevosMes },
                 ].map((x) => (
-                  <div key={x.texto} className="bg-tenue/70 rounded-boton px-2 py-3">
-                    <p className="font-titulo text-xl font-bold">{x.valor}</p>
+                  <div key={x.texto} className="bg-tenue rounded-2xl px-2 py-3">
+                    <p className="font-titulo text-3xl leading-none font-extrabold">{x.valor}</p>
                     <p className="text-texto-suave text-xs">{x.texto}</p>
                   </div>
                 ))}

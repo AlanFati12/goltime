@@ -44,7 +44,7 @@ function DatosEquipo({ equipo }: { equipo: Equipo }) {
   return (
     <Tarjeta className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">Datos del equipo</h2>
+        <h2 className="text-xl font-extrabold uppercase">Datos del equipo</h2>
         {!equipo.activo && <Insignia tono="rojo">Desactivado</Insignia>}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

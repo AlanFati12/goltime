@@ -149,7 +149,7 @@ export function PaginaPremiosAdmin() {
       />
 
       <Tarjeta className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Reglas</h2>
+        <h2 className="text-xl font-extrabold uppercase">Reglas</h2>
         {reglas.isPending && <Cargando texto="Cargando reglas…" />}
         {reglas.isError && <Alerta tipo="error">{mensajeDeError(reglas.error)}</Alerta>}
         {reglas.data?.length === 0 && (
@@ -179,7 +179,7 @@ export function PaginaPremiosAdmin() {
 
       <Tarjeta className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-base font-semibold">Premios otorgados</h2>
+          <h2 className="text-xl font-extrabold uppercase">Premios otorgados</h2>
           <CampoSelect
             className="w-44"
             etiqueta="Estado"

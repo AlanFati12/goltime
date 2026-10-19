@@ -141,7 +141,7 @@ export function PaginaReservaAdminDetalle() {
         </Tarjeta>
 
         <Tarjeta className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">Pagos</h2>
+          <h2 className="text-xl font-extrabold uppercase">Pagos</h2>
           <div className="flex items-center justify-between">
             <span className="text-sm">
               Valor <strong>{formatearCOP(r.precioFinal)}</strong>
