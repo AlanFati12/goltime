@@ -79,7 +79,7 @@ export function PaginaMisReservas() {
         {data?.contenido.map((r) => (
           <li key={r.id}>
             <Link to={`/mis-reservas/${r.id}`} className="group block">
-              <Tarjeta className="flex items-center gap-4 p-4 transition-all group-hover:shadow-md sm:p-5">
+              <Tarjeta className="group-hover:border-primario/40 flex items-center gap-4 p-4 transition-colors duration-200 sm:p-5">
                 <BloqueFecha fecha={r.inicio} />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -93,8 +93,8 @@ export function PaginaMisReservas() {
                     {r.sede.nombre} · {rangoHorario(r.inicio, r.fin)}
                   </p>
                   <p className="text-texto-suave text-xs">
-                    <span className="font-mono">{r.codigo}</span> · {formatearCOP(r.precioFinal)} ·{' '}
-                    {ETIQUETA_PAGO[r.estadoPago] ?? r.estadoPago}
+                    <span className="cifras font-semibold tracking-wide">{r.codigo}</span> ·{' '}
+                    {formatearCOP(r.precioFinal)} · {ETIQUETA_PAGO[r.estadoPago] ?? r.estadoPago}
                     {r.nombreEquipo && ` · ${r.nombreEquipo}`}
                   </p>
                 </div>

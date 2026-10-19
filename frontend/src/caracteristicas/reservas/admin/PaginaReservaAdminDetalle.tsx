@@ -78,7 +78,7 @@ export function PaginaReservaAdminDetalle() {
       <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <Tarjeta className="flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <h1 className="font-mono text-2xl font-bold">{r.codigo}</h1>
+            <h1 className="cifras text-2xl font-bold font-semibold tracking-wide">{r.codigo}</h1>
             <div className="flex gap-1">
               <Insignia tono={r.origen === 'ADMIN' ? 'verde' : 'gris'}>
                 {r.origen === 'ADMIN' ? 'Creada por admin' : 'Solicitada en la web'}

@@ -212,7 +212,7 @@ export function PaginaReservasAdmin() {
                   <td>
                     <Link
                       to={`/admin/reservas/${r.id}`}
-                      className="hover:text-primario font-mono font-semibold"
+                      className="hover:text-primario cifras font-semibold tracking-wide"
                     >
                       {r.codigo}
                     </Link>

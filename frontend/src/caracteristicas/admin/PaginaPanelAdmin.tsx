@@ -70,7 +70,7 @@ function Indicador({ a, ...props }: Parameters<typeof Estadistica>[0] & { a: str
     <Link to={a} className="group">
       <Estadistica
         {...props}
-        className="group-hover:border-texto-suave/30 h-full transition-colors group-hover:shadow-md"
+        className="group-hover:border-texto-suave/30 group-hover:border-primario/40 h-full transition-colors"
       />
     </Link>
   )

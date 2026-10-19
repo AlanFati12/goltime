@@ -42,15 +42,23 @@ export function PaginaMisPremios() {
         />
       )}
       {data?.progreso.map((p) => (
-        <Tarjeta key={p.regla.id} className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                <Gift className="size-5" aria-hidden />
-              </span>
-              <h2 className="text-base font-semibold">{p.regla.nombre}</h2>
+        <div
+          key={p.regla.id}
+          className="bg-noche relative isolate flex flex-col gap-4 overflow-hidden rounded-[1.5rem] p-6 text-white sm:p-8"
+        >
+          <Gift
+            className="text-volt/10 absolute -right-6 -bottom-8 -z-10 size-44 -rotate-12"
+            aria-hidden
+          />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-3xl leading-none font-extrabold uppercase">{p.regla.nombre}</h2>
+              <p className="text-volt-vivo mt-1 font-semibold">{p.regla.beneficio} de descuento</p>
             </div>
-            <Insignia tono="verde">{p.regla.beneficio} de descuento</Insignia>
+            <p className="font-titulo cifras text-6xl leading-none font-extrabold">
+              {p.enCiclo}
+              <span className="text-2xl text-white/40">/{p.regla.reservasRequeridas}</span>
+            </p>
           </div>
           <div
             role="progressbar"
@@ -58,21 +66,21 @@ export function PaginaMisPremios() {
             aria-valuemax={p.regla.reservasRequeridas}
             aria-valuenow={p.enCiclo}
             aria-label={`Progreso hacia ${p.regla.nombre}`}
-            className="bg-tenue h-2.5 overflow-hidden rounded-full"
+            className="h-3 overflow-hidden rounded-full bg-white/10"
           >
             <div
-              className="bg-primario h-full rounded-full transition-all"
+              className="bg-volt h-full rounded-full shadow-[0_0_16px_var(--color-volt)] transition-[width] duration-1000 ease-[var(--ease-salida)]"
               style={{ width: `${(100 * p.enCiclo) / p.regla.reservasRequeridas}%` }}
             />
           </div>
-          <p className="text-texto-suave text-sm">
+          <p className="text-sm text-white/65">
             {p.enCiclo} de {p.regla.reservasRequeridas} reservas completadas.{' '}
-            <strong className="text-texto font-semibold">
+            <strong className="font-semibold text-white">
               {p.faltan === 1 ? 'Te falta 1 reserva' : `Te faltan ${p.faltan} reservas`}
             </strong>{' '}
             para ganar este premio.
           </p>
-        </Tarjeta>
+        </div>
       ))}
 
       {disponibles.length > 0 && (

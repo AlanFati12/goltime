@@ -60,10 +60,10 @@ export function PaginaReservaDetalle() {
               <div className="flex items-center gap-4">
                 <BloqueFecha fecha={r.inicio} />
                 <div>
-                  <p className="text-texto-suave text-xs font-medium tracking-wide uppercase">
-                    Comprobante de reserva
-                  </p>
-                  <h1 className="font-mono text-2xl font-bold">{r.codigo}</h1>
+                  <p className="text-texto-suave text-sm font-semibold">Comprobante de reserva</p>
+                  <h1 className="font-titulo cifras text-4xl leading-none font-extrabold tracking-wide uppercase">
+                    {r.codigo}
+                  </h1>
                 </div>
               </div>
               <InsigniaEstadoReserva estado={r.estado} />

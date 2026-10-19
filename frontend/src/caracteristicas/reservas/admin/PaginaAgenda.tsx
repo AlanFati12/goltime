@@ -30,7 +30,7 @@ import { useAgenda } from './consultas'
 const PX_POR_HORA = 56
 const COLORES: Record<string, string> = {
   PENDIENTE: 'border-amber-500 bg-amber-50 text-amber-900 hover:bg-amber-100',
-  CONFIRMADA: 'border-primario bg-emerald-50 text-primario-oscuro hover:bg-emerald-100',
+  CONFIRMADA: 'border-primario bg-volt-claro text-primario-oscuro hover:bg-volt-claro/70',
   COMPLETADA: 'border-slate-300 bg-tenue text-texto-suave hover:bg-slate-200',
   NO_ASISTIO: 'border-peligro bg-red-50 text-peligro hover:bg-red-100',
   BLOQUEO:
@@ -230,7 +230,7 @@ export function PaginaAgenda() {
             <span className="size-3 rounded-sm border-l-4 border-amber-500 bg-amber-50" /> Pendiente
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="border-primario size-3 rounded-sm border-l-4 bg-emerald-50" />{' '}
+            <span className="border-primario bg-volt-claro size-3 rounded-sm border-l-4" />{' '}
             Confirmada
           </span>
           <span className="flex items-center gap-1.5">

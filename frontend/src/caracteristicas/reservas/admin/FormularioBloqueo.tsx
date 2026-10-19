@@ -175,7 +175,7 @@ export function FormularioBloqueo({
             {previa.conflictos.map((c) => (
               <li key={c.reservaId} className="px-3 py-2">
                 <div className="flex justify-between gap-2">
-                  <span className="font-mono font-medium">{c.codigo}</span>
+                  <span className="cifras font-medium font-semibold tracking-wide">{c.codigo}</span>
                   <span>{formatearCOP(c.precioFinal)}</span>
                 </div>
                 <div>{c.cliente}</div>

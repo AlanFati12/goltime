@@ -135,7 +135,13 @@ export function PaginaRegistro() {
           error={errors.aceptaTerminos?.message}
           {...register('aceptaTerminos')}
         />
-        <Boton type="submit" disabled={isSubmitting} className="mt-1 w-full">
+        <Boton
+          type="submit"
+          variante="volt"
+          tamano="lg"
+          disabled={isSubmitting}
+          className="mt-1 w-full"
+        >
           {isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
         </Boton>
       </form>

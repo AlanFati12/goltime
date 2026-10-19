@@ -88,7 +88,7 @@ export function PaginaRestablecerClave() {
           error={errors.confirmacion?.message}
           {...register('confirmacion')}
         />
-        <Boton type="submit" disabled={isSubmitting} className="w-full">
+        <Boton type="submit" variante="volt" tamano="lg" disabled={isSubmitting} className="w-full">
           {isSubmitting ? 'Guardando…' : 'Guardar contraseña'}
         </Boton>
       </form>

@@ -59,7 +59,13 @@ export function PaginaOlvideClave() {
               error={errors.correo?.message}
               {...register('correo')}
             />
-            <Boton type="submit" disabled={isSubmitting} className="w-full">
+            <Boton
+              type="submit"
+              variante="volt"
+              tamano="lg"
+              disabled={isSubmitting}
+              className="w-full"
+            >
               {isSubmitting ? 'Enviando…' : 'Enviar enlace'}
             </Boton>
           </form>

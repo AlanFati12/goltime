@@ -37,7 +37,7 @@ export function PaginaMiCuenta() {
         {SECCIONES_CUENTA.filter((x) => x.a !== '/mi-cuenta').map((x) => (
           <li key={x.a}>
             <Link to={x.a} className="group block h-full">
-              <Tarjeta className="flex h-full items-start gap-4 p-5 transition-all group-hover:shadow-md sm:p-5">
+              <Tarjeta className="group-hover:border-primario/40 flex h-full items-start gap-4 p-5 transition-colors duration-200 sm:p-5">
                 <span className="bg-primario-claro text-primario flex size-10 shrink-0 items-center justify-center rounded-xl">
                   <x.icono className="size-5" aria-hidden />
                 </span>

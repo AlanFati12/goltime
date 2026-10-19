@@ -75,7 +75,13 @@ export function PaginaIngresar() {
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
-        <Boton type="submit" disabled={isSubmitting} className="mt-1 w-full">
+        <Boton
+          type="submit"
+          variante="volt"
+          tamano="lg"
+          disabled={isSubmitting}
+          className="mt-1 w-full"
+        >
           {isSubmitting ? 'Ingresando…' : 'Ingresar'}
         </Boton>
       </form>
