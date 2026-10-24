@@ -1,6 +1,12 @@
 import { formatearFechaHora, formatearHora } from '@/lib/formato'
 
-import type { DisponibilidadCancha, EntradaHistorial, EstadoReserva, Slot } from './tipos'
+import type {
+  DisponibilidadCancha,
+  EntradaHistorial,
+  EstadoReserva,
+  PrevisualizacionEstado,
+  Slot,
+} from './tipos'
 
 export const ETIQUETA_ESTADO_RESERVA: Record<EstadoReserva, string> = {
   PENDIENTE: 'Pendiente de aprobación',
@@ -75,11 +81,52 @@ export function describirEntrada(h: EntradaHistorial): string {
       return `Marcada como completada el ${cuando}.`
     case 'NO_ASISTIO':
       return `Marcada como no asistió por ${actor} el ${cuando}.`
+    case 'ESTADO_CAMBIADO': {
+      const antes = etiquetaEstado(h.datosAnteriores?.estado)
+      const despues = etiquetaEstado(h.datosNuevos?.estado)
+      const cambio = antes && despues ? `: de «${antes}» a «${despues}»` : ''
+      return `Estado cambiado por ${actor} el ${cuando}${cambio}.${motivo}`
+    }
     case 'PAGO_REGISTRADO':
       return `Pago registrado por ${actor} el ${cuando}.${motivo}`
     default:
       return `${h.accion} por ${actor} el ${cuando}.${motivo}`
   }
+}
+
+function etiquetaEstado(valor: unknown): string | null {
+  return typeof valor === 'string' && valor in ETIQUETA_ESTADO_RESERVA
+    ? ETIQUETA_ESTADO_RESERVA[valor as EstadoReserva]
+    : null
+}
+
+/** Frases del efecto de un cambio de estado que calculó el backend (ADR 0019), en el orden en que importan. */
+export function efectosDelCambio(p: PrevisualizacionEstado): string[] {
+  const efectos: string[] = []
+  if (p.ocuparaHorario && p.horarioLibre) efectos.push('Volverá a ocupar la cancha en su horario.')
+  if (p.liberaraHorario) {
+    efectos.push('Liberará la cancha y se avisará a quienes esperan ese horario.')
+  }
+  if (p.cuentaParaPremios) efectos.push('Contará para los premios del cliente y para los ingresos.')
+  if (p.dejaDeContarParaPremios) {
+    efectos.push(
+      'Dejará de contar para premios e ingresos; si con ella ganó un premio que no ha usado, se le revoca.',
+    )
+  }
+  if (p.quedaReembolsoPendiente)
+    efectos.push('Tiene dinero pagado: quedará un reembolso pendiente.')
+  if (p.seCompletaraSola) {
+    efectos.push('Como ya terminó, la tarea automática la marcará completada en unos minutos.')
+  }
+  if (p.expiraraSola) {
+    efectos.push('Ya pasó el plazo para aprobarla: expirará sola en unos minutos.')
+  }
+  efectos.push(
+    p.avisaAlCliente
+      ? 'Se le avisará al cliente con el motivo.'
+      : 'No se le avisa a nadie: la reserva no tiene un cliente con canal de aviso.',
+  )
+  return efectos
 }
 
 /** Hasta cuántos bloques seguidos libres hay desde el slot elegido (respetando el máximo de la cancha). */

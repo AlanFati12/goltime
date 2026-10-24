@@ -46,6 +46,20 @@ describe('describirEntrada', () => {
     ).toContain('Expiró el')
   })
 
+  it('un cambio de estado del admin dice de qué estado a cuál y por qué', () => {
+    const texto = describirEntrada(
+      entrada({
+        accion: 'ESTADO_CAMBIADO',
+        datosAnteriores: { estado: 'CANCELADA' },
+        datosNuevos: { estado: 'CONFIRMADA', horario: 'OCUPADA' },
+        motivo: 'Se arrepintió',
+      }),
+    )
+    expect(texto).toBe(
+      'Estado cambiado por el administrador Juan Pérez el jue 12/11/2026 15:40: de «Cancelada» a «Confirmada». Motivo: Se arrepintió.',
+    )
+  })
+
   it('incluye el motivo de un rechazo o una cancelación', () => {
     expect(describirEntrada(entrada({ accion: 'RECHAZADA', motivo: 'Evento privado' }))).toContain(
       'Motivo: Evento privado',

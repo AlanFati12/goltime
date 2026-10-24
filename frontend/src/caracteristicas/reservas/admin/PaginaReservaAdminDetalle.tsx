@@ -17,10 +17,11 @@ import { InsigniaEstadoReserva } from '../InsigniaEstadoReserva'
 import { ModalReprogramar } from '../ModalReprogramar'
 import { useAccionesReservaAdmin } from '../consultas'
 import { ETIQUETA_PAGO, describirEntrada, rangoHorario, textoDuracion } from '../utilidades'
+import { ModalCambiarEstado } from './ModalCambiarEstado'
 import { ModalPago, ModalReembolso } from './ModalesPago'
-import { useAccionesPago, usePagos, useReservaAdmin } from './consultas'
+import { usePagos, useReservaAdmin } from './consultas'
 
-type Dialogo = 'pago' | 'reembolso' | 'reprogramar' | 'rechazar' | 'cancelar' | null
+type Dialogo = 'pago' | 'reembolso' | 'reprogramar' | 'rechazar' | 'cancelar' | 'estado' | null
 
 const TONO_PAGO: Record<string, 'verde' | 'ambar' | 'rojo' | 'gris'> = {
   PENDIENTE: 'gris',
@@ -35,7 +36,6 @@ export function PaginaReservaAdminDetalle() {
   const { data: r, isPending, isError, error } = useReservaAdmin(id)
   const pagos = usePagos(id)
   const { aprobar, rechazar, cancelar } = useAccionesReservaAdmin()
-  const { marcar } = useAccionesPago()
   const [dialogo, setDialogo] = useState<Dialogo>(null)
 
   if (isPending) return <Cargando texto="Cargando reserva…" />
@@ -56,21 +56,8 @@ export function PaginaReservaAdminDetalle() {
 
   const saldo = Math.max(0, r.precioFinal - r.montoPagado)
   const yaEmpezo = new Date(r.inicio).getTime() <= Date.now()
-  const yaTermino = new Date(r.fin).getTime() <= Date.now()
   const puedePagar = ['CONFIRMADA', 'COMPLETADA', 'NO_ASISTIO'].includes(r.estado) && saldo > 0
   const mostrador = r.cliente.id === null
-
-  const marcarEstado = (estado: 'COMPLETADA' | 'NO_ASISTIO') =>
-    marcar.mutate(
-      { id: r.id, estado },
-      {
-        onSuccess: () =>
-          avisar.exito(
-            estado === 'COMPLETADA' ? 'Marcada como completada.' : 'Marcada como no asistió.',
-          ),
-        onError: (e) => avisar.error(mensajeDeError(e)),
-      },
-    )
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -221,24 +208,9 @@ export function PaginaReservaAdminDetalle() {
             </Boton>
           </>
         )}
-        {r.estado === 'CONFIRMADA' && yaTermino && (
-          <Boton
-            variante="secundario"
-            disabled={marcar.isPending}
-            onClick={() => marcarEstado('COMPLETADA')}
-          >
-            Marcar como completada
-          </Boton>
-        )}
-        {(r.estado === 'CONFIRMADA' || r.estado === 'COMPLETADA') && yaEmpezo && (
-          <Boton
-            variante="secundario"
-            disabled={marcar.isPending}
-            onClick={() => marcarEstado('NO_ASISTIO')}
-          >
-            Marcar como no asistió
-          </Boton>
-        )}
+        <Boton variante="secundario" onClick={() => setDialogo('estado')}>
+          Cambiar estado
+        </Boton>
       </div>
 
       <Tarjeta>
@@ -256,6 +228,7 @@ export function PaginaReservaAdminDetalle() {
         </ol>
       </Tarjeta>
 
+      {dialogo === 'estado' && <ModalCambiarEstado reserva={r} alCerrar={() => setDialogo(null)} />}
       {dialogo === 'pago' && <ModalPago reserva={r} alCerrar={() => setDialogo(null)} />}
       {dialogo === 'reembolso' && <ModalReembolso reserva={r} alCerrar={() => setDialogo(null)} />}
       {dialogo === 'reprogramar' && (
