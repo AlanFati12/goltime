@@ -479,9 +479,48 @@ public class ServicioReservas {
         historial.registrar(new EntradaHistorial(null, reservaId, accion, actor.id(), null, actor.rol(), motivo, antes, despues, reloj.instant()));
     }
 
+    /**
+     * Avisa al titular de un cambio de estado hecho por el administrador (ADR 0019). Confirmar, rechazar y cancelar usan
+     * el mismo aviso que esas acciones; los demás destinos, uno genérico {@code RESERVA_ESTADO_<ESTADO>} con el motivo.
+     */
+    void avisarCambioDeEstado(Reserva r, String motivo) {
+        String codigo = r.codigo();
+        String cuando = FormatoTexto.fechaHora(r.inicio());
+        boolean porJugar = r.inicio().isAfter(reloj.instant());
+        switch (r.estado()) {
+            case CONFIRMADA -> {
+                if (porJugar) {
+                    notificarClienteConCalendario(r, "RESERVA_CONFIRMADA", "¡Reserva confirmada!",
+                            "El administrador confirmó tu reserva %s para el %s. Motivo: %s. Agrégala a tu calendario con el archivo adjunto."
+                                    .formatted(codigo, cuando, motivo), motivo);
+                    return;
+                }
+            }
+            case RECHAZADA -> {
+                notificarCliente(r, "RESERVA_RECHAZADA", "Tu solicitud no fue aprobada",
+                        "La reserva %s del %s no fue aprobada. Motivo: %s".formatted(codigo, cuando, motivo), motivo);
+                return;
+            }
+            case CANCELADA -> {
+                notificarCliente(r, "RESERVA_CANCELADA_ADMIN", "Tu reserva fue cancelada",
+                        "El administrador canceló la reserva %s del %s. Motivo: %s".formatted(codigo, cuando, motivo), motivo);
+                return;
+            }
+            default -> {
+                // aviso genérico
+            }
+        }
+        notificarCliente(r, "RESERVA_ESTADO_" + r.estado().name(), "Tu reserva cambió de estado",
+                "El administrador marcó la reserva %s del %s como %s. Motivo: %s".formatted(codigo, cuando, r.estado().etiqueta(), motivo), motivo);
+    }
+
     /** Igual que {@link #notificarCliente} pero el correo lleva el evento .ics de la reserva. */
     private void notificarClienteConCalendario(Reserva r, String tipo, String titulo, String mensaje) {
-        avisarPorOtrosCanales(r, tipo);
+        notificarClienteConCalendario(r, tipo, titulo, mensaje, motivoDe(r));
+    }
+
+    private void notificarClienteConCalendario(Reserva r, String tipo, String titulo, String mensaje, String motivo) {
+        avisarPorOtrosCanales(r, tipo, motivo);
         if (r.clienteId() != null) {
             notificador.notificar(r.clienteId(), tipo, titulo, mensaje, "reserva", r.id(), List.of(adjuntoCalendario(r)));
         }
@@ -504,20 +543,28 @@ public class ServicioReservas {
     }
 
     private void notificarCliente(Reserva r, String tipo, String titulo, String mensaje) {
-        avisarPorOtrosCanales(r, tipo);
+        notificarCliente(r, tipo, titulo, mensaje, motivoDe(r));
+    }
+
+    private void notificarCliente(Reserva r, String tipo, String titulo, String mensaje, String motivo) {
+        avisarPorOtrosCanales(r, tipo, motivo);
         if (r.clienteId() != null) {
             notificador.notificar(r.clienteId(), tipo, titulo, mensaje, "reserva", r.id());
         }
     }
 
-    /** También para clientes sin cuenta: el canal que escucha (WhatsApp) decide si le corresponde avisar. */
-    private void avisarPorOtrosCanales(Reserva r, String tipo) {
-        Relacionados rel = reservas.relacionados(List.of(r.id())).get(r.id());
-        String motivo = switch (r.estado()) {
+    /** Motivo que acompaña al aviso: solo en rechazos y cancelaciones. */
+    private static String motivoDe(Reserva r) {
+        return switch (r.estado()) {
             case RECHAZADA -> r.motivoRechazo();
             case CANCELADA -> r.motivoCancelacion();
             default -> null;
         };
+    }
+
+    /** También para clientes sin cuenta: el canal que escucha (WhatsApp) decide si le corresponde avisar. */
+    private void avisarPorOtrosCanales(Reserva r, String tipo, String motivo) {
+        Relacionados rel = reservas.relacionados(List.of(r.id())).get(r.id());
         eventos.publishEvent(new AvisoReservaEvento(r.id(), r.codigo(), tipo, r.clienteId(), r.clienteMostradorId(), r.origen(),
                 rel == null ? null : rel.clienteTelefono(),
                 rel == null ? null : rel.canchaNombre(), r.inicio(), motivo));

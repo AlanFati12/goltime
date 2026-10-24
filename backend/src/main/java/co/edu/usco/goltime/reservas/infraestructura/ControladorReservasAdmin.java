@@ -36,6 +36,7 @@ import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaMostrador;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaPago;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaPrevisualizacion;
+import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaPrevisualizacionEstado;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaReserva;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.SolicitudEstadoReserva;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.SolicitudMotivoObligatorio;
@@ -153,10 +154,17 @@ public class ControladorReservasAdmin {
         return MapeadorReservas.aRespuesta(reservas.reprogramar(id, actor(), s.canchaId(), s.inicio(), s.fin(), s.motivo()));
     }
 
+    @GetMapping("/reservas/{id}/estado/previsualizar")
+    @Operation(summary = "Previsualiza un cambio de estado: si ocupa o libera la cancha (y si está libre), premios, reembolso y aviso al cliente")
+    public RespuestaPrevisualizacionEstado previsualizarEstado(@PathVariable long id, @RequestParam EstadoReserva estado) {
+        return MapeadorReservas.aRespuesta(admin.previsualizarCambioEstado(id, estado));
+    }
+
     @PatchMapping("/reservas/{id}/estado")
-    @Operation(summary = "Marcar como COMPLETADA (ya terminó) o NO_ASISTIO (ya empezó; también corrige una completada por error)")
+    @Operation(summary = "Cambiar a cualquier estado, aunque no haya llegado la fecha (motivo obligatorio). Si vuelve a ocupar la cancha "
+            + "y el horario ya está tomado responde RESERVA_SOLAPADA; se avisa al cliente")
     public RespuestaReserva estado(@PathVariable long id, @Valid @RequestBody SolicitudEstadoReserva s) {
-        return MapeadorReservas.aRespuesta(admin.cambiarEstado(id, actor(), s.estado()));
+        return MapeadorReservas.aRespuesta(admin.cambiarEstado(id, actor(), s.estado(), s.motivo()));
     }
 
     // ----- Pagos -----

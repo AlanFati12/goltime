@@ -11,6 +11,7 @@ import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVinculacionWhatsapp;
 import co.edu.usco.goltime.compartido.dominio.FormatoTexto;
 import co.edu.usco.goltime.reservas.aplicacion.ServicioClientesSinCuenta;
 import co.edu.usco.goltime.reservas.dominio.AvisoReservaEvento;
+import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.whatsapp.aplicacion.EnviadorWhatsapp.AvisoWhatsapp;
 
@@ -22,6 +23,9 @@ import co.edu.usco.goltime.whatsapp.aplicacion.EnviadorWhatsapp.AvisoWhatsapp;
  */
 @Component
 public class AvisosWhatsapp {
+
+    /** Cambio de estado hecho por el administrador (ADR 0019): {@code RESERVA_ESTADO_COMPLETADA}, etc. */
+    private static final String PREFIJO_CAMBIO_ESTADO = "RESERVA_ESTADO_";
 
     private final ServicioVinculacionWhatsapp verificacion;
     private final ServicioClientesSinCuenta sinCuenta;
@@ -61,6 +65,11 @@ public class AvisosWhatsapp {
         String cuando = FormatoTexto.fechaHora(e.inicio());
         String donde = e.cancha() == null ? "" : " en " + e.cancha();
         String motivo = e.motivo() == null || e.motivo().isBlank() ? "" : " Motivo: " + e.motivo().trim();
+        if (e.tipo().startsWith(PREFIJO_CAMBIO_ESTADO)) {
+            return estado(e.tipo().substring(PREFIJO_CAMBIO_ESTADO.length()))
+                    .map(estado -> "El administrador marcó tu reserva %s del %s como %s.%s".formatted(e.codigo(), cuando, estado.etiqueta(), motivo))
+                    .orElse(null);
+        }
         return switch (e.tipo()) {
             case "RESERVA_CONFIRMADA" -> "✅ ¡Tu reserva %s quedó confirmada! Te esperamos el %s%s.".formatted(e.codigo(), cuando, donde);
             case "RESERVA_RECHAZADA" -> "Tu solicitud %s para el %s no fue aprobada.%s".formatted(e.codigo(), cuando, motivo);
@@ -71,5 +80,13 @@ public class AvisosWhatsapp {
             case "RESERVA_RECORDATORIO" -> "⏰ Recuerda tu partido: reserva %s, %s%s.".formatted(e.codigo(), cuando, donde);
             default -> null;
         };
+    }
+
+    private static Optional<EstadoReserva> estado(String nombre) {
+        try {
+            return Optional.of(EstadoReserva.valueOf(nombre));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 }

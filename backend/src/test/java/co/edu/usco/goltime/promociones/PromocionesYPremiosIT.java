@@ -95,7 +95,7 @@ class PromocionesYPremiosIT extends BaseReservasIT {
                 reservaId);
         jdbc.update("UPDATE ocupaciones_cancha SET rango = tstzrange(?, ?, '[)') WHERE reserva_id = ?", OffsetDateTime.ofInstant(inicio, ZoneOffset.UTC),
                 OffsetDateTime.ofInstant(fin, ZoneOffset.UTC), reservaId);
-        esperarEstado(parchear("/api/v1/admin/reservas/" + reservaId + "/estado", admin, Map.of("estado", "COMPLETADA")), 200);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + reservaId + "/estado", admin, Map.of("estado", "COMPLETADA", "motivo", "Partido jugado")), 200);
     }
 
     private long reglaCada(int reservas, String tipo, int valor) throws Exception {
@@ -334,12 +334,30 @@ class PromocionesYPremiosIT extends BaseReservasIT {
         completar(r2, 4);
         assertThat((List<?>) leer(misPremios(cliente.token()), "$.premios")).hasSize(1);
 
-        esperarEstado(parchear("/api/v1/admin/reservas/" + r2 + "/estado", admin, Map.of("estado", "NO_ASISTIO")), 200);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + r2 + "/estado", admin, Map.of("estado", "NO_ASISTIO", "motivo", "No se presentaron")), 200);
 
         assertThat((List<?>) leer(misPremios(cliente.token()), "$.premios")).isEmpty();
         List<String> estados = leer(obtener("/api/v1/admin/premios/otorgados?clienteId=" + cliente.id(), admin), "$[*].estado");
         assertThat(estados).containsExactly("REVOCADO");
         assertThat(progreso(misPremios(cliente.token()), "enCiclo")).isEqualTo(1);
+    }
+
+    @Test
+    void elAdminMarcaCompletadaUnaReservaFuturaYCuentaParaPremiosHastaQueLaDevuelveAPendiente() throws Exception {
+        reglaCada(1, "MONTO_FIJO", 10_000);
+        Sesion cliente = nuevoClienteConSesion();
+        long futura = reservaAdminParaCliente(cliente.id(), diaHabil(20));
+        String url = "/api/v1/admin/reservas/" + futura + "/estado";
+
+        esperarEstado(parchear(url, admin, Map.of("estado", "COMPLETADA", "motivo", "Pagó y se da por jugada")), 200);
+        MvcResult conPremio = misPremios(cliente.token());
+        assertThat((List<?>) leer(conPremio, "$.premios")).hasSize(1);
+        assertThat((String) leer(conPremio, "$.premios[0].estado")).isEqualTo("DISPONIBLE");
+
+        esperarEstado(parchear(url, admin, Map.of("estado", "PENDIENTE", "motivo", "Se marcó por error")), 200);
+        assertThat((List<?>) leer(misPremios(cliente.token()), "$.premios")).isEmpty();
+        List<String> estados = leer(obtener("/api/v1/admin/premios/otorgados?clienteId=" + cliente.id(), admin), "$[*].estado");
+        assertThat(estados).containsExactly("REVOCADO");
     }
 
     @Test
@@ -351,7 +369,7 @@ class PromocionesYPremiosIT extends BaseReservasIT {
         long premioId = ((Number) leer(misPremios(cliente.token()), "$.premios[0].id")).longValue();
         esperarEstado(reservarConCodigo(cliente.token(), fecha, "19:00", "20:00", null, premioId), 201);
 
-        esperarEstado(parchear("/api/v1/admin/reservas/" + r1 + "/estado", admin, Map.of("estado", "NO_ASISTIO")), 200);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + r1 + "/estado", admin, Map.of("estado", "NO_ASISTIO", "motivo", "No se presentaron")), 200);
         assertThat((String) leer(misPremios(cliente.token()), "$.premios[0].estado")).as("ya se usó: se conserva").isEqualTo("USADO");
         esperarEstado(postear("/api/v1/admin/premios/otorgados/" + premioId + "/revocar", admin, Map.of("motivo", "Error de captura")), 409); // no está disponible
 

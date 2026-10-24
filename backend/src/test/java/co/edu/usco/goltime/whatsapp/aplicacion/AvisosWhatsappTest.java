@@ -26,6 +26,14 @@ class AvisosWhatsappTest {
     }
 
     @Test
+    void elCambioDeEstadoDelAdminDiceElEstadoNuevoYElMotivo() {
+        assertThat(AvisosWhatsapp.mensaje(evento("RESERVA_ESTADO_COMPLETADA", "Pagó por adelantado")))
+                .contains("GT-2026-000001").contains("como completada").endsWith("Motivo: Pagó por adelantado");
+        assertThat(AvisosWhatsapp.mensaje(evento("RESERVA_ESTADO_PENDIENTE", "Revisión"))).contains("como pendiente de aprobación");
+        assertThat(AvisosWhatsapp.mensaje(evento("RESERVA_ESTADO_INVENTADO", null))).isNull();
+    }
+
+    @Test
     void losAvisosQueNoSonDeWhatsappNoTienenTexto() {
         assertThat(AvisosWhatsapp.mensaje(evento("RESERVA_SOLICITADA", null))).isNull();
     }
