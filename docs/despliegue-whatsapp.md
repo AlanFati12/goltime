@@ -46,6 +46,7 @@ flowchart LR
    ```
 
 6. En n8n › Credentials › «Goltime · OpenAI», pegar la API key de OpenAI (idealmente una propia de Goltime con límite de gasto).
+7. En el panel de Goltime › Configuración, poner `whatsapp_numero_negocio` (ej. `+573239085762`): el perfil lo muestra junto al código de vinculación y arma el enlace «Abrir WhatsApp».
 
 Para apagar el bot sin tocar Docker: Configuración › `whatsapp_bot_activo = false`. El bot responde que está en pausa y la web sigue igual.
 
@@ -56,7 +57,7 @@ Todas bajo `/api/v1/integracion/whatsapp`, con `X-Clave-Integracion: $WHATSAPP_C
 | Método y ruta | Para qué |
 |---|---|
 | `GET /contexto` | Quién escribe (`CLIENTE`, `SIN_VERIFICAR`, `SIN_CUENTA`, `DESACTIVADO`), su nombre, fecha y hora, sedes y políticas |
-| `POST /vinculacion/codigo` · `POST /vinculacion/confirmar` | Vincular el número con la cuenta (código al correo) |
+| `POST /vinculacion/confirmar` | Vincular este WhatsApp con el código que el cliente generó en su perfil (`POST /api/v1/me/whatsapp/codigo`, con sesión) |
 | `GET /canchas` · `GET /disponibilidad?fecha=` · `GET /cotizacion?canchaId=&fecha=&desde=&hasta=` | Catálogo, franjas libres y precio exacto |
 | `POST /reservas` (con `Idempotency-Key` = id del mensaje) · `GET /reservas` | Solicitar y ver las propias |
 | `POST /reservas/{codigo}/cancelar` · `/reprogramar/previsualizar` · `/reprogramar` | Gestionar las propias, con la política vigente |
