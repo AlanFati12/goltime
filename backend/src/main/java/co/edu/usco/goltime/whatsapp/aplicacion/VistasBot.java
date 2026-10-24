@@ -23,7 +23,8 @@ public final class VistasBot {
             List<FranjaLibre> franjasLibres) {
     }
 
-    public record Disponibilidad(String fecha, String dia, List<DisponibilidadCancha> canchas) {
+    /** {@code nota} explica por qué no hay franjas (no abren o ya está lleno); es nula si hay. */
+    public record Disponibilidad(String fecha, String dia, List<DisponibilidadCancha> canchas, String nota) {
     }
 
     public record Cotizacion(long canchaId, String cancha, String sede, String fecha, String desde, String hasta, long total, String totalTexto) {

@@ -88,7 +88,11 @@ public class ServicioConsultasBot {
                         c.duracionMaxMin(), franjas));
             }
         }
-        return new Disponibilidad(fecha.toString(), dia(fecha), resultado);
+        String nota = null;
+        if (resultado.isEmpty()) {
+            nota = dia.canchas().stream().allMatch(c -> c.cerrado()) ? "Ese día las canchas no abren." : "Ese día ya no quedan horarios libres.";
+        }
+        return new Disponibilidad(fecha.toString(), dia(fecha), resultado, nota);
     }
 
     static List<FranjaLibre> franjasLibres(List<Slot> slots, int bloqueMin) {
