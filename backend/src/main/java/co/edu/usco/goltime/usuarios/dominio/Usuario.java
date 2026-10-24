@@ -5,6 +5,7 @@ import java.util.Locale;
 
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
+import co.edu.usco.goltime.compartido.dominio.NumeroTelefono;
 import co.edu.usco.goltime.compartido.dominio.Rol;
 
 /**
@@ -19,6 +20,7 @@ public class Usuario {
     private String apellidos;
     private String correo;
     private String telefono;
+    private boolean telefonoVerificado;
     private String documento;
     private String claveHash;
     private final Rol rol;
@@ -63,7 +65,7 @@ public class Usuario {
         usuario.nombres = limpiar(nombres);
         usuario.apellidos = limpiar(apellidos);
         usuario.correo = normalizarCorreo(correo);
-        usuario.telefono = limpiar(telefono);
+        usuario.telefono = normalizarTelefono(rol, telefono);
         usuario.documento = limpiar(documento);
         usuario.claveHash = claveHash;
         usuario.activo = true;
@@ -72,7 +74,7 @@ public class Usuario {
 
     /** Reconstruye un usuario existente desde el almacenamiento (sin validar reglas de alta). */
     public static Usuario reconstruir(Long id, String nombres, String apellidos, String correo, String telefono,
-            String documento, String claveHash, Rol rol, boolean activo, boolean correoVerificado,
+            boolean telefonoVerificado, String documento, String claveHash, Rol rol, boolean activo, boolean correoVerificado,
             String motivoDesactivacion, Long desactivadoPor, Instant fechaDesactivacion, int versionToken,
             Instant ultimoLogin, Instant aceptoTerminosEn, boolean puedeInscribirEquipos, Instant creadoEn) {
         Usuario u = new Usuario(rol);
@@ -81,6 +83,7 @@ public class Usuario {
         u.apellidos = apellidos;
         u.correo = correo;
         u.telefono = telefono;
+        u.telefonoVerificado = telefonoVerificado;
         u.documento = documento;
         u.claveHash = claveHash;
         u.activo = activo;
@@ -100,6 +103,11 @@ public class Usuario {
         return correo == null ? null : correo.trim().toLowerCase(Locale.ROOT);
     }
 
+    /** El cliente siempre tiene WhatsApp (lo usa el bot para reconocerlo); para el administrador es opcional. */
+    private static String normalizarTelefono(Rol rol, String telefono) {
+        return rol == Rol.CLIENTE ? NumeroTelefono.de(telefono).valor() : NumeroTelefono.normalizarOpcional(telefono);
+    }
+
     private static String limpiar(String texto) {
         if (texto == null) {
             return null;
@@ -113,7 +121,12 @@ public class Usuario {
     public void actualizarPerfil(String nombres, String apellidos, String telefono, String documento) {
         this.nombres = limpiar(nombres);
         this.apellidos = limpiar(apellidos);
-        this.telefono = limpiar(telefono);
+        String nuevoTelefono = normalizarTelefono(rol, telefono);
+        if (nuevoTelefono == null ? this.telefono != null : !nuevoTelefono.equals(this.telefono)) {
+            // Un número nuevo hay que volver a probarlo desde WhatsApp.
+            this.telefonoVerificado = false;
+        }
+        this.telefono = nuevoTelefono;
         this.documento = limpiar(documento);
     }
 
@@ -159,6 +172,14 @@ public class Usuario {
         this.correoVerificado = true;
     }
 
+    /** Quien escribe desde este número probó con el código enviado al correo que también es dueño de la cuenta. */
+    public void verificarTelefono() {
+        if (telefono == null) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "La cuenta no tiene número de WhatsApp.");
+        }
+        this.telefonoVerificado = true;
+    }
+
     public void habilitarInscripcionEquipos(boolean habilitado) {
         if (rol != Rol.CLIENTE) {
             throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo los clientes pueden inscribir equipos.");
@@ -173,6 +194,7 @@ public class Usuario {
     public String apellidos() { return apellidos; }
     public String correo() { return correo; }
     public String telefono() { return telefono; }
+    public boolean telefonoVerificado() { return telefonoVerificado; }
     public String documento() { return documento; }
     public String claveHash() { return claveHash; }
     public Rol rol() { return rol; }

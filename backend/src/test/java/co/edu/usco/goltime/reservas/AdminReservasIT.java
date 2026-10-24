@@ -115,9 +115,9 @@ class AdminReservasIT extends BaseReservasIT {
         esperarEstado(primera, 201);
         esperarEstado(segunda, 201);
         assertThat((String) leer(primera, "$.cliente.nombre")).isEqualTo("Don Pedro");
-        assertThat((String) leer(primera, "$.cliente.telefono")).isEqualTo("3201112233");
+        assertThat((String) leer(primera, "$.cliente.telefono")).isEqualTo("+573201112233");
         assertThat(jdbc.queryForObject("SELECT cliente_id IS NULL FROM reservas WHERE id = ?", Boolean.class, id(primera))).isTrue();
-        Integer mostradores = jdbc.queryForObject("SELECT count(*) FROM clientes_mostrador WHERE telefono = '3201112233'", Integer.class);
+        Integer mostradores = jdbc.queryForObject("SELECT count(*) FROM clientes_mostrador WHERE telefono = '+573201112233'", Integer.class);
         assertThat(mostradores).as("mismo teléfono = mismo cliente").isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT count(DISTINCT cliente_mostrador_id) FROM reservas WHERE id IN (?, ?)", Integer.class, id(primera), id(segunda))).isEqualTo(1);
 

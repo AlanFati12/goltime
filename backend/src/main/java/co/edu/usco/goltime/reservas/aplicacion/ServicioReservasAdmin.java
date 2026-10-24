@@ -16,6 +16,7 @@ import co.edu.usco.goltime.compartido.dominio.Actor;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
 import co.edu.usco.goltime.compartido.dominio.FormatoTexto;
+import co.edu.usco.goltime.compartido.dominio.NumeroTelefono;
 import co.edu.usco.goltime.compartido.dominio.Pagina;
 import co.edu.usco.goltime.compartido.dominio.Rol;
 import co.edu.usco.goltime.compartido.dominio.SolicitudPagina;
@@ -125,7 +126,7 @@ public class ServicioReservasAdmin {
             if (d.mostradorNombre() == null || d.mostradorNombre().isBlank() || d.mostradorTelefono() == null || d.mostradorTelefono().isBlank()) {
                 throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Indica el cliente registrado o el nombre y teléfono del cliente de mostrador.");
             }
-            mostradorId = mostrador.buscarOCrear(d.mostradorNombre().trim(), d.mostradorTelefono().trim());
+            mostradorId = mostrador.buscarOCrear(d.mostradorNombre().trim(), NumeroTelefono.de(d.mostradorTelefono()).valor());
         }
 
         Precio precio = calculos.calcularPrecio(cancha, d.inicio(), d.fin());
