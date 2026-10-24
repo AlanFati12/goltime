@@ -9,8 +9,10 @@ export interface Usuario {
   apellidos: string
   correo: string
   telefono: string | null
-  /** El bot de WhatsApp reconoce este número como de la cuenta (ADR 0018). */
+  /** El teléfono de la cuenta se probó desde WhatsApp (ADR 0018). */
   telefonoVerificado: boolean
+  /** El bot de WhatsApp reconoce la cuenta, por su teléfono o por el WhatsApp vinculado con el código del correo. */
+  whatsappVinculado: boolean
   documento: string | null
   rol: Rol
   activo: boolean

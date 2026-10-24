@@ -25,19 +25,19 @@ import {
 
 import type { Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
 
-/** El número queda vinculado la primera vez que la persona le escribe al bot y confirma el código del correo. */
+/** El WhatsApp queda vinculado la primera vez que la persona le escribe al bot y confirma el código del correo. */
 function EstadoWhatsapp({ verificado }: { verificado: boolean }) {
   return verificado ? (
     <p className="text-texto-suave flex items-center gap-2 text-xs">
       <Insignia tono="verde">Vinculado</Insignia>
-      El bot de WhatsApp ya te reconoce. Si cambias el número, tendrás que vincularlo de nuevo.
+      El bot de WhatsApp ya te reconoce: puedes reservar y ver tus reservas desde allí.
     </p>
   ) : (
     <p className="text-texto-suave flex items-start gap-2 text-xs">
       <Insignia tono="ambar">Sin vincular</Insignia>
       <span>
-        Escríbele al WhatsApp de Goltime desde este número: la primera vez te enviaremos un código a
-        tu correo para vincularlo.
+        Escríbele al WhatsApp de Goltime: la primera vez te enviaremos un código a tu correo para
+        vincular tu cuenta.
       </span>
     </p>
   )
@@ -105,9 +105,7 @@ function FormularioDatos({ usuario }: { usuario: Usuario }) {
                 />
               )}
             />
-            {usuario.rol === 'CLIENTE' && (
-              <EstadoWhatsapp verificado={usuario.telefonoVerificado} />
-            )}
+            {usuario.rol === 'CLIENTE' && <EstadoWhatsapp verificado={usuario.whatsappVinculado} />}
           </div>
           <Campo
             etiqueta="Documento"

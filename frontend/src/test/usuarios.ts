@@ -13,6 +13,7 @@ export function usuarioDePrueba(cambios: Partial<Usuario> = {}): Usuario {
     activo: true,
     correoVerificado: true,
     telefonoVerificado: false,
+    whatsappVinculado: false,
     motivoDesactivacion: null,
     fechaDesactivacion: null,
     puedeInscribirEquipos: false,

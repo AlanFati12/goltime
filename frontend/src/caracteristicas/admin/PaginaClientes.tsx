@@ -113,7 +113,7 @@ export function PaginaClientes() {
                     <div>{c.correo}</div>
                     <div className="text-texto-suave flex items-center gap-1.5 text-xs">
                       {c.telefono ? formatearTelefono(c.telefono) : '—'}
-                      {c.telefono && c.telefonoVerificado && (
+                      {c.whatsappVinculado && (
                         <span title="WhatsApp vinculado al bot">
                           <MessageCircleCheck
                             className="text-primario size-3.5"
