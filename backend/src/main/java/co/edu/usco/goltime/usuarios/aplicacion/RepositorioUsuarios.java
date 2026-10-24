@@ -20,6 +20,8 @@ public interface RepositorioUsuarios {
     /** Todas las cuentas que escribieron ese número (E.164); solo una puede tenerlo verificado. */
     List<Usuario> buscarPorTelefono(String telefono);
 
+    Optional<Usuario> buscarPorWhatsappLid(String lid);
+
     /** Si otra cuenta (distinta de {@code excluirId}) ya tiene verificado ese número. */
     boolean existeTelefonoVerificado(String telefono, Long excluirId);
 

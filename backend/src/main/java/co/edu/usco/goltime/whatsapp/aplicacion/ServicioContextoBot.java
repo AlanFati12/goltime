@@ -44,21 +44,23 @@ public class ServicioContextoBot {
     }
 
     /**
-     * @param situacion CLIENTE (cuenta con el número vinculado), SIN_VERIFICAR (hay cuenta pero falta vincular),
-     *                  SIN_CUENTA o DESACTIVADO
+     * @param situacion        CLIENTE (cuenta con el WhatsApp vinculado), SIN_VERIFICAR (hay cuenta con ese teléfono pero
+     *                         falta vincular), SIN_CUENTA (o no sabemos si tiene, si escribe desde un @lid) o DESACTIVADO
+     * @param identificadoPor  TELEFONO o LID (WhatsApp no compartió el número: para vincular hace falta el correo)
      */
-    public record Contexto(boolean botActivo, Situacion situacion, String nombre, boolean puedeReservarSinCuenta, String fecha, String dia,
-            String hora, List<Sede> sedes, Politicas politicas, String contacto) {
+    public record Contexto(boolean botActivo, Situacion situacion, String identificadoPor, String nombre, boolean puedeReservarSinCuenta,
+            String fecha, String dia, String hora, List<Sede> sedes, Politicas politicas, String contacto) {
     }
 
-    public Contexto de(String numero) {
-        Remitente remitente = bot.identificar(numero);
+    public Contexto de(RemitenteWhatsapp quien) {
+        Remitente remitente = bot.identificar(quien);
         Instant ahora = reloj.instant();
         LocalDate hoy = ServicioConsultasBot.hoy(ahora);
         PoliticaReservas p = reservas.politica();
         List<Sede> lista = sedes.listarPublicas().stream()
                 .map(v -> new Sede(v.sede().id(), v.sede().nombre(), v.sede().direccion(), v.sede().ciudad())).toList();
-        return new Contexto(configuracion.activo(), remitente.situacion(), remitente.nombre(), remitente.conReservasSinCuenta(),
+        return new Contexto(configuracion.activo(), remitente.situacion(), remitente.porLid() ? "LID" : "TELEFONO", remitente.nombre(),
+                remitente.conReservasSinCuenta(),
                 hoy.toString(), ServicioConsultasBot.dia(hoy), FormatoTexto.hora(ahora), lista,
                 new Politicas(p.horasMinCancelacion(), p.maxReprogramaciones(), p.antelacionMinimaHoras(), p.antelacionMaximaDias(),
                         p.horasExpiracionAprobacion()),

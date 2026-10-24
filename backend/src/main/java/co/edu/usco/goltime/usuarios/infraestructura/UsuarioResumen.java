@@ -13,6 +13,7 @@ public record UsuarioResumen(
         String correo,
         String telefono,
         boolean telefonoVerificado,
+        boolean whatsappVinculado,
         String documento,
         Rol rol,
         boolean activo,
@@ -24,7 +25,7 @@ public record UsuarioResumen(
         Instant creadoEn) {
 
     public static UsuarioResumen de(Usuario u) {
-        return new UsuarioResumen(u.id(), u.nombres(), u.apellidos(), u.correo(), u.telefono(), u.telefonoVerificado(), u.documento(),
+        return new UsuarioResumen(u.id(), u.nombres(), u.apellidos(), u.correo(), u.telefono(), u.telefonoVerificado(), u.whatsappVinculado(), u.documento(),
                 u.rol(), u.activo(), u.correoVerificado(), u.motivoDesactivacion(), u.fechaDesactivacion(),
                 u.puedeInscribirEquipos(), u.ultimoLogin(), u.creadoEn());
     }

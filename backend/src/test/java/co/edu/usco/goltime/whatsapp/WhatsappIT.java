@@ -314,5 +314,99 @@ class WhatsappIT extends BaseTorneosIT {
         aprobar(admin, deLaWeb);
         verify(enviador, after(1500).never()).enviar(argThat(a -> a.numero().equals(sinVincular)));
     }
+
+    // ---------- Quien escribe desde un @lid (WhatsApp no compartió su número) ----------
+
+    private static String lid() {
+        return String.valueOf(ThreadLocalRandom.current().nextLong(100_000_000_000_000L, 999_999_999_999_999L));
+    }
+
+    private MvcResult botLid(MockHttpServletRequestBuilder peticion, String lid, Object cuerpo) throws Exception {
+        peticion.header("X-WhatsApp-Lid", lid + "@lid");
+        return bot(peticion, null, cuerpo);
+    }
+
+    private String codigoDelCorreo(String destinatario) {
+        ArgumentCaptor<MensajeCorreo> captor = ArgumentCaptor.forClass(MensajeCorreo.class);
+        verify(correo, atLeastOnce()).enviar(captor.capture());
+        return captor.getAllValues().stream().filter(m -> m.destinatario().equals(destinatario))
+                .reduce((a, b) -> b).map(m -> (String) m.variables().get("codigo")).orElseThrow();
+    }
+
+    @Test
+    void sinNumeroVisibleSeAtiendeComoSinCuentaYLaReservaQuedaAtadaAlLid() throws Exception {
+        String lid = lid();
+        MvcResult contexto = botLid(get(BASE + "/contexto"), lid, null);
+        esperarEstado(contexto, 200);
+        assertThat((String) leer(contexto, "$.identificadoPor")).isEqualTo("LID");
+        assertThat((String) leer(contexto, "$.situacion")).isEqualTo("SIN_CUENTA");
+
+        Map<String, Object> pedido = reserva(diaHabil(9), "19:00", "20:00", "Laura Ríos");
+        esperarEstado(botLid(post(BASE + "/reservas"), lid, pedido), 400); // falta el celular de contacto
+        pedido.put("telefonoContacto", "300 555 0177");
+        MvcResult creada = botLid(post(BASE + "/reservas"), lid, pedido);
+        esperarEstado(creada, 201);
+        String codigo = codigoDe(creada);
+        assertThat(jdbc.queryForMap("SELECT m.whatsapp_lid, m.telefono FROM reservas r JOIN clientes_mostrador m ON m.id = r.cliente_mostrador_id "
+                + "WHERE r.codigo = ?", codigo)).containsEntry("whatsapp_lid", lid).containsEntry("telefono", "+573005550177");
+        assertThat((List<String>) leer(botLid(get(BASE + "/reservas"), lid, null), "$[*].codigo")).containsExactly(codigo);
+
+        // ni otro @lid ni quien escriba desde el teléfono de contacto (no verificado) la pueden ver o cancelar
+        assertThat((List<?>) leer(botLid(get(BASE + "/reservas"), lid(), null), "$")).isEmpty();
+        assertThat((List<?>) leer(bot(get(BASE + "/reservas"), "+573005550177", null), "$")).isEmpty();
+        esperarEstado(bot(post(BASE + "/reservas/" + codigo + "/cancelar"), "+573005550177", Map.of("motivo", "no")), 404);
+        // y el admin, al crear una reserva de mostrador con ese teléfono, no la junta con la de este @lid
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM clientes_mostrador WHERE telefono = '+573005550177' AND whatsapp_lid IS NULL",
+                Integer.class)).isZero();
+
+        // el aviso de la aprobación va a su chat @lid
+        long id = jdbc.queryForObject("SELECT id FROM reservas WHERE codigo = ?", Long.class, codigo);
+        aprobar(admin, id);
+        verify(enviador, timeout(3000)).enviar(argThat(a -> a.numero().equals(lid + "@lid") && a.tipo().equals("RESERVA_CONFIRMADA")));
+    }
+
+    @Test
+    void desdeUnLidSeVinculaLaCuentaConElCodigoDelCorreoSinRevelarSiElCorreoExiste() throws Exception {
+        String lid = lid();
+        String correoCuenta = correoUnico();
+        Map<String, Object> datos = new HashMap<>(datosRegistro(correoCuenta, CLAVE_VALIDA));
+        datos.put("telefono", celular());
+        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
+
+        // un correo que no existe recibe la misma respuesta, y no se envía nada
+        MvcResult inexistente = botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", "nadie-" + correoCuenta));
+        esperarEstado(inexistente, 200);
+        assertThat((List<String>) leer(inexistente, "$.correos")).hasSize(1);
+        esperarEstado(botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of()), 400); // sin correo
+
+        esperarEstado(botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", correoCuenta)), 200);
+        esperarEstado(botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", "000000x")), 400);
+        MvcResult vinculado = botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", codigoDelCorreo(correoCuenta)));
+        esperarEstado(vinculado, 200);
+        assertThat((String) leer(vinculado, "$.nombre")).isEqualTo("Ana");
+
+        MvcResult contexto = botLid(get(BASE + "/contexto"), lid, null);
+        assertThat((String) leer(contexto, "$.situacion")).isEqualTo("CLIENTE");
+        long clienteId = jdbc.queryForObject("SELECT id FROM usuarios WHERE correo = ?", Long.class, correoCuenta);
+        MvcResult creada = botLid(post(BASE + "/reservas"), lid, reserva(diaHabil(10), "18:00", "19:00", null));
+        esperarEstado(creada, 201);
+        assertThat(jdbc.queryForObject("SELECT cliente_id FROM reservas WHERE codigo = ?", Long.class, codigoDe(creada))).isEqualTo(clienteId);
+        // el perfil lo muestra como vinculado aunque el teléfono siga sin verificar
+        Sesion web = ingresar(correoCuenta, CLAVE_VALIDA, false);
+        assertThat((Boolean) leer(obtener("/api/v1/me", web.token()), "$.whatsappVinculado")).isTrue();
+
+        // el aviso va al chat @lid (su teléfono no está verificado)
+        long id = jdbc.queryForObject("SELECT id FROM reservas WHERE codigo = ?", Long.class, codigoDe(creada));
+        aprobar(admin, id);
+        verify(enviador, timeout(3000)).enviar(argThat(a -> a.numero().equals(lid + "@lid")));
+
+        // ese WhatsApp ya no se puede vincular a otra cuenta
+        String otraCuenta = correoUnico();
+        Map<String, Object> otros = new HashMap<>(datosRegistro(otraCuenta, CLAVE_VALIDA));
+        otros.put("telefono", celular());
+        esperarEstado(enviar("/api/v1/autenticacion/registrar", otros), 201);
+        MvcResult ocupado = botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", otraCuenta));
+        esperarEstado(ocupado, 409);
+    }
 }
 

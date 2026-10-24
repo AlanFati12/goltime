@@ -21,6 +21,7 @@ public class Usuario {
     private String correo;
     private String telefono;
     private boolean telefonoVerificado;
+    private String whatsappLid;
     private String documento;
     private String claveHash;
     private final Rol rol;
@@ -74,7 +75,7 @@ public class Usuario {
 
     /** Reconstruye un usuario existente desde el almacenamiento (sin validar reglas de alta). */
     public static Usuario reconstruir(Long id, String nombres, String apellidos, String correo, String telefono,
-            boolean telefonoVerificado, String documento, String claveHash, Rol rol, boolean activo, boolean correoVerificado,
+            boolean telefonoVerificado, String whatsappLid, String documento, String claveHash, Rol rol, boolean activo, boolean correoVerificado,
             String motivoDesactivacion, Long desactivadoPor, Instant fechaDesactivacion, int versionToken,
             Instant ultimoLogin, Instant aceptoTerminosEn, boolean puedeInscribirEquipos, Instant creadoEn) {
         Usuario u = new Usuario(rol);
@@ -84,6 +85,7 @@ public class Usuario {
         u.correo = correo;
         u.telefono = telefono;
         u.telefonoVerificado = telefonoVerificado;
+        u.whatsappLid = whatsappLid;
         u.documento = documento;
         u.claveHash = claveHash;
         u.activo = activo;
@@ -180,6 +182,17 @@ public class Usuario {
         this.telefonoVerificado = true;
     }
 
+    /**
+     * Quien escribe desde ese @lid (WhatsApp no compartió su teléfono) probó con el código del correo que es dueño
+     * de la cuenta. A diferencia del teléfono, no cambia si la persona edita su perfil.
+     */
+    public void vincularWhatsappLid(String lid) {
+        if (rol != Rol.CLIENTE) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo los clientes usan el bot de WhatsApp.");
+        }
+        this.whatsappLid = lid;
+    }
+
     public void habilitarInscripcionEquipos(boolean habilitado) {
         if (rol != Rol.CLIENTE) {
             throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo los clientes pueden inscribir equipos.");
@@ -195,6 +208,9 @@ public class Usuario {
     public String correo() { return correo; }
     public String telefono() { return telefono; }
     public boolean telefonoVerificado() { return telefonoVerificado; }
+    public String whatsappLid() { return whatsappLid; }
+    /** El bot reconoce la cuenta, por su teléfono verificado o por su @lid. */
+    public boolean whatsappVinculado() { return telefonoVerificado || whatsappLid != null; }
     public String documento() { return documento; }
     public String claveHash() { return claveHash; }
     public Rol rol() { return rol; }

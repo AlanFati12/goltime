@@ -20,6 +20,7 @@ import co.edu.usco.goltime.auditoria.aplicacion.RegistroAuditoria;
 import co.edu.usco.goltime.autenticacion.dominio.VerificacionTelefono;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
+import co.edu.usco.goltime.compartido.dominio.LidWhatsapp;
 import co.edu.usco.goltime.compartido.dominio.NumeroTelefono;
 import co.edu.usco.goltime.compartido.dominio.Rol;
 import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo.MensajeCorreo;
@@ -64,8 +65,15 @@ public class ServicioVerificacionTelefono {
         DESACTIVADO
     }
 
-    /** Quién escribe. {@code usuarioId} y {@code nombres} solo vienen con {@link Situacion#CLIENTE}. */
-    public record Identificacion(Situacion situacion, String telefono, Long usuarioId, String nombres) {
+    /**
+     * Quién escribe. {@code usuarioId} y {@code nombres} solo vienen con {@link Situacion#CLIENTE}. Si WhatsApp no
+     * compartió el teléfono, {@code lid} trae el identificador anónimo y {@code telefono} el de la cuenta (si la hay).
+     */
+    public record Identificacion(Situacion situacion, String telefono, Long usuarioId, String nombres, String lid) {
+
+        Identificacion(Situacion situacion, String telefono, Long usuarioId, String nombres) {
+            this(situacion, telefono, usuarioId, nombres, null);
+        }
     }
 
     /** Correos (enmascarados) a los que se envió un código. */
@@ -87,6 +95,79 @@ public class ServicioVerificacionTelefono {
         }
         return cuentas.isEmpty() ? new Identificacion(Situacion.SIN_CUENTA, telefono, null, null)
                 : new Identificacion(Situacion.DESACTIVADO, telefono, null, null);
+    }
+
+    /**
+     * Quien escribe desde un @lid. Si lo vinculó a su cuenta es ese cliente; si no, no se sabe si tiene cuenta y se
+     * atiende como sin cuenta (el bot le ofrece vincularla con el correo).
+     */
+    @Transactional(readOnly = true)
+    public Identificacion identificarPorLid(String lidTexto) {
+        String lid = LidWhatsapp.de(lidTexto).valor();
+        return usuarios.buscarPorWhatsappLid(lid).filter(u -> u.rol() == Rol.CLIENTE)
+                .map(u -> u.activo() ? new Identificacion(Situacion.CLIENTE, u.telefono(), u.id(), u.nombres(), lid)
+                        : new Identificacion(Situacion.DESACTIVADO, null, null, null, lid))
+                .orElseGet(() -> new Identificacion(Situacion.SIN_CUENTA, null, null, null, lid));
+    }
+
+    /**
+     * Desde un chat sin teléfono visible: envía un código al correo de la cuenta. La respuesta es la misma exista o
+     * no la cuenta, para que el bot no sirva para averiguar qué correos están registrados.
+     */
+    @Transactional
+    public CodigoEnviado solicitarCodigoDesdeLid(String lidTexto, String correoCuenta) {
+        String lid = LidWhatsapp.de(lidTexto).valor();
+        if (correoCuenta == null || !correoCuenta.contains("@")) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Escribe el correo con el que te registraste en Goltime.");
+        }
+        Instant ahora = reloj.instant();
+        Instant haceUnaHora = ahora.minus(Duration.ofHours(1));
+        if (verificaciones.contarCreadasDesdeLid(lid, haceUnaHora) >= MAX_CODIGOS_POR_HORA) {
+            throw new ExcepcionNegocio(CodigoError.DEMASIADOS_INTENTOS, "Ya pedimos varios códigos desde este WhatsApp. Intenta de nuevo en una hora.");
+        }
+        Optional<Usuario> cuenta = usuarios.buscarPorCorreo(correoCuenta.trim()).filter(u -> u.rol() == Rol.CLIENTE && u.activo());
+        Optional<Usuario> yaVinculada = usuarios.buscarPorWhatsappLid(lid);
+        if (yaVinculada.isPresent() && cuenta.map(c -> !c.id().equals(yaVinculada.get().id())).orElse(true)) {
+            throw new ExcepcionNegocio(CodigoError.TELEFONO_YA_REGISTRADO, "Este WhatsApp ya está vinculado a otra cuenta.");
+        }
+        // No llenar la bandeja de alguien pidiendo códigos desde varios chats.
+        if (cuenta.isPresent() && verificaciones.contarCreadasDesdeUsuario(cuenta.get().id(), haceUnaHora) < MAX_CODIGOS_POR_HORA) {
+            Usuario u = cuenta.get();
+            String codigo = "%06d".formatted(ALEATORIO.nextInt(1_000_000));
+            verificaciones.anularPendientesDeLid(u.id(), lid, ahora);
+            verificaciones.guardar(VerificacionTelefono.nuevaDesdeLid(u.id(), lid, hash(u.id(), "lid:" + lid, codigo), ahora));
+            correo.enviar(new MensajeCorreo(u.correo(), "Tu código para vincular WhatsApp en Goltime", "verificar-telefono",
+                    Map.of("nombre", u.nombres(), "codigo", codigo, "numero", "", "minutos", VerificacionTelefono.VIGENCIA.toMinutes())));
+        }
+        return new CodigoEnviado(List.of(enmascararCorreo(Usuario.normalizarCorreo(correoCuenta))));
+    }
+
+    @Transactional(noRollbackFor = ExcepcionNegocio.class)
+    public Usuario confirmarCodigoDesdeLid(String lidTexto, String codigo) {
+        String lid = LidWhatsapp.de(lidTexto).valor();
+        Instant ahora = reloj.instant();
+        String limpio = codigo == null ? "" : codigo.replaceAll("\\s", "");
+        List<VerificacionTelefono> vigentes = verificaciones.pendientesDeLid(lid).stream().filter(v -> v.estaVigente(ahora)).toList();
+        for (VerificacionTelefono v : vigentes) {
+            if (MessageDigest.isEqual(v.codigoHash().getBytes(StandardCharsets.UTF_8),
+                    hash(v.usuarioId(), "lid:" + lid, limpio).getBytes(StandardCharsets.UTF_8))) {
+                Usuario usuario = usuarios.buscarPorId(v.usuarioId()).orElseThrow();
+                if (!usuario.activo()) {
+                    throw new ExcepcionNegocio(CodigoError.TOKEN_INVALIDO, "El código no es correcto o ya venció.");
+                }
+                usuario.vincularWhatsappLid(lid);
+                Usuario guardado = usuarios.guardar(usuario);
+                v.marcarUsada(ahora);
+                verificaciones.guardar(v);
+                auditoria.registrar("VINCULAR_WHATSAPP", "usuarios", guardado.id(), Map.of("whatsappLid", lid, "canal", "WHATSAPP"), null);
+                return guardado;
+            }
+        }
+        for (VerificacionTelefono v : vigentes) {
+            v.registrarIntentoFallido();
+            verificaciones.guardar(v);
+        }
+        throw new ExcepcionNegocio(CodigoError.TOKEN_INVALIDO, "El código no es correcto o ya venció.");
     }
 
     /**
@@ -159,6 +240,20 @@ public class ServicioVerificacionTelefono {
         verificaciones.guardar(v);
         auditoria.registrar("VERIFICAR_TELEFONO", "usuarios", guardado.id(), Map.of("telefono", telefono, "canal", "WHATSAPP"), null);
         return guardado;
+    }
+
+    /**
+     * A dónde avisarle por WhatsApp a un cliente: a su teléfono si lo verificó, o a su chat @lid si se vinculó
+     * con el correo. Vacío si nunca demostró que el WhatsApp es suyo.
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> destinoWhatsapp(long usuarioId) {
+        return usuarios.buscarPorId(usuarioId).filter(Usuario::activo).flatMap(u -> {
+            if (u.telefonoVerificado()) {
+                return Optional.of(u.telefono());
+            }
+            return Optional.ofNullable(u.whatsappLid()).map(l -> new LidWhatsapp(l).jid());
+        });
     }
 
     private List<Usuario> clientesCon(String telefono) {

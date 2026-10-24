@@ -21,6 +21,8 @@ interface RepositorioUsuariosJpa extends JpaRepository<UsuarioEntidad, Long>, Jp
 
     List<UsuarioEntidad> findByTelefonoOrderByIdAsc(String telefono);
 
+    Optional<UsuarioEntidad> findByWhatsappLid(String whatsappLid);
+
     @Query("select count(u) > 0 from UsuarioEntidad u where u.telefono = :telefono and u.telefonoVerificado = true"
             + " and (:excluirId is null or u.id <> :excluirId)")
     boolean existeTelefonoVerificado(String telefono, Long excluirId);

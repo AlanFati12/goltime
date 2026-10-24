@@ -15,16 +15,19 @@ public class VerificacionTelefono {
     private final Long id;
     private final long usuarioId;
     private final String telefono;
+    private final String whatsappLid;
     private final String codigoHash;
     private int intentos;
     private final Instant expiraEn;
     private Instant usadoEn;
 
-    public VerificacionTelefono(Long id, long usuarioId, String telefono, String codigoHash, int intentos, Instant expiraEn,
+    /** Exactamente uno de {@code telefono} y {@code whatsappLid}: desde dónde se pidió el código. */
+    public VerificacionTelefono(Long id, long usuarioId, String telefono, String whatsappLid, String codigoHash, int intentos, Instant expiraEn,
             Instant usadoEn) {
         this.id = id;
         this.usuarioId = usuarioId;
         this.telefono = telefono;
+        this.whatsappLid = whatsappLid;
         this.codigoHash = codigoHash;
         this.intentos = intentos;
         this.expiraEn = expiraEn;
@@ -32,7 +35,12 @@ public class VerificacionTelefono {
     }
 
     public static VerificacionTelefono nueva(long usuarioId, String telefono, String codigoHash, Instant ahora) {
-        return new VerificacionTelefono(null, usuarioId, telefono, codigoHash, 0, ahora.plus(VIGENCIA), null);
+        return new VerificacionTelefono(null, usuarioId, telefono, null, codigoHash, 0, ahora.plus(VIGENCIA), null);
+    }
+
+    /** Código pedido desde un chat sin teléfono visible (@lid), con el correo de la cuenta. */
+    public static VerificacionTelefono nuevaDesdeLid(long usuarioId, String whatsappLid, String codigoHash, Instant ahora) {
+        return new VerificacionTelefono(null, usuarioId, null, whatsappLid, codigoHash, 0, ahora.plus(VIGENCIA), null);
     }
 
     public boolean estaVigente(Instant ahora) {
@@ -51,6 +59,7 @@ public class VerificacionTelefono {
     public Long id() { return id; }
     public long usuarioId() { return usuarioId; }
     public String telefono() { return telefono; }
+    public String whatsappLid() { return whatsappLid; }
     public String codigoHash() { return codigoHash; }
     public int intentos() { return intentos; }
     public Instant expiraEn() { return expiraEn; }

@@ -1,33 +1,37 @@
 package co.edu.usco.goltime.whatsapp.aplicacion;
 
+import java.util.Optional;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono;
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono.Identificacion;
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono.Situacion;
 import co.edu.usco.goltime.compartido.dominio.FormatoTexto;
+import co.edu.usco.goltime.reservas.aplicacion.ServicioClientesSinCuenta;
 import co.edu.usco.goltime.reservas.dominio.AvisoReservaEvento;
 import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.whatsapp.aplicacion.EnviadorWhatsapp.AvisoWhatsapp;
 
 /**
  * Avisa por WhatsApp los cambios de una reserva, después de confirmar la transacción y sin hacer esperar a quien
- * hizo el cambio. Solo a quien tiene el número vinculado a su cuenta, o a quien reservó por WhatsApp sin cuenta:
- * nunca a un número que alguien escribió en el registro sin demostrar que es suyo. Los textos salen de aquí, no
- * del modelo de lenguaje, así que no cuestan tokens ni pueden inventar nada.
+ * hizo el cambio. Solo a quien vinculó su WhatsApp a la cuenta (teléfono o @lid), o a quien reservó por WhatsApp sin
+ * cuenta (a su chat @lid si escribió desde uno): nunca a un número que alguien escribió en el registro sin demostrar
+ * que es suyo. Los textos salen de aquí, no del modelo de lenguaje, así que no cuestan tokens ni pueden inventar nada.
  */
 @Component
 public class AvisosWhatsapp {
 
     private final ServicioVerificacionTelefono verificacion;
+    private final ServicioClientesSinCuenta sinCuenta;
     private final ConfiguracionBot configuracion;
     private final EnviadorWhatsapp enviador;
 
-    public AvisosWhatsapp(ServicioVerificacionTelefono verificacion, ConfiguracionBot configuracion, EnviadorWhatsapp enviador) {
+    public AvisosWhatsapp(ServicioVerificacionTelefono verificacion, ServicioClientesSinCuenta sinCuenta, ConfiguracionBot configuracion,
+            EnviadorWhatsapp enviador) {
         this.verificacion = verificacion;
+        this.sinCuenta = sinCuenta;
         this.configuracion = configuracion;
         this.enviador = enviador;
     }
@@ -36,23 +40,21 @@ public class AvisosWhatsapp {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void alAvisarDeUnaReserva(AvisoReservaEvento e) {
         String mensaje = mensaje(e);
-        if (mensaje == null || e.telefono() == null || !configuracion.activo() || !destinatarioValido(e)) {
+        if (mensaje == null || !configuracion.activo()) {
             return;
         }
-        enviador.enviar(new AvisoWhatsapp(e.telefono(), mensaje, e.tipo(), e.reservaId()));
+        destino(e).ifPresent(numero -> enviador.enviar(new AvisoWhatsapp(numero, mensaje, e.tipo(), e.reservaId())));
     }
 
-    private boolean destinatarioValido(AvisoReservaEvento e) {
-        if (e.clienteId() == null) {
-            return e.origen() == OrigenReserva.WHATSAPP;
+    /** Teléfono (+57…) o chat @lid; vacío si no le corresponde aviso por WhatsApp. */
+    private Optional<String> destino(AvisoReservaEvento e) {
+        if (e.clienteId() != null) {
+            return verificacion.destinoWhatsapp(e.clienteId());
         }
-        try {
-            Identificacion id = verificacion.identificar(e.telefono());
-            return id.situacion() == Situacion.CLIENTE && e.clienteId().equals(id.usuarioId());
-        } catch (RuntimeException ex) {
-            // Un teléfono viejo que no es un celular válido: no se avisa por WhatsApp.
-            return false;
+        if (e.origen() == OrigenReserva.WHATSAPP && e.clienteMostradorId() != null) {
+            return sinCuenta.destinoWhatsapp(e.clienteMostradorId(), e.telefono());
         }
+        return Optional.empty();
     }
 
     static String mensaje(AvisoReservaEvento e) {

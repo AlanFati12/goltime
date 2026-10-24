@@ -30,10 +30,11 @@ class RepositorioVerificacionesTelefonoJdbc implements RepositorioVerificaciones
     public VerificacionTelefono guardar(VerificacionTelefono v) {
         if (v.id() == null) {
             Long id = jdbc.queryForObject("""
-                    INSERT INTO verificaciones_telefono (usuario_id, telefono, codigo_hash, intentos, expira_en, usado_en)
-                    VALUES (?, ?, ?, ?, ?, ?) RETURNING id""", Long.class,
-                    v.usuarioId(), v.telefono(), v.codigoHash(), v.intentos(), utc(v.expiraEn()), utc(v.usadoEn()));
-            return new VerificacionTelefono(id, v.usuarioId(), v.telefono(), v.codigoHash(), v.intentos(), v.expiraEn(), v.usadoEn());
+                    INSERT INTO verificaciones_telefono (usuario_id, telefono, whatsapp_lid, codigo_hash, intentos, expira_en, usado_en)
+                    VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id""", Long.class,
+                    v.usuarioId(), v.telefono(), v.whatsappLid(), v.codigoHash(), v.intentos(), utc(v.expiraEn()), utc(v.usadoEn()));
+            return new VerificacionTelefono(id, v.usuarioId(), v.telefono(), v.whatsappLid(), v.codigoHash(), v.intentos(), v.expiraEn(),
+                    v.usadoEn());
         }
         jdbc.update("UPDATE verificaciones_telefono SET intentos = ?, usado_en = ? WHERE id = ?", v.intentos(), utc(v.usadoEn()), v.id());
         return v;
@@ -59,9 +60,36 @@ class RepositorioVerificacionesTelefonoJdbc implements RepositorioVerificaciones
                 utc(ahora), VerificacionTelefono.MAX_INTENTOS, usuarioId, telefono);
     }
 
+    @Override
+    public List<VerificacionTelefono> pendientesDeLid(String whatsappLid) {
+        return jdbc.query("SELECT * FROM verificaciones_telefono WHERE whatsapp_lid = ? AND usado_en IS NULL ORDER BY id",
+                (rs, i) -> verificacion(rs), whatsappLid);
+    }
+
+    @Override
+    public int contarCreadasDesdeLid(String whatsappLid, Instant desde) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM verificaciones_telefono WHERE whatsapp_lid = ? AND creado_en >= ?", Integer.class,
+                whatsappLid, utc(desde));
+        return n == null ? 0 : n;
+    }
+
+    @Override
+    public int contarCreadasDesdeUsuario(long usuarioId, Instant desde) {
+        Integer n = jdbc.queryForObject("SELECT count(*) FROM verificaciones_telefono WHERE usuario_id = ? AND creado_en >= ?", Integer.class,
+                usuarioId, utc(desde));
+        return n == null ? 0 : n;
+    }
+
+    @Override
+    public void anularPendientesDeLid(long usuarioId, String whatsappLid, Instant ahora) {
+        jdbc.update("UPDATE verificaciones_telefono SET usado_en = ?, intentos = ? WHERE usuario_id = ? AND whatsapp_lid = ? AND usado_en IS NULL",
+                utc(ahora), VerificacionTelefono.MAX_INTENTOS, usuarioId, whatsappLid);
+    }
+
     private static VerificacionTelefono verificacion(ResultSet rs) throws SQLException {
         OffsetDateTime usado = rs.getObject("usado_en", OffsetDateTime.class);
-        return new VerificacionTelefono(rs.getLong("id"), rs.getLong("usuario_id"), rs.getString("telefono"), rs.getString("codigo_hash"),
+        return new VerificacionTelefono(rs.getLong("id"), rs.getLong("usuario_id"), rs.getString("telefono"), rs.getString("whatsapp_lid"),
+                rs.getString("codigo_hash"),
                 rs.getInt("intentos"), rs.getObject("expira_en", OffsetDateTime.class).toInstant(), usado == null ? null : usado.toInstant());
     }
 }

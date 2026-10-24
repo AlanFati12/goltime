@@ -7,6 +7,6 @@ import java.time.Instant;
  * administrador, o el recordatorio). Otros canales, como WhatsApp (ADR 0018), lo escuchan para avisar también.
  * {@code tipo} es el mismo de la notificación de la web; {@code motivo} solo viene en rechazos y cancelaciones.
  */
-public record AvisoReservaEvento(long reservaId, String codigo, String tipo, Long clienteId, OrigenReserva origen, String telefono,
+public record AvisoReservaEvento(long reservaId, String codigo, String tipo, Long clienteId, Long clienteMostradorId, OrigenReserva origen, String telefono,
         String cancha, Instant inicio, String motivo) {
 }

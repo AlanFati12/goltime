@@ -13,7 +13,7 @@ class AvisosWhatsappTest {
 
     private static AvisoReservaEvento evento(String tipo, String motivo) {
         // 20:00 en Bogotá
-        return new AvisoReservaEvento(1L, "GT-2026-000001", tipo, null, OrigenReserva.WHATSAPP, "+573001234567", "Cancha 1",
+        return new AvisoReservaEvento(1L, "GT-2026-000001", tipo, null, 2L, OrigenReserva.WHATSAPP, "+573001234567", "Cancha 1",
                 Instant.parse("2026-11-20T01:00:00Z"), motivo);
     }
 

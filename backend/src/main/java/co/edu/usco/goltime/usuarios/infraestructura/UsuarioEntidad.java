@@ -37,6 +37,9 @@ public class UsuarioEntidad extends EntidadAuditable {
     @Column(name = "telefono_verificado", nullable = false)
     private boolean telefonoVerificado;
 
+    @Column(name = "whatsapp_lid")
+    private String whatsappLid;
+
     private String documento;
 
     @Column(name = "clave_hash", nullable = false)
@@ -90,6 +93,8 @@ public class UsuarioEntidad extends EntidadAuditable {
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public boolean isTelefonoVerificado() { return telefonoVerificado; }
     public void setTelefonoVerificado(boolean telefonoVerificado) { this.telefonoVerificado = telefonoVerificado; }
+    public String getWhatsappLid() { return whatsappLid; }
+    public void setWhatsappLid(String whatsappLid) { this.whatsappLid = whatsappLid; }
     public String getDocumento() { return documento; }
     public void setDocumento(String documento) { this.documento = documento; }
     public String getClaveHash() { return claveHash; }

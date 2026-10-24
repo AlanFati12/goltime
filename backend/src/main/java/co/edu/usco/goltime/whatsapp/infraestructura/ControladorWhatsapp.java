@@ -21,6 +21,7 @@ import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionReprograma
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
+import co.edu.usco.goltime.whatsapp.aplicacion.RemitenteWhatsapp;
 import co.edu.usco.goltime.whatsapp.aplicacion.ServicioBotWhatsapp;
 import co.edu.usco.goltime.whatsapp.aplicacion.ServicioBotWhatsapp.Franja;
 import co.edu.usco.goltime.whatsapp.aplicacion.ServicioConsultasBot;
@@ -51,6 +52,8 @@ import jakarta.validation.constraints.Size;
 public class ControladorWhatsapp {
 
     public static final String CABECERA_NUMERO = "X-WhatsApp-Numero";
+    /** Si WhatsApp no compartió el teléfono, n8n manda el identificador anónimo (@lid) de quien escribe. */
+    public static final String CABECERA_LID = "X-WhatsApp-Lid";
 
     private final ServicioContextoBot contexto;
     private final ServicioBotWhatsapp bot;
@@ -66,20 +69,22 @@ public class ControladorWhatsapp {
 
     @GetMapping("/contexto")
     @Operation(summary = "Quién escribe, fecha y hora de Bogotá, sedes y políticas vigentes")
-    public Contexto contexto(@RequestHeader(CABECERA_NUMERO) String numero) {
-        return contexto.de(numero);
+    public Contexto contexto(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid) {
+        return contexto.de(quien(numero, lid));
     }
 
     @PostMapping("/vinculacion/codigo")
-    @Operation(summary = "Envía al correo de la cuenta con este número un código para vincularlo")
-    public CodigoEnviado enviarCodigo(@RequestHeader(CABECERA_NUMERO) String numero) {
-        return new CodigoEnviado(bot.enviarCodigo(numero).correos());
+    @Operation(summary = "Envía un código al correo de la cuenta para vincular este WhatsApp",
+            description = "Con teléfono, a la cuenta que lo escribió al registrarse; con @lid, a la cuenta del correo enviado.")
+    public CodigoEnviado enviarCodigo(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero,
+            @RequestHeader(value = CABECERA_LID, required = false) String lid, @Valid @RequestBody(required = false) SolicitudVinculacion s) {
+        return new CodigoEnviado(bot.enviarCodigo(quien(numero, lid), s == null ? null : s.correo()).correos());
     }
 
     @PostMapping("/vinculacion/confirmar")
     @Operation(summary = "Vincula el número con el código que llegó al correo")
-    public Vinculado confirmar(@RequestHeader(CABECERA_NUMERO) String numero, @Valid @RequestBody SolicitudCodigo s) {
-        return new Vinculado(bot.confirmarCodigo(numero, s.codigo()));
+    public Vinculado confirmar(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid, @Valid @RequestBody SolicitudCodigo s) {
+        return new Vinculado(bot.confirmarCodigo(quien(numero, lid), s.codigo()));
     }
 
     // ---------- Canchas, horarios y precios ----------
@@ -111,35 +116,35 @@ public class ControladorWhatsapp {
     @PostMapping("/reservas")
     @Operation(summary = "Solicita una reserva (nace pendiente y la aprueba el administrador)",
             description = "Idempotency-Key: el id del mensaje de WhatsApp, para que un reintento no la cree dos veces.")
-    public ResponseEntity<ReservaBot> solicitar(@RequestHeader(CABECERA_NUMERO) String numero,
+    public ResponseEntity<ReservaBot> solicitar(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid,
             @RequestHeader(value = "Idempotency-Key", required = false) String clave, @Valid @RequestBody SolicitudReserva s) {
-        var resultado = bot.solicitar(numero, s.nombre(), s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()), s.nombreEquipo(), clave);
+        var resultado = bot.solicitar(quien(numero, lid), s.nombre(), s.telefonoContacto(), s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()), s.nombreEquipo(), clave);
         return ResponseEntity.status(resultado.creada() ? HttpStatus.CREATED : HttpStatus.OK).body(reserva(resultado.vista()));
     }
 
     @GetMapping("/reservas")
     @Operation(summary = "Reservas pendientes y confirmadas por jugar de quien escribe")
-    public List<ReservaBot> misReservas(@RequestHeader(CABECERA_NUMERO) String numero) {
-        return bot.misReservas(numero).stream().map(ControladorWhatsapp::reserva).toList();
+    public List<ReservaBot> misReservas(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid) {
+        return bot.misReservas(quien(numero, lid)).stream().map(ControladorWhatsapp::reserva).toList();
     }
 
     @PostMapping("/reservas/{codigo}/cancelar")
-    public ReservaBot cancelar(@RequestHeader(CABECERA_NUMERO) String numero, @PathVariable String codigo, @Valid @RequestBody SolicitudMotivo s) {
-        return reserva(bot.cancelar(numero, codigo, s.motivo()));
+    public ReservaBot cancelar(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid, @PathVariable String codigo, @Valid @RequestBody SolicitudMotivo s) {
+        return reserva(bot.cancelar(quien(numero, lid), codigo, s.motivo()));
     }
 
     @PostMapping("/reservas/{codigo}/reprogramar/previsualizar")
     @Operation(summary = "Si el nuevo horario está libre y cuánto cambia el precio, sin cambiar nada")
-    public Previsualizacion previsualizar(@RequestHeader(CABECERA_NUMERO) String numero, @PathVariable String codigo,
+    public Previsualizacion previsualizar(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid, @PathVariable String codigo,
             @Valid @RequestBody SolicitudReprogramacion s) {
-        PrevisualizacionReprogramacion p = bot.previsualizarReprogramacion(numero, codigo, s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()));
+        PrevisualizacionReprogramacion p = bot.previsualizarReprogramacion(quien(numero, lid), codigo, s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()));
         return new Previsualizacion(p.disponible(), p.precioActual(), p.precioNuevo(), p.diferencia(), FormatoTexto.cop(p.precioNuevo()));
     }
 
     @PostMapping("/reservas/{codigo}/reprogramar")
-    public ReservaBot reprogramar(@RequestHeader(CABECERA_NUMERO) String numero, @PathVariable String codigo,
+    public ReservaBot reprogramar(@RequestHeader(value = CABECERA_NUMERO, required = false) String numero, @RequestHeader(value = CABECERA_LID, required = false) String lid, @PathVariable String codigo,
             @Valid @RequestBody SolicitudReprogramacion s) {
-        return reserva(bot.reprogramar(numero, codigo, s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()), s.motivo()));
+        return reserva(bot.reprogramar(quien(numero, lid), codigo, s.canchaId(), new Franja(s.fecha(), s.desde(), s.hasta()), s.motivo()));
     }
 
     // ---------- Torneos y partidos (solo lo público) ----------
@@ -182,7 +187,15 @@ public class ControladorWhatsapp {
         return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
+    private static RemitenteWhatsapp quien(String numero, String lid) {
+        return RemitenteWhatsapp.de(numero, lid);
+    }
+
     // ---------- DTOs ----------
+
+    /** Solo cuando se escribe desde un @lid: el correo de la cuenta Goltime. */
+    public record SolicitudVinculacion(@Size(max = 255) String correo) {
+    }
 
     public record SolicitudCodigo(@NotBlank @Size(max = 12) String codigo) {
     }
@@ -193,9 +206,12 @@ public class ControladorWhatsapp {
     public record Vinculado(String nombre) {
     }
 
-    /** {@code nombre} solo hace falta la primera vez que reserva alguien sin cuenta. */
+    /**
+     * {@code nombre} solo hace falta la primera vez que reserva alguien sin cuenta; {@code telefonoContacto}, además,
+     * si escribe desde un @lid (WhatsApp no compartió su número).
+     */
     public record SolicitudReserva(@NotNull Long canchaId, @NotNull LocalDate fecha, @NotNull LocalTime desde,
-            @NotNull LocalTime hasta, @Size(max = 150) String nombre, @Size(max = 100) String nombreEquipo) {
+            @NotNull LocalTime hasta, @Size(max = 150) String nombre, @Size(max = 30) String telefonoContacto, @Size(max = 100) String nombreEquipo) {
     }
 
     public record SolicitudMotivo(@Size(max = 500) String motivo) {

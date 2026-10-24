@@ -518,7 +518,8 @@ public class ServicioReservas {
             case CANCELADA -> r.motivoCancelacion();
             default -> null;
         };
-        eventos.publishEvent(new AvisoReservaEvento(r.id(), r.codigo(), tipo, r.clienteId(), r.origen(), rel == null ? null : rel.clienteTelefono(),
+        eventos.publishEvent(new AvisoReservaEvento(r.id(), r.codigo(), tipo, r.clienteId(), r.clienteMostradorId(), r.origen(),
+                rel == null ? null : rel.clienteTelefono(),
                 rel == null ? null : rel.canchaNombre(), r.inicio(), motivo));
     }
 

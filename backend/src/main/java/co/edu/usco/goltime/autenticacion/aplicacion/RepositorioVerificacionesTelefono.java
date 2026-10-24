@@ -18,4 +18,13 @@ public interface RepositorioVerificacionesTelefono {
 
     /** Anula los códigos sin usar de esa cuenta y ese número, para que solo sirva el último. */
     void anularPendientes(long usuarioId, String telefono, Instant ahora);
+
+    List<VerificacionTelefono> pendientesDeLid(String whatsappLid);
+
+    int contarCreadasDesdeLid(String whatsappLid, Instant desde);
+
+    /** Cuántos códigos se enviaron al correo de esa cuenta (para no llenarle la bandeja). */
+    int contarCreadasDesdeUsuario(long usuarioId, Instant desde);
+
+    void anularPendientesDeLid(long usuarioId, String whatsappLid, Instant ahora);
 }
