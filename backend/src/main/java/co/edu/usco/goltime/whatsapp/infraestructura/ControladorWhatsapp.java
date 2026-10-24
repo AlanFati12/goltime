@@ -87,7 +87,7 @@ public class ControladorWhatsapp {
     @GetMapping("/canchas")
     public List<Cancha> canchas(@RequestParam(required = false) Long sedeId, @RequestParam(required = false) String modalidad) {
         bot.verificarActivo();
-        return consultas.canchas(sedeId, modalidad);
+        return consultas.canchas(sedeId, vacioANulo(modalidad));
     }
 
     @GetMapping("/disponibilidad")
@@ -95,7 +95,7 @@ public class ControladorWhatsapp {
     public Disponibilidad disponibilidad(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             @RequestParam(required = false) Long sedeId, @RequestParam(required = false) String modalidad) {
         bot.verificarActivo();
-        return consultas.disponibilidad(fecha, sedeId, modalidad);
+        return consultas.disponibilidad(fecha, sedeId, vacioANulo(modalidad));
     }
 
     @GetMapping("/cotizacion")
@@ -175,6 +175,11 @@ public class ControladorWhatsapp {
     public ResumenPartido resumen(@PathVariable long id) {
         bot.verificarActivo();
         return consultas.resumen(id);
+    }
+
+    /** El modelo de lenguaje manda los filtros opcionales vacíos en vez de omitirlos. */
+    private static String vacioANulo(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     // ---------- DTOs ----------
