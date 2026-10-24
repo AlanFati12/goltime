@@ -25,7 +25,10 @@ CRED_API = {"httpHeaderAuth": {"id": "GoltimeApiCred01", "name": "Goltime · API
 CRED_EVOLUTION = {"httpHeaderAuth": {"id": "GoltimeEvoCred01", "name": "Goltime · Evolution API"}}
 CRED_OPENAI = {"openAiApi": {"id": "GoltimeOpenAi001", "name": "Goltime · OpenAI"}}
 
-NUMERO = "={{ $('Extraer mensaje').first().json.numero }}"
+NUMERO = "={{ $('Extraer mensaje').first().json.numero || '' }}"
+# Si WhatsApp no comparte el teléfono, quien escribe se identifica por su @lid (ADR 0018).
+LID = "={{ $('Extraer mensaje').first().json.lid || '' }}"
+CLAVE_MEMORIA = "={{ $('Extraer mensaje').first().json.numero || $('Extraer mensaje').first().json.lid }}"
 
 SISTEMA = """Eres GolBot ⚽, el asistente de WhatsApp de Goltime, un negocio de canchas de fútbol sintético en Neiva (Colombia). Hablas español de Colombia, cercano y claro, con mensajes cortos (máximo unas 6 líneas) y 0 a 2 emojis.
 
@@ -44,9 +47,9 @@ RESERVAR
 1. Averigua el día, la hora de inicio, la duración (si no la dicen, 1 hora) y si prefiere sede o tipo de cancha.
 2. Consulta la disponibilidad de ese día y ofrece máximo 3 opciones concretas. Si no hay horarios (mira el campo «nota»), dilo en una frase, consulta tú mismo el día siguiente y ofrece opciones de ese día.
 3. Cuando elija, cotiza el precio exacto y muestra un resumen: cancha, sede, día, hora de inicio y de fin, y precio. Pregunta «¿Confirmo la solicitud?».
-4. Solo con un sí explícito usa solicitar_reserva. Si quien escribe no tiene cuenta y no sabes su nombre, pídeselo antes.
+4. Solo con un sí explícito usa solicitar_reserva. Si quien escribe no tiene cuenta y no sabes su nombre, pídeselo antes; si además el [Contexto] dice que WhatsApp no comparte su número, pide también un celular de contacto (telefonoContacto).
 5. Explica que la reserva queda pendiente hasta que el administrador la apruebe, que le avisaremos por aquí, y dale su código (GT-…).
-- Si tiene cuenta pero el número aún no está vinculado, no puede reservar ni ver sus reservas hasta vincularlo: ofrécele enviar un código a su correo (enviar_codigo_vinculacion) y, cuando lo escriba, confírmalo con confirmar_codigo_vinculacion. Precios, horarios y torneos sí los puedes responder.
+- Si tiene cuenta pero su WhatsApp aún no está vinculado, no puede reservar con su cuenta ni ver sus reservas hasta vincularlo: ofrécele enviar un código a su correo (enviar_codigo_vinculacion; si el [Contexto] dice que WhatsApp no comparte su número, pásale el correo de su cuenta) y, cuando lo escriba, confírmalo con confirmar_codigo_vinculacion. Al pedir el código, dile que si el correo es de una cuenta Goltime le llegará ahí. Precios, horarios y torneos sí los puedes responder sin vincular nada.
 - Si no tiene cuenta y no puede reservar sin cuenta, invítalo a registrarse en la web de Goltime con este mismo número.
 
 CANCELAR O REPROGRAMAR
@@ -77,7 +80,7 @@ def desde_ia(clave, descripcion, tipo="string", defecto=None):
 
 def herramienta(nombre, descripcion, metodo, ruta, posicion, consulta=None, cuerpo=None, idempotente=False):
     """HTTP Request Tool hacia la API. El número va fijo desde el mensaje; el modelo solo llena los parámetros."""
-    cabeceras = [{"name": "X-WhatsApp-Numero", "value": NUMERO}]
+    cabeceras = [{"name": "X-WhatsApp-Numero", "value": NUMERO}, {"name": "X-WhatsApp-Lid", "value": LID}]
     if idempotente:
         cabeceras.append({"name": "Idempotency-Key", "value": "={{ $('Extraer mensaje').first().json.idMensaje }}"})
     p = {
@@ -142,7 +145,8 @@ def si(nombre, posicion, expresion):
 
 
 EXTRAER = r"""// Mensaje de Evolution API (messages.upsert). Evolution 2.3 cambia remoteJid por remoteJidAlt (el teléfono real)
-// cuando WhatsApp usa identificadores @lid; por si acaso se buscan también senderPn y remoteJidAlt.
+// cuando WhatsApp lo comparte; por si acaso se buscan también senderPn y remoteJidAlt. Si WhatsApp no comparte el
+// teléfono, queda el identificador anónimo @lid, que también sirve para reconocer a quien escribe.
 const cuerpo = $input.first().json.body || $input.first().json;
 const datos = cuerpo.data || {};
 const clave = datos.key || {};
@@ -156,14 +160,15 @@ const procesar = cuerpo.event === 'messages.upsert' && cuerpo.instance === 'golt
 let respuestaFija = null;
 if (!texto) {
   respuestaFija = 'Por ahora solo leo mensajes de texto 🙌 Escríbeme qué necesitas: precios, horarios, reservas o torneos.';
-} else if (!deTelefono) {
-  respuestaFija = 'No logré reconocer tu número 😕 Intenta de nuevo en un momento o reserva en la web de Goltime.';
+} else if (!deTelefono && !chatId.endsWith('@lid')) {
+  respuestaFija = 'No logré reconocer tu WhatsApp 😕 Intenta de nuevo en un momento o reserva en la web de Goltime.';
 }
 
 return [{ json: {
   procesar,
   chatId,
   numero: deTelefono ? '+' + deTelefono.split('@')[0].split(':')[0] : null,
+  lid: !deTelefono && chatId.endsWith('@lid') ? chatId.split('@')[0] : null,
   idMensaje: clave.id || null,
   texto,
   respuestaFija,
@@ -183,9 +188,15 @@ if (c.situacion === 'DESACTIVADO') {
 const quien = {
   CLIENTE: `cliente registrado con el WhatsApp vinculado; se llama ${c.nombre}.`,
   SIN_VERIFICAR: 'tiene cuenta en Goltime, pero este número aún no está vinculado (necesita el código del correo para reservar o ver sus reservas).',
-  SIN_CUENTA: c.puedeReservarSinCuenta
-    ? `no tiene cuenta; puede reservar sin cuenta. ${c.nombre ? 'Dio el nombre ' + c.nombre + '.' : 'Aún no sabemos su nombre.'}`
-    : 'no tiene cuenta y por ahora solo se reserva con cuenta: invítalo a registrarse en la web con este número.',
+  SIN_CUENTA: c.identificadoPor === 'LID'
+    ? 'WhatsApp no comparte su número, así que no sabemos si tiene cuenta en Goltime. Si dice que tiene cuenta (o quiere ver o gestionar '
+      + 'reservas de su cuenta), pídele el correo de la cuenta para vincular este WhatsApp. '
+      + (c.puedeReservarSinCuenta
+        ? `Si no tiene cuenta, puede reservar sin cuenta: ${c.nombre ? 'ya dio el nombre ' + c.nombre + '.' : 'pídele su nombre y un celular de contacto.'}`
+        : 'Sin cuenta no puede reservar: invítalo a registrarse en la web de Goltime.')
+    : (c.puedeReservarSinCuenta
+      ? `no tiene cuenta; puede reservar sin cuenta. ${c.nombre ? 'Dio el nombre ' + c.nombre + '.' : 'Aún no sabemos su nombre.'}`
+      : 'no tiene cuenta y por ahora solo se reserva con cuenta: invítalo a registrarse en la web con este número.'),
 }[c.situacion] || 'desconocido.';
 const p = c.politicas || {};
 const sedes = (c.sedes || []).map(s => `[${s.id}] ${s.nombre} (${s.direccion}, ${s.ciudad})`).join('; ');
@@ -229,7 +240,8 @@ def bot():
         si("¿Respuesta fija?", [920, 300], MENSAJE + ".respuestaFija !== null"),
         nodo("Contexto", "n8n-nodes-base.httpRequest", 4.2, [1080, 400], {
             "method": "GET", "url": API + "/contexto", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
-            "sendHeaders": True, "headerParameters": {"parameters": [{"name": "X-WhatsApp-Numero", "value": NUMERO}]},
+            "sendHeaders": True, "headerParameters": {"parameters": [{"name": "X-WhatsApp-Numero", "value": NUMERO},
+                                                                     {"name": "X-WhatsApp-Lid", "value": LID}]},
             "options": {"timeout": 10000},
         }, credentials=CRED_API, onError="continueErrorOutput"),
         nodo("Preparar entrada", "n8n-nodes-base.code", 2, [1240, 380], {"jsCode": PREPARAR}),
@@ -245,7 +257,7 @@ def bot():
             "options": {"reasoningEffort": "low", "maxTokens": 800, "timeout": 60000},
         }, credentials=CRED_OPENAI),
         nodo("Memoria por número", "@n8n/n8n-nodes-langchain.memoryBufferWindow", 1.3, [1460, 760], {
-            "sessionIdType": "customKey", "sessionKey": NUMERO, "contextWindowLength": 10,
+            "sessionIdType": "customKey", "sessionKey": CLAVE_MEMORIA, "contextWindowLength": 10,
         }),
         nodo("Armar respuesta", "n8n-nodes-base.code", 2, [1980, 300], {"jsCode": ARMAR}),
         enviar_whatsapp("Responder", [2160, 300], MENSAJE + ".chatId", "$json.texto", "$json.retraso", onError="continueErrorOutput"),
@@ -277,6 +289,7 @@ def bot():
                             "desde": desde_ia("desde", "Hora de inicio HH:mm"),
                             "hasta": desde_ia("hasta", "Hora de fin HH:mm"),
                             "nombre": desde_ia("nombre", "Nombre completo si no tiene cuenta y es su primera reserva; si no, vacío", "string", ""),
+                            "telefonoContacto": desde_ia("telefonoContacto", "Celular de contacto si no tiene cuenta y WhatsApp no comparte su número; si no, vacío", "string", ""),
                             "nombreEquipo": desde_ia("nombreEquipo", "Nombre del equipo si lo dio; si no, vacío", "string", "")}),
         herramienta("mis_reservas", "Reservas pendientes y confirmadas por jugar de quien escribe, con su código y lo que se puede hacer.",
                     "GET", "/reservas", None),
@@ -291,8 +304,9 @@ def bot():
                     "POST", "={{ '" + API + "/reservas/' + " + desde_ia("codigo", "Código de la reserva") + " + '/reprogramar' }}", None,
                     cuerpo={"fecha": desde_ia("fecha", "Nueva fecha AAAA-MM-DD"), "desde": desde_ia("desde", "Nueva hora de inicio HH:mm"),
                             "hasta": desde_ia("hasta", "Nueva hora de fin HH:mm"), "motivo": desde_ia("motivo", "Motivo del cambio")}),
-        herramienta("enviar_codigo_vinculacion", "Envía al correo de la cuenta un código para vincular este número de WhatsApp.",
-                    "POST", "/vinculacion/codigo", None),
+        herramienta("enviar_codigo_vinculacion", "Envía al correo de la cuenta Goltime un código para vincular este WhatsApp.",
+                    "POST", "/vinculacion/codigo", None,
+                    cuerpo={"correo": desde_ia("correo", "Correo de la cuenta Goltime si WhatsApp no comparte su número; si no, vacío", "string", "")}),
         herramienta("confirmar_codigo_vinculacion", "Vincula el número con el código de 6 dígitos que el cliente recibió en su correo.",
                     "POST", "/vinculacion/confirmar", None, cuerpo={"codigo": desde_ia("codigo", "Código de 6 dígitos")}),
         herramienta("torneos_activos", "Torneos con inscripciones abiertas o en curso, con su id.", "GET", "/torneos", None),
@@ -347,7 +361,9 @@ const valida = !!$env.GOLTIME_SECRETO_AVISOS && firma.length === esperada.length
   && crypto.timingSafeEqual(Buffer.from(firma), Buffer.from(esperada));
 let aviso = {};
 try { aviso = JSON.parse(crudo.toString('utf8')); } catch (e) { aviso = {}; }
-const numero = String(aviso.numero || '').replace(/\D/g, '');
+// Teléfono (+57…) o chat @lid de quien no compartió su número.
+const destino = String(aviso.numero || '');
+const numero = destino.endsWith('@lid') ? destino : destino.replace(/\D/g, '');
 return [{ json: { valida: valida && numero.length >= 8 && !!aviso.mensaje, numero, mensaje: aviso.mensaje, tipo: aviso.tipo, reservaId: aviso.reservaId } }];"""
 
 
