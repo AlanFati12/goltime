@@ -30,8 +30,10 @@ import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionReprograma
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.ResultadoSolicitud;
 import co.edu.usco.goltime.reservas.aplicacion.PoliticaDescuentos.Descuento;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
+import co.edu.usco.goltime.reservas.dominio.AvisoReservaEvento;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.GeneradorIcs;
+import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.reservas.dominio.PoliticaReservas;
 import co.edu.usco.goltime.reservas.dominio.Precio;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
@@ -97,10 +99,21 @@ public class ServicioReservas {
     @Transactional
     public ResultadoSolicitud solicitar(long clienteId, long canchaId, Instant inicio, Instant fin, String nombreEquipo,
             String notas, String claveIdempotencia, String codigoPromocion, Long premioId) {
+        return crearSolicitud(OrigenReserva.WEB, Titular.cliente(clienteId), canchaId, inicio, fin, nombreEquipo, notas, claveIdempotencia,
+                codigoPromocion, premioId);
+    }
+
+    /**
+     * Núcleo de toda solicitud: valida la franja, el límite de reservas activas y el precio (calculado aquí), ocupa el
+     * horario y avisa a los administradores. Los descuentos y premios son solo de clientes registrados.
+     */
+    private ResultadoSolicitud crearSolicitud(OrigenReserva origen, Titular titular, long canchaId, Instant inicio, Instant fin,
+            String nombreEquipo, String notas, String claveIdempotencia, String codigoPromocion, Long premioId) {
         String clave = claveIdempotencia == null || claveIdempotencia.isBlank() ? null : claveIdempotencia.trim();
         if (clave != null) {
-            reservas.bloquearPorClave(clienteId + ":" + clave);
-            var existente = reservas.buscarPorClaveIdempotencia(clienteId, clave);
+            reservas.bloquearPorClave((titular.tieneCuenta() ? titular.clienteId() : "m" + titular.clienteMostradorId()) + ":" + clave);
+            var existente = titular.tieneCuenta() ? reservas.buscarPorClaveIdempotencia(titular.clienteId(), clave)
+                    : reservas.buscarPorClaveIdempotenciaSinCuenta(titular.clienteMostradorId(), clave);
             if (existente.isPresent()) {
                 return new ResultadoSolicitud(vista(existente.get(), true), false);
             }
@@ -109,30 +122,109 @@ public class ServicioReservas {
         PoliticaReservas politica = configuracion.politica();
         VistaCancha cancha = canchas.detallePublico(canchaId);
         calculos.validarFranja(cancha, inicio, fin, ahora, politica);
-        if (reservas.contarActivasFuturas(clienteId, ahora) >= politica.maxReservasActivasCliente()) {
-            throw new ExcepcionNegocio(CodigoError.LIMITE_DE_RESERVAS,
-                    "Ya tienes " + politica.maxReservasActivasCliente() + " reservas activas. Cancela alguna o espera a que se juegue.");
-        }
+        verificarLimiteDeActivas(titular, ahora, politica);
         Precio base = calculos.calcularPrecio(cancha, inicio, fin);
-        Optional<Descuento> descuento = descuentos.evaluar(new PoliticaDescuentos.Consulta(clienteId, cancha.cancha().sedeId(), canchaId, inicio, fin,
-                base.finalAPagar(), codigoPromocion, premioId, reservas.contarNoCanceladas(clienteId) == 0));
+        Long clienteId = titular.clienteId();
+        Optional<Descuento> descuento = titular.tieneCuenta()
+                ? descuentos.evaluar(new PoliticaDescuentos.Consulta(clienteId, cancha.cancha().sedeId(), canchaId, inicio, fin,
+                        base.finalAPagar(), codigoPromocion, premioId, reservas.contarNoCanceladas(clienteId) == 0))
+                : Optional.empty();
         Precio precio = descuento.map(d -> new Precio(base.base(), d.monto(), base.base() - d.monto())).orElse(base);
         int anio = ZonaHoraria.fechaLocal(ahora).getYear();
-        Reserva nueva = Reserva.solicitar(reservas.siguienteCodigo(anio), clienteId, canchaId, inicio, fin, precio, nombreEquipo,
-                notas, politica.calcularExpiracion(ahora, inicio), clave);
+        Reserva nueva = Reserva.solicitar(origen, reservas.siguienteCodigo(anio), clienteId, titular.clienteMostradorId(), canchaId, inicio, fin,
+                precio, nombreEquipo, notas, politica.calcularExpiracion(ahora, inicio), clave);
         Reserva guardada = reservas.guardar(nueva);
         ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(cancha), inicio, fin);
         descuento.ifPresent(d -> descuentos.consumir(d, guardada.id(), clienteId));
-        eventos.publishEvent(new ReservaCreadaEvento(guardada.id(), clienteId, canchaId, inicio, fin));
+        if (clienteId != null) {
+            // Solo los clientes registrados tienen lista de espera que cumplir.
+            eventos.publishEvent(new ReservaCreadaEvento(guardada.id(), clienteId, canchaId, inicio, fin));
+        }
 
-        Actor actor = new Actor(clienteId, Rol.CLIENTE);
         Map<String, Object> datosCreada = datosDe(guardada);
         descuento.ifPresent(d -> datosCreada.put("descuentoAplicado", d.descripcion()));
-        registrar(guardada.id(), "CREADA", actor, null, null, datosCreada);
+        registrar(guardada.id(), "CREADA", titular.actor(), null, null, conCanal(datosCreada, origen));
         notificador.notificarAdministradores("RESERVA_SOLICITADA", "Nueva solicitud de reserva",
-                "%s pidió %s el %s. Responde antes de que expire.".formatted(guardada.codigo(), cancha.cancha().nombre(),
-                        FormatoTexto.fechaHora(inicio)), "reserva", guardada.id());
+                "%s pidió %s el %s%s. Responde antes de que expire.".formatted(guardada.codigo(), cancha.cancha().nombre(),
+                        FormatoTexto.fechaHora(inicio), origen == OrigenReserva.WHATSAPP ? " por WhatsApp" : ""), "reserva", guardada.id());
         return new ResultadoSolicitud(vista(guardada, true), true);
+    }
+
+    private void verificarLimiteDeActivas(Titular titular, Instant ahora, PoliticaReservas politica) {
+        if (titular.tieneCuenta()) {
+            if (reservas.contarActivasFuturas(titular.clienteId(), ahora) >= politica.maxReservasActivasCliente()) {
+                throw new ExcepcionNegocio(CodigoError.LIMITE_DE_RESERVAS,
+                        "Ya tienes " + politica.maxReservasActivasCliente() + " reservas activas. Cancela alguna o espera a que se juegue.");
+            }
+            return;
+        }
+        int maximo = configuracion.maxSolicitudesSinCuenta();
+        if (reservas.contarActivasFuturasSinCuenta(titular.clienteMostradorId(), ahora) >= maximo) {
+            throw new ExcepcionNegocio(CodigoError.LIMITE_DE_RESERVAS,
+                    "Sin cuenta puedes tener hasta " + maximo + " reservas activas. Crea una cuenta en la web para reservar más.");
+        }
+    }
+
+    // ===================================================================================
+    // WhatsApp (ADR 0018): las mismas reglas que la web, con el dueño identificado por su número
+    // ===================================================================================
+
+    /** Solicitud por WhatsApp de un cliente registrado (con su número verificado) o de uno sin cuenta. */
+    @Transactional
+    public ResultadoSolicitud solicitarPorWhatsapp(Titular titular, long canchaId, Instant inicio, Instant fin, String nombreEquipo,
+            String notas, String claveIdempotencia) {
+        return crearSolicitud(OrigenReserva.WHATSAPP, titular, canchaId, inicio, fin, nombreEquipo, notas, claveIdempotencia, null, null);
+    }
+
+    /** Pendientes y confirmadas por jugar del titular, de la más próxima a la más lejana. */
+    @Transactional(readOnly = true)
+    public List<VistaReserva> proximasDe(Titular titular, int limite) {
+        Instant ahora = reloj.instant();
+        List<Reserva> filas = titular.tieneCuenta()
+                ? reservas.deCliente(titular.clienteId(), PestanaReservas.PROXIMAS, ahora, new SolicitudPagina(0, limite)).contenido()
+                : reservas.proximasSinCuenta(titular.clienteMostradorId(), ahora, limite);
+        return conVistas(new Pagina<>(filas, 0, limite, filas.size(), 1), ahora).contenido();
+    }
+
+    /** Id de una reserva del titular a partir de su código (GT-2026-000123); las ajenas responden como si no existieran. */
+    @Transactional(readOnly = true)
+    public long idDeCodigo(String codigo, Titular titular) {
+        return reservas.buscarPorCodigo(codigo == null ? "" : codigo.trim().toUpperCase(java.util.Locale.ROOT))
+                .filter(titular::esDuenoDe).map(Reserva::id)
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No encontramos esa reserva entre las tuyas."));
+    }
+
+    @Transactional
+    public VistaReserva cancelar(long id, Titular titular, String motivo) {
+        return cancelarCargada(cargarDeTitular(id, titular), titular.actor(), motivo, OrigenReserva.WHATSAPP);
+    }
+
+    @Transactional(readOnly = true)
+    public PrevisualizacionReprogramacion previsualizarReprogramacion(long id, Titular titular, Long nuevaCanchaId, Instant inicio, Instant fin) {
+        return previsualizarCargada(cargarDeTitular(id, titular), titular.actor(), nuevaCanchaId, inicio, fin);
+    }
+
+    @Transactional
+    public VistaReserva reprogramar(long id, Titular titular, Long nuevaCanchaId, Instant inicio, Instant fin, String motivo) {
+        return reprogramarCargada(cargarDeTitular(id, titular), titular.actor(), nuevaCanchaId, inicio, fin, motivo, OrigenReserva.WHATSAPP);
+    }
+
+    private Reserva cargarDeTitular(long id, Titular titular) {
+        Reserva reserva = cargar(id);
+        if (!titular.esDuenoDe(reserva)) {
+            throw new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "La reserva no existe.");
+        }
+        return reserva;
+    }
+
+    /** Deja en el historial por qué canal se hizo el cambio (la web no lo anota, es el caso normal). */
+    private static Map<String, Object> conCanal(Map<String, Object> datos, OrigenReserva canal) {
+        if (canal == OrigenReserva.WHATSAPP) {
+            Map<String, Object> copia = new LinkedHashMap<>(datos);
+            copia.put("canal", canal.name());
+            return copia;
+        }
+        return datos;
     }
 
     @Transactional(readOnly = true)
@@ -150,7 +242,10 @@ public class ServicioReservas {
 
     @Transactional
     public VistaReserva cancelar(long id, Actor actor, String motivo) {
-        Reserva reserva = cargarAutorizada(id, actor);
+        return cancelarCargada(cargarAutorizada(id, actor), actor, motivo, OrigenReserva.WEB);
+    }
+
+    private VistaReserva cancelarCargada(Reserva reserva, Actor actor, String motivo, OrigenReserva canal) {
         Instant ahora = reloj.instant();
         EstadoReserva antes = reserva.estado();
         reserva.cancelar(actor, motivo, ahora, configuracion.politica());
@@ -161,12 +256,13 @@ public class ServicioReservas {
         Map<String, Object> despues = new LinkedHashMap<>();
         despues.put("estado", guardada.estado().name());
         despues.put("cancelacionTardia", guardada.cancelacionTardia());
-        registrar(guardada.id(), "CANCELADA", actor, guardada.motivoCancelacion(), Map.of("estado", antes.name()), despues);
+        registrar(guardada.id(), "CANCELADA", actor, guardada.motivoCancelacion(), Map.of("estado", antes.name()), conCanal(despues, canal));
 
         if (actor.rol() == Rol.CLIENTE) {
             if (antes == EstadoReserva.CONFIRMADA) {
                 notificador.notificarAdministradores("RESERVA_CANCELADA", "Reserva cancelada por el cliente",
-                        "%s del %s fue cancelada%s.".formatted(guardada.codigo(), FormatoTexto.fechaHora(guardada.inicio()),
+                        "%s del %s fue cancelada%s%s.".formatted(guardada.codigo(), FormatoTexto.fechaHora(guardada.inicio()),
+                                canal == OrigenReserva.WHATSAPP ? " por WhatsApp" : "",
                                 guardada.cancelacionTardia() ? " (cancelación tardía)" : ""), "reserva", guardada.id());
             }
         } else {
@@ -180,7 +276,10 @@ public class ServicioReservas {
     /** Muestra el efecto de reprogramar (precio nuevo, diferencia y si el horario está libre) sin cambiar nada. */
     @Transactional(readOnly = true)
     public PrevisualizacionReprogramacion previsualizarReprogramacion(long id, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin) {
-        Reserva reserva = cargarAutorizada(id, actor);
+        return previsualizarCargada(cargarAutorizada(id, actor), actor, nuevaCanchaId, inicio, fin);
+    }
+
+    private PrevisualizacionReprogramacion previsualizarCargada(Reserva reserva, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin) {
         Instant ahora = reloj.instant();
         PoliticaReservas politica = politicaPara(actor);
         verificarPuedeReprogramar(reserva, actor, ahora, politica);
@@ -194,7 +293,11 @@ public class ServicioReservas {
 
     @Transactional
     public VistaReserva reprogramar(long id, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin, String motivo) {
-        Reserva reserva = cargarAutorizada(id, actor);
+        return reprogramarCargada(cargarAutorizada(id, actor), actor, nuevaCanchaId, inicio, fin, motivo, OrigenReserva.WEB);
+    }
+
+    private VistaReserva reprogramarCargada(Reserva reserva, Actor actor, Long nuevaCanchaId, Instant inicio, Instant fin, String motivo,
+            OrigenReserva canal) {
         Instant ahora = reloj.instant();
         PoliticaReservas politica = politicaPara(actor);
         VistaCancha destino = canchas.detallePublico(nuevaCanchaId != null ? nuevaCanchaId : reserva.canchaId());
@@ -206,11 +309,12 @@ public class ServicioReservas {
         Reserva guardada = reservas.guardar(reserva);
         ocupaciones.liberar(guardada.id());
         ocupaciones.ocupar(guardada.id(), CalculosReserva.idsQueOcupa(destino), inicio, fin);
-        registrar(guardada.id(), "REPROGRAMADA", actor, motivo, antes, datosDe(guardada));
+        registrar(guardada.id(), "REPROGRAMADA", actor, motivo, antes, conCanal(datosDe(guardada), canal));
 
         if (actor.rol() == Rol.CLIENTE) {
             notificador.notificarAdministradores("RESERVA_REPROGRAMADA", "Reserva reprogramada por el cliente",
-                    "%s pasó al %s en %s.".formatted(guardada.codigo(), FormatoTexto.fechaHora(inicio), destino.cancha().nombre()),
+                    "%s pasó al %s en %s%s.".formatted(guardada.codigo(), FormatoTexto.fechaHora(inicio), destino.cancha().nombre(),
+                            canal == OrigenReserva.WHATSAPP ? " (por WhatsApp)" : ""),
                     "reserva", guardada.id());
         } else {
             notificarCliente(guardada, "RESERVA_REPROGRAMADA_ADMIN", "Tu reserva fue reprogramada",
@@ -377,6 +481,7 @@ public class ServicioReservas {
 
     /** Igual que {@link #notificarCliente} pero el correo lleva el evento .ics de la reserva. */
     private void notificarClienteConCalendario(Reserva r, String tipo, String titulo, String mensaje) {
+        avisarPorOtrosCanales(r, tipo);
         if (r.clienteId() != null) {
             notificador.notificar(r.clienteId(), tipo, titulo, mensaje, "reserva", r.id(), List.of(adjuntoCalendario(r)));
         }
@@ -399,9 +504,22 @@ public class ServicioReservas {
     }
 
     private void notificarCliente(Reserva r, String tipo, String titulo, String mensaje) {
+        avisarPorOtrosCanales(r, tipo);
         if (r.clienteId() != null) {
             notificador.notificar(r.clienteId(), tipo, titulo, mensaje, "reserva", r.id());
         }
+    }
+
+    /** También para clientes sin cuenta: el canal que escucha (WhatsApp) decide si le corresponde avisar. */
+    private void avisarPorOtrosCanales(Reserva r, String tipo) {
+        Relacionados rel = reservas.relacionados(List.of(r.id())).get(r.id());
+        String motivo = switch (r.estado()) {
+            case RECHAZADA -> r.motivoRechazo();
+            case CANCELADA -> r.motivoCancelacion();
+            default -> null;
+        };
+        eventos.publishEvent(new AvisoReservaEvento(r.id(), r.codigo(), tipo, r.clienteId(), r.origen(), rel == null ? null : rel.clienteTelefono(),
+                rel == null ? null : rel.canchaNombre(), r.inicio(), motivo));
     }
 
     private Pagina<VistaReserva> conVistas(Pagina<Reserva> filas, Instant ahora) {

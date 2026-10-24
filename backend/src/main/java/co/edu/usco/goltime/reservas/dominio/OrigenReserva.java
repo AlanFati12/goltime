@@ -4,5 +4,7 @@ public enum OrigenReserva {
     WEB,
     ADMIN,
     TORNEO,
-    RECURRENTE
+    RECURRENTE,
+    /** Solicitud hecha por el bot de WhatsApp (ADR 0018). */
+    WHATSAPP
 }

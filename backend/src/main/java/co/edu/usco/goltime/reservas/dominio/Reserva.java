@@ -54,9 +54,29 @@ public class Reserva {
     /** Solicitud de un cliente por la web: nace PENDIENTE y retiene el horario hasta que el admin responda. */
     public static Reserva solicitar(String codigo, long clienteId, long canchaId, Instant inicio, Instant fin,
             Precio precio, String nombreEquipo, String notas, Instant expiraEn, String claveIdempotencia) {
+        return solicitar(OrigenReserva.WEB, codigo, clienteId, null, canchaId, inicio, fin, precio, nombreEquipo, notas, expiraEn,
+                claveIdempotencia);
+    }
+
+    /**
+     * Solicitud por un canal ({@code WEB} o {@code WHATSAPP}) de un cliente registrado o, solo por WhatsApp, de uno sin
+     * cuenta (de mostrador). Igual que la de la web: nace PENDIENTE y la aprueba el administrador.
+     */
+    public static Reserva solicitar(OrigenReserva origen, String codigo, Long clienteId, Long clienteMostradorId, long canchaId,
+            Instant inicio, Instant fin, Precio precio, String nombreEquipo, String notas, Instant expiraEn, String claveIdempotencia) {
+        if ((clienteId == null) == (clienteMostradorId == null)) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "La solicitud debe ser de un cliente registrado o de uno sin cuenta.");
+        }
+        if (origen != OrigenReserva.WEB && origen != OrigenReserva.WHATSAPP) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo se solicitan reservas por la web o por WhatsApp.");
+        }
+        if (clienteMostradorId != null && origen != OrigenReserva.WHATSAPP) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Las solicitudes sin cuenta solo llegan por WhatsApp.");
+        }
         Reserva r = new Reserva();
         r.codigo = codigo;
         r.clienteId = clienteId;
+        r.clienteMostradorId = clienteMostradorId;
         r.canchaId = canchaId;
         r.inicio = inicio;
         r.fin = fin;
@@ -64,7 +84,7 @@ public class Reserva {
         r.nombreEquipo = limpiar(nombreEquipo);
         r.notas = limpiar(notas);
         r.estado = EstadoReserva.PENDIENTE;
-        r.origen = OrigenReserva.WEB;
+        r.origen = origen;
         r.estadoPago = EstadoPago.PENDIENTE;
         r.expiraEn = expiraEn;
         r.claveIdempotencia = claveIdempotencia;
@@ -354,6 +374,10 @@ public class Reserva {
 
     public boolean esDe(long usuarioId) {
         return clienteId != null && clienteId == usuarioId;
+    }
+
+    public boolean esDeClienteSinCuenta(long clienteMostradorId) {
+        return this.clienteMostradorId != null && this.clienteMostradorId == clienteMostradorId;
     }
 
     // ---------- Utilidades ----------

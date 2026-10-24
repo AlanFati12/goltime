@@ -1,6 +1,7 @@
 package co.edu.usco.goltime.reservas.infraestructura;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,12 @@ class RepositorioMostradorJdbc implements RepositorioMostrador {
             return existentes.getFirst();
         }
         return jdbc.queryForObject("INSERT INTO clientes_mostrador (nombre, telefono) VALUES (?, ?) RETURNING id", Long.class, nombre, telefono);
+    }
+
+    @Override
+    public Optional<ClienteMostrador> buscarPorTelefono(String telefono) {
+        return jdbc.query("SELECT id, nombre, telefono FROM clientes_mostrador WHERE telefono = ? ORDER BY id LIMIT 1",
+                (rs, i) -> new ClienteMostrador(rs.getLong("id"), rs.getString("nombre"), rs.getString("telefono")), telefono).stream().findFirst();
     }
 
     @Override
