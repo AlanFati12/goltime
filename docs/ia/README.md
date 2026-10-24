@@ -141,3 +141,10 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Ajuste: la disponibilidad del bot trae una «nota» cuando no hay franjas (no abren o está lleno) y el prompt pide consultar el día siguiente.
 - Pendiente: conversación real desde un celular; panel del admin.
 
+### Bot de WhatsApp, parte 4: ritmo de respuesta (24/oct/2026)
+
+- Petición: 10 s de espera entre respuestas, estado «escribiendo» mientras responde y «cerrar sesión» de la conversación al terminar.
+- Hecho: el workflow pone el número «en línea» y «escribiendo…» al recibir; todas las respuestas (agente, fijas y de error) pasan por un solo nodo que calcula cuánto falta para los 10 s y se envían con ese `delay`, y al final el número queda «desconectado» aunque el envío falle. «Cerrar sesión» se interpretó como dejar de aparecer en línea, no como borrar la memoria (rompería las reservas de varios mensajes).
+- Verificado con mensajes simulados: el agente tardó 3 s y el envío esperó 2,6 s más; el audio esperó 9,9 s; «desconectado» se ejecuta al final.
+- Qué se corrigió: la respuesta fija leía la salida del nodo de presencia en vez del mensaje; una prueba corrió con la versión anterior porque n8n aún reiniciaba (el script de importación ahora espera a que esté listo).
+

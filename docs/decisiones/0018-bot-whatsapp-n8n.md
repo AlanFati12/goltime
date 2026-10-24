@@ -63,6 +63,7 @@ El LLM solo conversa y elige herramientas. Precios, disponibilidad, políticas, 
    - Solo habla de Goltime: cualquier otro tema recibe una respuesta fija. Nunca inventa precios, horarios ni resultados; siempre consulta una herramienta. Antes de reservar, cancelar o reprogramar resume (cancha, fecha, hora, precio) y espera un «sí» explícito.
    - Cada mensaje llega con la fecha y hora de Bogotá, para resolver «mañana a las 8».
    - Solo texto; a audios e imágenes responde que por ahora solo lee texto.
+   - Ritmo humano (pedido el 24/oct/2026): al recibir, el número pasa a «en línea» y muestra «escribiendo…» (`/chat/sendPresence` de Evolution); la respuesta sale a los 10 s de recibido el mensaje, o apenas termine el agente si tarda más (el `delay` de `sendText` mantiene «escribiendo…»), y al final el número vuelve a «desconectado» (`/instance/setPresence`). La memoria de la conversación no se borra al terminar, porque una reserva toma varios mensajes.
    - Credencial de OpenAI propia de Goltime para medir su costo aparte.
    - Implementado en `integraciones/n8n/` (generador en Python + `scripts/whatsapp/n8n-importar.sh`). Evolution 2.3.7 reemplaza `remoteJid` por `remoteJidAlt` (el teléfono) antes de llamar el webhook; el workflow además busca `senderPn` y, si solo hay un `@lid`, responde un texto fijo en vez de adivinar el número.
 
