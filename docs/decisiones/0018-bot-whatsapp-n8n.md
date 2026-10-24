@@ -74,15 +74,17 @@ El LLM solo conversa y elige herramientas. Precios, disponibilidad, políticas, 
     - Perfil del cliente: estado del WhatsApp (verificado o pendiente).
 
 11. **Infraestructura pensada para desplegar.**
-    - El stack de n8n sigue aparte (sirve a otros bots). Evolution sale del puerto 8080 del host, que choca con la API de Goltime, y pasa al 8082.
-    - Red Docker compartida `goltime_integracion`: la API entra con el alias `goltime-api` y n8n con `n8n`. Se agrega con `docker-compose.whatsapp.yml`, así `docker compose up` sigue funcionando sin n8n.
-    - Todo por variables de entorno (`WHATSAPP_CLAVE_INTEGRACION`, `WHATSAPP_URL_AVISOS`, `WHATSAPP_SECRETO_AVISOS`). En un VPS solo cambian URLs y secretos.
+    - **Cambio (24/oct/2026):** el stack viejo de n8n + Evolution (bots de otros negocios que ya no se usan) se respaldó en `~/Documents/Respaldos/n8n-project-2026-10-24` y se borró. n8n 2.40.5, Evolution v2.3.7 y su PostgreSQL ahora viven **en este repo**, en `docker-compose.whatsapp.yml`, que se suma al compose principal: `docker compose -f docker-compose.yml -f docker-compose.whatsapp.yml up -d`. Sin ese archivo, `docker compose up` sigue funcionando sin bot.
+    - Todos comparten la red del proyecto: n8n llama a `http://api:8080` y a `http://evolution-api:8080`; la API avisa a `http://n8n:5678`. Evolution queda en el puerto 8082 del host (el 8080 es de la API).
+    - Todo por variables de entorno (`WHATSAPP_CLAVE_INTEGRACION`, `WHATSAPP_URL_AVISOS`, `WHATSAPP_SECRETO_AVISOS`, `N8N_*`, `EVOLUTION_*`). En un VPS solo cambian URLs y secretos.
+    - `scripts/whatsapp/conectar.sh <número>` crea la instancia `goltime` con su webhook hacia n8n y deja un QR fresco (o un código para vincular por número).
     - Los workflows se exportan sin credenciales a `integraciones/n8n/` con un script para generarlos e importarlos.
     - `docs/despliegue-whatsapp.md`: guía y lista de chequeo.
     - Riesgo conocido: Evolution/Baileys no es oficial y el número puede ser bloqueado. Como todo lo de WhatsApp vive en n8n, pasar a la API oficial de WhatsApp Cloud no toca el backend.
 
 ## Consecuencias
 
-- Migración `V13`: origen `WHATSAPP`, `telefono_verificado`, normalización de teléfonos existentes, índice único parcial, nuevas claves de configuración y canal en historial.
+- Migración `V13`: `telefono_verificado`, normalización de teléfonos existentes, índice único parcial y `verificaciones_telefono`. Migración `V14`: origen `WHATSAPP`, idempotencia para clientes sin cuenta y las claves `whatsapp_*` de configuración. El canal queda en el historial (`datos_nuevos.canal`).
+- `reservas` aprendió a solicitar a nombre de un cliente sin cuenta (`Titular`), y publica `AvisoReservaEvento` cada vez que avisa al titular; `whatsapp` lo escucha. La lista de espera solo se cumple para clientes registrados.
 - Las reservas de clientes sin cuenta por WhatsApp no suman premios ni lista de espera.
 - El bot depende de que Evolution y n8n estén arriba; si caen, la web sigue igual y los avisos se pierden (se registran en el log).

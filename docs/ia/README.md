@@ -122,3 +122,12 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: la primera versión ponía la verificación en `usuarios` y creaba un ciclo `usuarios → notificaciones → usuarios` que detectó `ArquitecturaTest`; un intento fallido debía sobrevivir al rollback (`noRollbackFor`); una prueba fallaba 1 de cada 10 veces porque el «número nuevo» podía coincidir con el viejo; al teclear `+593…` carácter por carácter se perdía el `+` (ahora se guarda un borrador hasta reconocer el país); los ejemplos usaban un número real y se cambiaron por uno ficticio.
 - Pendiente: módulo `whatsapp` con los endpoints del bot, panel del admin y workflows de n8n.
 
+### Bot de WhatsApp, parte 2: stack propio y módulo `whatsapp` (24/oct/2026)
+
+- Petición: respaldar y borrar el stack viejo de n8n + Evolution (bots de otros negocios), definir uno nuevo dentro de Goltime, seguir con el módulo del bot y conectar el número +57 323 908 5762.
+- Infraestructura: respaldo completo en `~/Documents/Respaldos/n8n-project-2026-10-24` (carpeta, volúmenes y export de n8n, con instrucciones para restaurar); `docker-compose.whatsapp.yml` con n8n 2.40.5, Evolution v2.3.7 y su PostgreSQL; variables nuevas en `.env.example`; `scripts/whatsapp/conectar.sh` para el QR. El número quedó conectado.
+- Backend: migración V14 (origen `WHATSAPP`, idempotencia sin cuenta, claves `whatsapp_*`); `reservas` solicita, lista, cancela y reprograma a nombre de un `Titular` (cliente registrado o sin cuenta) y publica `AvisoReservaEvento`; módulo `whatsapp` con cadena de seguridad propia por clave, contexto, catálogo, franjas libres compactas, cotización, reservas, vinculación, torneos activos, tabla, marcadores y resumen redactado de un partido; avisos salientes a n8n firmados con HMAC, solo a números vinculados o a quien reservó por WhatsApp.
+- Pruebas: 396 en backend; 9 de integración del bot (seguridad, sin cuenta con idempotencia y límite, cliente vinculado visible en la web, cuenta sin vincular y desactivada, franjas y precio, resumen sin goleadores del torneo, bot apagado, avisos) y 3 unitarias (textos de los avisos y firma HMAC).
+- Qué se corrigió: el evento `ReservaCreadaEvento` suponía siempre un cliente registrado (NullPointerException con clientes sin cuenta); la duración de bloque por defecto es de 60 minutos y la primera versión de las pruebas reservaba 90.
+- Pendiente: workflows de n8n (agente con `gpt-6-luna`), panel del admin (insignia y filtro «WhatsApp», configuración del bot, estadísticas por origen) y guion de demo.
+

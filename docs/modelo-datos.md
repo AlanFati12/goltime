@@ -110,6 +110,14 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 | `uq_usuarios_telefono_verificado` | Un número verificado pertenece a una sola cuenta | Índice único parcial `WHERE telefono_verificado`: varias cuentas pueden *escribir* el mismo número |
 | `verificaciones_telefono` | Código de 6 dígitos enviado al correo para vincular el número | Solo hash; vence a los 10 min; 5 intentos; máximo 3 códigos por número por hora |
 
+### V14: reservas por WhatsApp (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `reservas.origen` admite `WHATSAPP` | Saber qué reservas llegaron por el bot | El cliente puede ser registrado (`cliente_id`) o sin cuenta (`cliente_mostrador_id`) |
+| `uq_reservas_idempotencia_sin_cuenta` | Un mensaje reintentado por n8n no crea dos reservas | Única por (`cliente_mostrador_id`, `clave_idempotencia`) |
+| Claves `whatsapp_*` en `configuracion` | Bot activo, reservas sin cuenta, máximo de reservas activas sin cuenta (2) y número del negocio | Editables por el administrador |
+
 ## Relaciones
 
 ```mermaid
