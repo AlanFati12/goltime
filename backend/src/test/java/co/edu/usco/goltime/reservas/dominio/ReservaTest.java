@@ -226,6 +226,109 @@ class ReservaTest {
         assertThat(codigo(() -> pendiente().completar(FIN))).isEqualTo(CodigoError.ESTADO_INVALIDO);
     }
 
+    // ----- Cambio de estado del administrador (ADR 0019) -----
+
+    private static final Instant NUEVA_EXPIRACION = AHORA.plusSeconds(3600);
+
+    private static void cambiar(Reserva r, EstadoReserva destino) {
+        r.cambiarEstadoPorAdmin(1L, destino, "Decisión del administrador", AHORA, NUEVA_EXPIRACION);
+    }
+
+    @Test
+    void elAdminLlevaUnaReservaDeCualquierEstadoACualquierOtroSinImportarLaFecha() {
+        for (EstadoReserva desde : EstadoReserva.values()) {
+            for (EstadoReserva hacia : EstadoReserva.values()) {
+                if (desde == hacia) {
+                    continue;
+                }
+                Reserva r = pendiente();
+                if (desde != EstadoReserva.PENDIENTE) {
+                    cambiar(r, desde);
+                }
+                cambiar(r, hacia); // AHORA es cuatro días antes del inicio
+                assertThat(r.estado()).as("%s -> %s", desde, hacia).isEqualTo(hacia);
+            }
+        }
+    }
+
+    @Test
+    void unaReservaFuturaSePuedeMarcarCompletadaONoAsistio() {
+        Reserva r = confirmada();
+        cambiar(r, EstadoReserva.COMPLETADA);
+        assertThat(r.estado()).isEqualTo(EstadoReserva.COMPLETADA);
+        cambiar(r, EstadoReserva.NO_ASISTIO);
+        assertThat(r.estado()).isEqualTo(EstadoReserva.NO_ASISTIO);
+    }
+
+    @Test
+    void elCambioDelAdminExigeMotivoYUnEstadoDistinto() {
+        Reserva r = confirmada();
+        assertThat(codigo(() -> r.cambiarEstadoPorAdmin(1L, EstadoReserva.COMPLETADA, " ", AHORA, NUEVA_EXPIRACION)))
+                .isEqualTo(CodigoError.DATOS_INVALIDOS);
+        assertThat(codigo(() -> r.cambiarEstadoPorAdmin(1L, null, "x", AHORA, NUEVA_EXPIRACION))).isEqualTo(CodigoError.DATOS_INVALIDOS);
+        assertThat(codigo(() -> cambiar(r, EstadoReserva.CONFIRMADA))).isEqualTo(CodigoError.ESTADO_INVALIDO);
+        assertThat(r.estado()).isEqualTo(EstadoReserva.CONFIRMADA);
+    }
+
+    @Test
+    void cancelarYRechazarDejanQuienYPorQueYVolverAConfirmarLosLimpia() {
+        Reserva r = confirmada();
+        r.cambiarEstadoPorAdmin(7L, EstadoReserva.CANCELADA, " Lluvia ", AHORA, NUEVA_EXPIRACION);
+        assertThat(r.canceladaPor()).isEqualTo(7L);
+        assertThat(r.rolCancelador()).isEqualTo(Rol.ADMIN);
+        assertThat(r.motivoCancelacion()).isEqualTo("Lluvia");
+        assertThat(r.fechaCancelacion()).isEqualTo(AHORA);
+        assertThat(r.cancelacionTardia()).isFalse();
+
+        cambiar(r, EstadoReserva.CONFIRMADA);
+        assertThat(r.canceladaPor()).isNull();
+        assertThat(r.motivoCancelacion()).isNull();
+        assertThat(r.aprobadaPor()).isEqualTo(1L);
+
+        cambiar(r, EstadoReserva.RECHAZADA);
+        assertThat(r.motivoRechazo()).isEqualTo("Decisión del administrador");
+        cambiar(r, EstadoReserva.COMPLETADA);
+        assertThat(r.motivoRechazo()).isNull();
+    }
+
+    @Test
+    void volverAPendienteRenuevaElPlazoYQuitaLaAprobacion() {
+        Reserva r = confirmada();
+        cambiar(r, EstadoReserva.COMPLETADA);
+        cambiar(r, EstadoReserva.PENDIENTE);
+        assertThat(r.expiraEn()).isEqualTo(NUEVA_EXPIRACION);
+        assertThat(r.aprobadaPor()).isNull();
+        cambiar(r, EstadoReserva.CONFIRMADA);
+        assertThat(r.expiraEn()).isNull();
+    }
+
+    @Test
+    void liberarConDineroDejaReembolsoPendienteYVolverAOcuparRecuperaElPago() {
+        Reserva r = confirmada();
+        r.aplicarPago(40_000);
+        cambiar(r, EstadoReserva.CANCELADA);
+        assertThat(r.estadoPago()).isEqualTo(EstadoPago.REEMBOLSO_PENDIENTE);
+        cambiar(r, EstadoReserva.EXPIRADA); // de un estado libre a otro: el reembolso sigue pendiente
+        assertThat(r.estadoPago()).isEqualTo(EstadoPago.REEMBOLSO_PENDIENTE);
+        cambiar(r, EstadoReserva.CONFIRMADA);
+        assertThat(r.estadoPago()).isEqualTo(EstadoPago.ABONADO);
+        assertThat(r.montoPagado()).isEqualTo(40_000);
+
+        Reserva sinDinero = confirmada();
+        cambiar(sinDinero, EstadoReserva.RECHAZADA);
+        assertThat(sinDinero.estadoPago()).isEqualTo(EstadoPago.PENDIENTE);
+    }
+
+    @Test
+    void lasJugadasConservanLaOcupacionYSoloLasLiberadasLaSueltan() {
+        assertThat(EstadoReserva.COMPLETADA.conservaOcupacion()).isTrue();
+        assertThat(EstadoReserva.NO_ASISTIO.conservaOcupacion()).isTrue();
+        assertThat(EstadoReserva.PENDIENTE.conservaOcupacion()).isTrue();
+        assertThat(EstadoReserva.CANCELADA.conservaOcupacion()).isFalse();
+        assertThat(EstadoReserva.RECHAZADA.conservaOcupacion()).isFalse();
+        assertThat(EstadoReserva.EXPIRADA.conservaOcupacion()).isFalse();
+    }
+
     @Test
     void soloLasPendientesYConfirmadasOcupanElHorario() {
         assertThat(EstadoReserva.PENDIENTE.ocupaHorario()).isTrue();
