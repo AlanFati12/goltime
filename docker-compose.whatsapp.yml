@@ -1,0 +1,88 @@
+# Bot de WhatsApp de Goltime (ADR 0018): n8n + Evolution API junto al resto del sistema.
+# Se suma al compose principal; sin este archivo Goltime funciona igual, solo que sin bot.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.whatsapp.yml up -d
+#
+# n8n: http://localhost:5678 (editor de workflows) · Evolution: http://localhost:8082/manager (QR del número).
+# Todos los servicios comparten la red del proyecto: n8n llama a la API como http://api:8080 y a Evolution
+# como http://evolution-api:8080; la API avisa a n8n en http://n8n:5678. En un servidor solo cambian las
+# variables *_URL_PUBLICA y los secretos (ver docs/despliegue-whatsapp.md).
+services:
+  api:
+    environment:
+      WHATSAPP_CLAVE_INTEGRACION: ${WHATSAPP_CLAVE_INTEGRACION:?Define WHATSAPP_CLAVE_INTEGRACION en .env}
+      WHATSAPP_URL_AVISOS: ${WHATSAPP_URL_AVISOS:-http://n8n:5678/webhook/goltime-avisos}
+      WHATSAPP_SECRETO_AVISOS: ${WHATSAPP_SECRETO_AVISOS:?Define WHATSAPP_SECRETO_AVISOS en .env}
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.40.5
+    restart: unless-stopped
+    ports:
+      - "${N8N_PUERTO:-5678}:5678"
+    environment:
+      # No cambiarla una vez creadas credenciales: dejarían de poder descifrarse.
+      N8N_ENCRYPTION_KEY: ${N8N_CLAVE_CIFRADO:?Define N8N_CLAVE_CIFRADO en .env}
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOLO:-http}
+      WEBHOOK_URL: ${N8N_URL_PUBLICA:-http://localhost:5678/}
+      N8N_SECURE_COOKIE: ${N8N_COOKIE_SEGURA:-false}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      GENERIC_TIMEZONE: America/Bogota
+      TZ: America/Bogota
+    volumes:
+      - datos_n8n:/home/node/.n8n
+    depends_on:
+      - api
+      - evolution-api
+
+  evolution-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${EVOLUTION_DB_CLAVE:?Define EVOLUTION_DB_CLAVE en .env}
+    volumes:
+      - datos_evolution_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    ports:
+      - "${EVOLUTION_PUERTO:-8082}:8080"
+    environment:
+      SERVER_URL: ${EVOLUTION_URL_PUBLICA:-http://localhost:8082}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_CLAVE_API:?Define EVOLUTION_CLAVE_API en .env}
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${EVOLUTION_DB_CLAVE}@evolution-db:5432/evolution
+      DATABASE_CONNECTION_CLIENT_NAME: goltime
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_LOCAL_ENABLED: "true"
+      CONFIG_SESSION_PHONE_CLIENT: Goltime
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      DEL_INSTANCE: "false"
+      LANGUAGE: es
+      LOG_LEVEL: ERROR,WARN,INFO
+      TZ: America/Bogota
+    volumes:
+      - datos_evolution_instancias:/evolution/instances
+    depends_on:
+      evolution-db:
+        condition: service_healthy
+
+volumes:
+  datos_n8n:
+  datos_evolution_db:
+  datos_evolution_instancias:

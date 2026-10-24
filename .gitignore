@@ -21,3 +21,6 @@ frontend/*.tsbuildinfo
 
 # Subidas locales
 uploads/
+
+# QR temporal del bot de WhatsApp
+qr-whatsapp.png
