@@ -25,23 +25,7 @@ import {
 
 import type { Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
 
-/** El WhatsApp queda vinculado la primera vez que la persona le escribe al bot y confirma el código del correo. */
-function EstadoWhatsapp({ verificado }: { verificado: boolean }) {
-  return verificado ? (
-    <p className="text-texto-suave flex items-center gap-2 text-xs">
-      <Insignia tono="verde">Vinculado</Insignia>
-      El bot de WhatsApp ya te reconoce: puedes reservar y ver tus reservas desde allí.
-    </p>
-  ) : (
-    <p className="text-texto-suave flex items-start gap-2 text-xs">
-      <Insignia tono="ambar">Sin vincular</Insignia>
-      <span>
-        Escríbele al WhatsApp de Goltime: la primera vez te enviaremos un código a tu correo para
-        vincular tu cuenta.
-      </span>
-    </p>
-  )
-}
+import { TarjetaWhatsapp } from './TarjetaWhatsapp'
 
 function FormularioDatos({ usuario }: { usuario: Usuario }) {
   const actualizarUsuario = useSesion((s) => s.actualizarUsuario)
@@ -105,7 +89,6 @@ function FormularioDatos({ usuario }: { usuario: Usuario }) {
                 />
               )}
             />
-            {usuario.rol === 'CLIENTE' && <EstadoWhatsapp verificado={usuario.whatsappVinculado} />}
           </div>
           <Campo
             etiqueta="Documento"
@@ -197,6 +180,7 @@ export function PaginaPerfil() {
         }
       />
       <FormularioDatos usuario={usuario} />
+      {usuario.rol === 'CLIENTE' && <TarjetaWhatsapp usuario={usuario} />}
       <FormularioClave />
     </div>
   )
