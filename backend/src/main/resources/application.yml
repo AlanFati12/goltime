@@ -80,6 +80,11 @@ goltime:
     directorio: ${DIRECTORIO_ARCHIVOS:./uploads}
   swagger:
     habilitado: false
+  # Bot de WhatsApp (ADR 0018). Sin clave de integración, /api/v1/integracion/** queda cerrado.
+  whatsapp:
+    clave-integracion: ${WHATSAPP_CLAVE_INTEGRACION:}
+    url-avisos: ${WHATSAPP_URL_AVISOS:}
+    secreto-avisos: ${WHATSAPP_SECRETO_AVISOS:}
 
 springdoc:
   api-docs:
