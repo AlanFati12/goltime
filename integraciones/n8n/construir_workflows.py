@@ -16,6 +16,10 @@ API = "http://api:8080/api/v1/integracion/whatsapp"
 EVOLUTION = "http://evolution-api:8080"
 INSTANCIA = "goltime"
 MODELO = "gpt-6-luna"
+# El bot responde a los 10 segundos de recibir el mensaje (o apenas termine, si tarda más), mostrando
+# «escribiendo…» todo ese tiempo. ENVIO_MIN_MS es lo mínimo que se muestra «escribiendo…» antes de enviar.
+ESPERA_MS = 10000
+ENVIO_MIN_MS = 1500
 
 CRED_API = {"httpHeaderAuth": {"id": "GoltimeApiCred01", "name": "Goltime · API del bot"}}
 CRED_EVOLUTION = {"httpHeaderAuth": {"id": "GoltimeEvoCred01", "name": "Goltime · Evolution API"}}
@@ -97,7 +101,8 @@ def herramienta(nombre, descripcion, metodo, ruta, posicion, consulta=None, cuer
     return nodo(nombre, "n8n-nodes-base.httpRequestTool", 4.2, posicion, p, credentials=CRED_API)
 
 
-def enviar_whatsapp(nombre, posicion, numero, texto, **extra):
+def enviar_whatsapp(nombre, posicion, numero, texto, retraso="0", **extra):
+    """sendText de Evolution. Con {@code retraso} (ms) muestra «escribiendo…» ese tiempo antes de enviar."""
     return nodo(nombre, "n8n-nodes-base.httpRequest", 4.2, posicion, {
         "method": "POST",
         "url": f"{EVOLUTION}/message/sendText/{INSTANCIA}",
@@ -105,9 +110,23 @@ def enviar_whatsapp(nombre, posicion, numero, texto, **extra):
         "genericAuthType": "httpHeaderAuth",
         "sendBody": True,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: " + numero + ", text: " + texto + " }) }}",
-        "options": {"timeout": 15000},
+        "jsonBody": "={{ JSON.stringify({ number: " + numero + ", text: " + texto + ", delay: " + retraso + " }) }}",
+        "options": {"timeout": ESPERA_MS + 20000},
     }, credentials=CRED_EVOLUTION, **extra)
+
+
+def evolution(nombre, posicion, ruta, cuerpo, tiempo_ms):
+    """Llamada auxiliar a Evolution (presencia). Si falla o se corta por tiempo, el flujo sigue igual."""
+    return nodo(nombre, "n8n-nodes-base.httpRequest", 4.2, posicion, {
+        "method": "POST",
+        "url": f"{EVOLUTION}{ruta}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": True,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(" + cuerpo + ") }}",
+        "options": {"timeout": tiempo_ms},
+    }, credentials=CRED_EVOLUTION, onError="continueRegularOutput", alwaysOutputData=True)
 
 
 def si(nombre, posicion, expresion):
@@ -148,6 +167,7 @@ return [{ json: {
   idMensaje: clave.id || null,
   texto,
   respuestaFija,
+  recibidoEn: Date.now(),
 } }];"""
 
 PREPARAR = r"""// Arma lo que recibe el agente: el contexto que da la API (fecha de Bogotá, quién escribe, sedes y políticas)
@@ -178,6 +198,20 @@ const entrada = `[Contexto] Hoy es ${c.dia} (${c.fecha}), son las ${c.hora} en B
 return [{ json: { respuestaFija: null, entrada } }];"""
 
 FIJA = "$json.respuestaFija"
+MENSAJE = "$('Extraer mensaje').first().json"
+
+ARMAR = r"""// Una sola salida para todas las respuestas: la del agente, una fija (audio, pausa, cuenta desactivada) o la de error.
+// La espera completa los 10 s desde que llegó el mensaje; Evolution muestra «escribiendo…» durante ese tiempo.
+const j = $input.first().json;
+const msg = $('Extraer mensaje').first().json;
+const texto = (typeof j.output === 'string' && j.output.trim()) ? j.output.trim()
+  : (j.respuestaFija || msg.respuestaFija
+     || 'Uy, tuve un problema para responderte 😓 Intenta de nuevo en un momento o reserva en la web de Goltime.');
+const transcurrido = Date.now() - msg.recibidoEn;
+return [{ json: { texto, retraso: Math.max(__ENVIO_MIN__, __ESPERA__ - transcurrido) } }];""".replace("__ENVIO_MIN__", str(ENVIO_MIN_MS)).replace("__ESPERA__", str(ESPERA_MS))
+
+# Número para la presencia: el teléfono sin «+»; si solo hay @lid, el chat tal cual.
+CHAT_PRESENCIA = "(" + MENSAJE + ".numero || '').replace('+', '') || " + MENSAJE + ".chatId"
 
 
 def bot():
@@ -187,17 +221,20 @@ def bot():
              webhookId="goltime-whatsapp"),
         nodo("Extraer mensaje", "n8n-nodes-base.code", 2, [220, 300], {"jsCode": EXTRAER}),
         si("¿Es para el bot?", [440, 300], "$json.procesar"),
-        si("¿Respuesta fija?", [660, 300], FIJA + " !== null"),
-        enviar_whatsapp("Responder fijo", [880, 120], "$('Extraer mensaje').first().json.chatId", FIJA),
-        nodo("Contexto", "n8n-nodes-base.httpRequest", 4.2, [880, 400], {
+        # En línea y «escribiendo…» apenas llega el mensaje. sendPresence espera todo el tiempo pedido antes de
+        # responder; n8n corta la espera al segundo y medio, pero Evolution sigue mostrando «escribiendo…».
+        evolution("En línea", [600, 300], f"/instance/setPresence/{INSTANCIA}", "{ presence: 'available' }", 5000),
+        evolution("Escribiendo", [760, 300], f"/chat/sendPresence/{INSTANCIA}",
+                  "{ number: " + CHAT_PRESENCIA + ", presence: 'composing', delay: " + str(ESPERA_MS) + " }", 1500),
+        si("¿Respuesta fija?", [920, 300], MENSAJE + ".respuestaFija !== null"),
+        nodo("Contexto", "n8n-nodes-base.httpRequest", 4.2, [1080, 400], {
             "method": "GET", "url": API + "/contexto", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
             "sendHeaders": True, "headerParameters": {"parameters": [{"name": "X-WhatsApp-Numero", "value": NUMERO}]},
             "options": {"timeout": 10000},
         }, credentials=CRED_API, onError="continueErrorOutput"),
-        nodo("Preparar entrada", "n8n-nodes-base.code", 2, [1100, 380], {"jsCode": PREPARAR}),
-        si("¿Contestar sin el agente?", [1320, 380], FIJA + " !== null"),
-        enviar_whatsapp("Responder pausa", [1540, 220], "$('Extraer mensaje').first().json.chatId", FIJA),
-        nodo("GolBot", "@n8n/n8n-nodes-langchain.agent", 3.1, [1540, 460], {
+        nodo("Preparar entrada", "n8n-nodes-base.code", 2, [1240, 380], {"jsCode": PREPARAR}),
+        si("¿Contestar sin el agente?", [1400, 380], FIJA + " !== null"),
+        nodo("GolBot", "@n8n/n8n-nodes-langchain.agent", 3.1, [1580, 460], {
             "promptType": "define",
             "text": "={{ $json.entrada }}",
             "options": {"systemMessage": SISTEMA, "maxIterations": 8},
@@ -210,9 +247,10 @@ def bot():
         nodo("Memoria por número", "@n8n/n8n-nodes-langchain.memoryBufferWindow", 1.3, [1460, 760], {
             "sessionIdType": "customKey", "sessionKey": NUMERO, "contextWindowLength": 10,
         }),
-        enviar_whatsapp("Responder", [1980, 440], "$('Extraer mensaje').first().json.chatId", "$json.output"),
-        enviar_whatsapp("Responder error", [1980, 640], "$('Extraer mensaje').first().json.chatId",
-                        "'Uy, tuve un problema para responderte 😓 Intenta de nuevo en un momento o reserva en la web de Goltime.'"),
+        nodo("Armar respuesta", "n8n-nodes-base.code", 2, [1980, 300], {"jsCode": ARMAR}),
+        enviar_whatsapp("Responder", [2160, 300], MENSAJE + ".chatId", "$json.texto", "$json.retraso", onError="continueErrorOutput"),
+        # Al terminar, el bot deja de aparecer en línea.
+        evolution("Desconectado", [2340, 300], f"/instance/setPresence/{INSTANCIA}", "{ presence: 'unavailable' }", 5000),
     ]
 
     x, y = 1620, 760
@@ -274,16 +312,21 @@ def bot():
     conexiones = {
         "Mensaje de WhatsApp": {"main": [[{"node": "Extraer mensaje", "type": "main", "index": 0}]]},
         "Extraer mensaje": {"main": [[{"node": "¿Es para el bot?", "type": "main", "index": 0}]]},
-        "¿Es para el bot?": {"main": [[{"node": "¿Respuesta fija?", "type": "main", "index": 0}], []]},
-        "¿Respuesta fija?": {"main": [[{"node": "Responder fijo", "type": "main", "index": 0}],
+        "¿Es para el bot?": {"main": [[{"node": "En línea", "type": "main", "index": 0}], []]},
+        "En línea": {"main": [[{"node": "Escribiendo", "type": "main", "index": 0}]]},
+        "Escribiendo": {"main": [[{"node": "¿Respuesta fija?", "type": "main", "index": 0}]]},
+        "¿Respuesta fija?": {"main": [[{"node": "Armar respuesta", "type": "main", "index": 0}],
                                       [{"node": "Contexto", "type": "main", "index": 0}]]},
         "Contexto": {"main": [[{"node": "Preparar entrada", "type": "main", "index": 0}],
-                              [{"node": "Responder error", "type": "main", "index": 0}]]},
+                              [{"node": "Armar respuesta", "type": "main", "index": 0}]]},
         "Preparar entrada": {"main": [[{"node": "¿Contestar sin el agente?", "type": "main", "index": 0}]]},
-        "¿Contestar sin el agente?": {"main": [[{"node": "Responder pausa", "type": "main", "index": 0}],
+        "¿Contestar sin el agente?": {"main": [[{"node": "Armar respuesta", "type": "main", "index": 0}],
                                                [{"node": "GolBot", "type": "main", "index": 0}]]},
-        "GolBot": {"main": [[{"node": "Responder", "type": "main", "index": 0}],
-                            [{"node": "Responder error", "type": "main", "index": 0}]]},
+        "GolBot": {"main": [[{"node": "Armar respuesta", "type": "main", "index": 0}],
+                            [{"node": "Armar respuesta", "type": "main", "index": 0}]]},
+        "Armar respuesta": {"main": [[{"node": "Responder", "type": "main", "index": 0}]]},
+        "Responder": {"main": [[{"node": "Desconectado", "type": "main", "index": 0}],
+                               [{"node": "Desconectado", "type": "main", "index": 0}]]},
         "OpenAI " + MODELO: {"ai_languageModel": [[{"node": "GolBot", "type": "ai_languageModel", "index": 0}]]},
         "Memoria por número": {"ai_memory": [[{"node": "GolBot", "type": "ai_memory", "index": 0}]]},
     }

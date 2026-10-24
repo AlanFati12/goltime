@@ -72,9 +72,9 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $json.numero, text: $json.mensaje }) }}",
+        "jsonBody": "={{ JSON.stringify({ number: $json.numero, text: $json.mensaje, delay: 0 }) }}",
         "options": {
-          "timeout": 15000
+          "timeout": 30000
         }
       },
       "name": "Enviar por WhatsApp",

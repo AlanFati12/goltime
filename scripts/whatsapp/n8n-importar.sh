@@ -53,4 +53,10 @@ for id in GoltimeBotWa0001 GoltimeAvisos001; do
 done
 
 "${COMPOSE[@]}" restart n8n >/dev/null 2>&1
+# Los mensajes que lleguen antes de que n8n termine de arrancar podrían correr con la versión anterior.
+for _ in $(seq 1 60); do
+  curl -sf "http://localhost:${N8N_PUERTO:-5678}/healthz" >/dev/null 2>&1 && break
+  sleep 2
+done
+sleep 5
 echo "Listo. n8n: ${N8N_URL_PUBLICA:-http://localhost:5678/}"

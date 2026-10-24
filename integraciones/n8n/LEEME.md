@@ -8,7 +8,7 @@ scripts/whatsapp/n8n-importar.sh
 
 | Workflow | Webhook | Qué hace |
 |---|---|---|
-| `Goltime · Bot WhatsApp` | `POST /webhook/goltime-whatsapp` (lo llama Evolution) | Saca el número real del mensaje, pide el contexto a la API y deja que el agente GolBot (`gpt-6-luna`, Responses API, razonamiento `low`, memoria de 10 mensajes por número) responda con 15 herramientas hacia `/api/v1/integracion/whatsapp`. Audios, imágenes, bot en pausa, cuenta desactivada y errores reciben un texto fijo sin gastar tokens. |
+| `Goltime · Bot WhatsApp` | `POST /webhook/goltime-whatsapp` (lo llama Evolution) | Saca el número real del mensaje, pide el contexto a la API y deja que el agente GolBot (`gpt-6-luna`, Responses API, razonamiento `low`, memoria de 10 mensajes por número) responda con 15 herramientas hacia `/api/v1/integracion/whatsapp`. Audios, imágenes, bot en pausa, cuenta desactivada y errores reciben un texto fijo sin gastar tokens. Al llegar un mensaje el número se pone «en línea» y muestra «escribiendo…»; la respuesta sale a los 10 s (o apenas termine el agente, si tarda más) y luego el número vuelve a «desconectado» (`ESPERA_MS` en el generador). |
 | `Goltime · Avisos de reservas` | `POST /webhook/goltime-avisos` (lo llama la API) | Verifica la firma HMAC del cuerpo (`X-Firma-Goltime`) y reenvía el aviso por Evolution. Sin firma válida responde 401. |
 
 Credenciales (las crea el script; los secretos salen de `.env`):

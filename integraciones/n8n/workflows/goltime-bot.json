@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Mensaje de Evolution API (messages.upsert). Evolution 2.3 cambia remoteJid por remoteJidAlt (el teléfono real)\n// cuando WhatsApp usa identificadores @lid; por si acaso se buscan también senderPn y remoteJidAlt.\nconst cuerpo = $input.first().json.body || $input.first().json;\nconst datos = cuerpo.data || {};\nconst clave = datos.key || {};\nconst chatId = clave.remoteJid || '';\nconst deTelefono = [clave.remoteJid, clave.remoteJidAlt, clave.senderPn].find(j => typeof j === 'string' && j.endsWith('@s.whatsapp.net'));\nconst mensaje = datos.message || {};\nconst texto = (mensaje.conversation || (mensaje.extendedTextMessage && mensaje.extendedTextMessage.text) || '').trim().slice(0, 1000);\nconst procesar = cuerpo.event === 'messages.upsert' && cuerpo.instance === 'goltime' && clave.fromMe !== true\n  && !chatId.endsWith('@g.us') && !chatId.endsWith('@broadcast') && !chatId.endsWith('@newsletter');\n\nlet respuestaFija = null;\nif (!texto) {\n  respuestaFija = 'Por ahora solo leo mensajes de texto 🙌 Escríbeme qué necesitas: precios, horarios, reservas o torneos.';\n} else if (!deTelefono) {\n  respuestaFija = 'No logré reconocer tu número 😕 Intenta de nuevo en un momento o reserva en la web de Goltime.';\n}\n\nreturn [{ json: {\n  procesar,\n  chatId,\n  numero: deTelefono ? '+' + deTelefono.split('@')[0].split(':')[0] : null,\n  idMensaje: clave.id || null,\n  texto,\n  respuestaFija,\n} }];"
+        "jsCode": "// Mensaje de Evolution API (messages.upsert). Evolution 2.3 cambia remoteJid por remoteJidAlt (el teléfono real)\n// cuando WhatsApp usa identificadores @lid; por si acaso se buscan también senderPn y remoteJidAlt.\nconst cuerpo = $input.first().json.body || $input.first().json;\nconst datos = cuerpo.data || {};\nconst clave = datos.key || {};\nconst chatId = clave.remoteJid || '';\nconst deTelefono = [clave.remoteJid, clave.remoteJidAlt, clave.senderPn].find(j => typeof j === 'string' && j.endsWith('@s.whatsapp.net'));\nconst mensaje = datos.message || {};\nconst texto = (mensaje.conversation || (mensaje.extendedTextMessage && mensaje.extendedTextMessage.text) || '').trim().slice(0, 1000);\nconst procesar = cuerpo.event === 'messages.upsert' && cuerpo.instance === 'goltime' && clave.fromMe !== true\n  && !chatId.endsWith('@g.us') && !chatId.endsWith('@broadcast') && !chatId.endsWith('@newsletter');\n\nlet respuestaFija = null;\nif (!texto) {\n  respuestaFija = 'Por ahora solo leo mensajes de texto 🙌 Escríbeme qué necesitas: precios, horarios, reservas o torneos.';\n} else if (!deTelefono) {\n  respuestaFija = 'No logré reconocer tu número 😕 Intenta de nuevo en un momento o reserva en la web de Goltime.';\n}\n\nreturn [{ json: {\n  procesar,\n  chatId,\n  numero: deTelefono ? '+' + deTelefono.split('@')[0].split(':')[0] : null,\n  idMensaje: clave.id || null,\n  texto,\n  respuestaFija,\n  recibidoEn: Date.now(),\n} }];"
       },
       "name": "Extraer mensaje",
       "type": "n8n-nodes-base.code",
@@ -64,6 +64,64 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/instance/setPresence/goltime",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ presence: 'available' }) }}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "En línea",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GoltimeEvoCred01",
+          "name": "Goltime · Evolution API"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/chat/sendPresence/goltime",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: ($('Extraer mensaje').first().json.numero || '').replace('+', '') || $('Extraer mensaje').first().json.chatId, presence: 'composing', delay: 10000 }) }}",
+        "options": {
+          "timeout": 1500
+        }
+      },
+      "name": "Escribiendo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GoltimeEvoCred01",
+          "name": "Goltime · Evolution API"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -73,7 +131,7 @@
           "conditions": [
             {
               "id": "¿Respuesta fija?",
-              "leftValue": "={{ $json.respuestaFija !== null }}",
+              "leftValue": "={{ $('Extraer mensaje').first().json.respuestaFija !== null }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
@@ -90,36 +148,9 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        660,
+        920,
         300
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://evolution-api:8080/message/sendText/goltime",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Extraer mensaje').first().json.chatId, text: $json.respuestaFija }) }}",
-        "options": {
-          "timeout": 15000
-        }
-      },
-      "name": "Responder fijo",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        880,
-        120
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GoltimeEvoCred01",
-          "name": "Goltime · Evolution API"
-        }
-      }
     },
     {
       "parameters": {
@@ -144,7 +175,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
+        1080,
         400
       ],
       "credentials": {
@@ -163,7 +194,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
+        1240,
         380
       ]
     },
@@ -195,36 +226,9 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1320,
+        1400,
         380
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://evolution-api:8080/message/sendText/goltime",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Extraer mensaje').first().json.chatId, text: $json.respuestaFija }) }}",
-        "options": {
-          "timeout": 15000
-        }
-      },
-      "name": "Responder pausa",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1540,
-        220
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GoltimeEvoCred01",
-          "name": "Goltime · Evolution API"
-        }
-      }
     },
     {
       "parameters": {
@@ -239,7 +243,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1540,
+        1580,
         460
       ],
       "onError": "continueErrorOutput"
@@ -289,30 +293,15 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://evolution-api:8080/message/sendText/goltime",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Extraer mensaje').first().json.chatId, text: $json.output }) }}",
-        "options": {
-          "timeout": 15000
-        }
+        "jsCode": "// Una sola salida para todas las respuestas: la del agente, una fija (audio, pausa, cuenta desactivada) o la de error.\n// La espera completa los 10 s desde que llegó el mensaje; Evolution muestra «escribiendo…» durante ese tiempo.\nconst j = $input.first().json;\nconst msg = $('Extraer mensaje').first().json;\nconst texto = (typeof j.output === 'string' && j.output.trim()) ? j.output.trim()\n  : (j.respuestaFija || msg.respuestaFija\n     || 'Uy, tuve un problema para responderte 😓 Intenta de nuevo en un momento o reserva en la web de Goltime.');\nconst transcurrido = Date.now() - msg.recibidoEn;\nreturn [{ json: { texto, retraso: Math.max(1500, 10000 - transcurrido) } }];"
       },
-      "name": "Responder",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "name": "Armar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         1980,
-        440
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GoltimeEvoCred01",
-          "name": "Goltime · Evolution API"
-        }
-      }
+        300
+      ]
     },
     {
       "parameters": {
@@ -322,24 +311,54 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: $('Extraer mensaje').first().json.chatId, text: 'Uy, tuve un problema para responderte 😓 Intenta de nuevo en un momento o reserva en la web de Goltime.' }) }}",
+        "jsonBody": "={{ JSON.stringify({ number: $('Extraer mensaje').first().json.chatId, text: $json.texto, delay: $json.retraso }) }}",
         "options": {
-          "timeout": 15000
+          "timeout": 30000
         }
       },
-      "name": "Responder error",
+      "name": "Responder",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1980,
-        640
+        2160,
+        300
       ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "GoltimeEvoCred01",
           "name": "Goltime · Evolution API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/instance/setPresence/goltime",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ presence: 'unavailable' }) }}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "Desconectado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GoltimeEvoCred01",
+          "name": "Goltime · Evolution API"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -1048,7 +1067,7 @@
       "main": [
         [
           {
-            "node": "¿Respuesta fija?",
+            "node": "En línea",
             "type": "main",
             "index": 0
           }
@@ -1056,11 +1075,33 @@
         []
       ]
     },
+    "En línea": {
+      "main": [
+        [
+          {
+            "node": "Escribiendo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribiendo": {
+      "main": [
+        [
+          {
+            "node": "¿Respuesta fija?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "¿Respuesta fija?": {
       "main": [
         [
           {
-            "node": "Responder fijo",
+            "node": "Armar respuesta",
             "type": "main",
             "index": 0
           }
@@ -1085,7 +1126,7 @@
         ],
         [
           {
-            "node": "Responder error",
+            "node": "Armar respuesta",
             "type": "main",
             "index": 0
           }
@@ -1107,7 +1148,7 @@
       "main": [
         [
           {
-            "node": "Responder pausa",
+            "node": "Armar respuesta",
             "type": "main",
             "index": 0
           }
@@ -1125,14 +1166,43 @@
       "main": [
         [
           {
-            "node": "Responder",
+            "node": "Armar respuesta",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Responder error",
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder": {
+      "main": [
+        [
+          {
+            "node": "Desconectado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Desconectado",
             "type": "main",
             "index": 0
           }
