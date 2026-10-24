@@ -25,9 +25,13 @@ services:
       N8N_HOST: ${N8N_HOST:-localhost}
       N8N_PORT: 5678
       N8N_PROTOCOL: ${N8N_PROTOCOLO:-http}
-      WEBHOOK_URL: ${N8N_URL_PUBLICA:-http://localhost:5678/}
+      N8N_WEBHOOK_URL: ${N8N_URL_PUBLICA:-http://localhost:5678/}
       N8N_SECURE_COOKIE: ${N8N_COOKIE_SEGURA:-false}
       N8N_DIAGNOSTICS_ENABLED: "false"
+      # El workflow de avisos verifica la firma HMAC de la API con este secreto (Code node: $env y crypto).
+      GOLTIME_SECRETO_AVISOS: ${WHATSAPP_SECRETO_AVISOS}
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
       GENERIC_TIMEZONE: America/Bogota
       TZ: America/Bogota
     volumes:
