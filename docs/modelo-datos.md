@@ -133,6 +133,12 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 | `codigos_vinculacion_whatsapp` | Código que el cliente genera en su perfil y le envía al bot | Solo hash (único); vence a los 10 min; un uso; uno nuevo anula los anteriores |
 | `intentos_vinculacion_whatsapp` | Códigos equivocados por WhatsApp (teléfono o `lid:<id>`) | 5 por hora bloquean ese WhatsApp una hora |
 
+## V17: cambio de estado libre del admin (ADR 0019)
+
+| Tabla | Cambio | Notas |
+|---|---|---|
+| `reserva_historial.accion` | Nuevo valor `ESTADO_CAMBIADO` | Cambio de estado hecho por el admin: motivo, `{estado}` antes y después y `horario` (`OCUPADA` o `LIBERADA`) si la cancha cambió |
+
 ## Relaciones
 
 ```mermaid
