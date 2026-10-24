@@ -148,3 +148,10 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Verificado con mensajes simulados: el agente tardó 3 s y el envío esperó 2,6 s más; el audio esperó 9,9 s; «desconectado» se ejecuta al final.
 - Qué se corrigió: la respuesta fija leía la salida del nodo de presencia en vez del mensaje; una prueba corrió con la versión anterior porque n8n aún reiniciaba (el script de importación ahora espera a que esté listo).
 
+### Bot de WhatsApp, parte 5: identificación por @lid (24/oct/2026)
+
+- Problema: la persona le escribió al bot y recibió «No logré reconocer tu número». WhatsApp mandó el mensaje con un identificador anónimo (`…@lid`, `addressingMode: lid`) y sin teléfono; Baileys 7 tampoco tenía la relación @lid ↔ teléfono y Evolution no la expone.
+- Hecho (aprobado por la persona): migración V15; `LidWhatsapp`; identificación por @lid en `ServicioVerificacionTelefono` (vinculación con el correo de la cuenta, respuesta igual exista o no el correo, límites por @lid y por cuenta); clientes sin cuenta atados al @lid con teléfono de contacto que nunca se cruza con los de mostrador; `RemitenteWhatsapp` en el módulo del bot (`X-WhatsApp-Numero` o `X-WhatsApp-Lid`); avisos al chat `<lid>@lid`; `whatsappVinculado` en el perfil y en la lista de clientes; workflow y prompt de n8n que piden el correo o el celular de contacto según el caso.
+- Pruebas: 398 en backend (2 nuevas de integración del bot (sin cuenta por @lid, que ni otro @lid ni el teléfono de contacto pueden ver; vinculación por correo, reserva como cliente, aviso al @lid y @lid ya ocupado) y 76 en frontend. Simulado en n8n: un @lid que dice tener cuenta recibe la petición del correo.
+- Qué se corrigió: al reconstruir la web solo con `docker-compose.yml` se recreó la API sin la clave de integración; ahora `COMPOSE_FILE` en `.env` incluye siempre el bot.
+

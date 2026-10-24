@@ -24,7 +24,7 @@ flowchart LR
 
 ## En local
 
-1. Variables: copia de `.env.example` el bloque «Bot de WhatsApp» a tu `.env` y genera cada secreto con `openssl rand -hex 32`. No cambies `N8N_CLAVE_CIFRADO` después de crear credenciales en n8n.
+1. Variables: copia de `.env.example` el bloque «Bot de WhatsApp» a tu `.env` y genera cada secreto con `openssl rand -hex 32`. No cambies `N8N_CLAVE_CIFRADO` después de crear credenciales en n8n. Con `COMPOSE_FILE` en el `.env`, `docker compose up -d` ya incluye el bot.
 2. Levantar todo:
 
    ```bash
@@ -51,7 +51,7 @@ Para apagar el bot sin tocar Docker: Configuración › `whatsapp_bot_activo = f
 
 ## API del bot
 
-Todas bajo `/api/v1/integracion/whatsapp`, con `X-Clave-Integracion: $WHATSAPP_CLAVE_INTEGRACION`. Las que actúan a nombre de alguien llevan `X-WhatsApp-Numero` con el número del remitente, tomado del mensaje de Evolution (nunca de lo que diga el modelo de lenguaje). Fechas `yyyy-MM-dd` y horas `HH:mm`, en hora de Bogotá. Documentación completa en Swagger (`/swagger-ui.html` en desarrollo).
+Todas bajo `/api/v1/integracion/whatsapp`, con `X-Clave-Integracion: $WHATSAPP_CLAVE_INTEGRACION`. Las que actúan a nombre de alguien llevan `X-WhatsApp-Numero` con el número del remitente o, si WhatsApp no lo comparte, `X-WhatsApp-Lid` con su identificador anónimo; ambos salen del mensaje de Evolution (nunca de lo que diga el modelo de lenguaje). Fechas `yyyy-MM-dd` y horas `HH:mm`, en hora de Bogotá. Documentación completa en Swagger (`/swagger-ui.html` en desarrollo).
 
 | Método y ruta | Para qué |
 |---|---|

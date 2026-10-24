@@ -30,6 +30,12 @@ El LLM solo conversa y elige herramientas. Precios, disponibilidad, políticas, 
    - Los teléfonos de clientes de mostrador también se normalizan, para reconocerlos cuando escriban por WhatsApp.
    - Número sin cuenta → **cliente sin cuenta** (`clientes_mostrador`, nombre + teléfono). Límite propio de solicitudes activas por número (configurable) para evitar que alguien retenga horarios en masa.
 
+2b. **Identificación por @lid (cambio del 24/oct/2026).** Por privacidad, WhatsApp no envía el teléfono de quien escribe cuando no son contactos: manda un identificador anónimo y estable (`164295400784036@lid`). Ni Evolution ni Baileys pueden traducirlo a teléfono. Por eso n8n envía `X-WhatsApp-Numero` o, si no hay teléfono, `X-WhatsApp-Lid`, y la API reconoce a la persona así:
+   - Consultas (precios, horarios, torneos): sin pedir nada.
+   - Con cuenta: el bot pide el correo de la cuenta y le envía el código de 6 dígitos; al confirmarlo, el @lid queda guardado en `usuarios.whatsapp_lid`. La respuesta es la misma exista o no el correo (no sirve para averiguar cuentas) y hay límite de códigos por @lid y por cuenta.
+   - Sin cuenta: reserva con nombre y un celular de contacto; queda atado a `clientes_mostrador.whatsapp_lid` y solo desde ese WhatsApp ve o cancela sus reservas. Como ese celular no está verificado, esos registros nunca se reutilizan al buscar clientes de mostrador por teléfono (ni el bot ni el panel).
+   - Los avisos van al teléfono verificado o al chat `<lid>@lid`.
+
 3. **El número nunca lo elige el LLM.** n8n toma el número del webhook de Evolution (resolviendo los JID `@lid` con `senderPn`/`remoteJidAlt`) y lo pone fijo en la cabecera `X-WhatsApp-Numero` de cada herramienta; el LLM solo rellena parámetros de negocio (`$fromAI`). Las reservas se identifican por `codigo` y el backend comprueba que pertenezcan a ese número (anti-IDOR). Un «resérvale a mi amigo el 300…» no puede cambiar de dueño.
 
 4. **Módulo `whatsapp` con endpoints hechos para conversar** (`/api/v1/integracion/whatsapp/**`). Se prefieren a los públicos porque devuelven respuestas compactas (menos tokens): por ejemplo, la disponibilidad pública trae cada bloque de cada cancha con su estado; la del bot solo trae franjas libres con precio.
@@ -88,5 +94,6 @@ El LLM solo conversa y elige herramientas. Precios, disponibilidad, políticas, 
 
 - Migración `V13`: `telefono_verificado`, normalización de teléfonos existentes, índice único parcial y `verificaciones_telefono`. Migración `V14`: origen `WHATSAPP`, idempotencia para clientes sin cuenta y las claves `whatsapp_*` de configuración. El canal queda en el historial (`datos_nuevos.canal`).
 - `reservas` aprendió a solicitar a nombre de un cliente sin cuenta (`Titular`), y publica `AvisoReservaEvento` cada vez que avisa al titular; `whatsapp` lo escucha. La lista de espera solo se cumple para clientes registrados.
+- Migración `V15`: `usuarios.whatsapp_lid`, `clientes_mostrador.whatsapp_lid` (únicos) y códigos de verificación pedidos desde un @lid.
 - Las reservas de clientes sin cuenta por WhatsApp no suman premios ni lista de espera.
 - El bot depende de que Evolution y n8n estén arriba; si caen, la web sigue igual y los avisos se pierden (se registran en el log).

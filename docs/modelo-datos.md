@@ -118,6 +118,14 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 | `uq_reservas_idempotencia_sin_cuenta` | Un mensaje reintentado por n8n no crea dos reservas | Única por (`cliente_mostrador_id`, `clave_idempotencia`) |
 | Claves `whatsapp_*` en `configuracion` | Bot activo, reservas sin cuenta, máximo de reservas activas sin cuenta (2) y número del negocio | Editables por el administrador |
 
+### V15: identificación por @lid (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `usuarios.whatsapp_lid` | El @lid que el cliente vinculó con el código del correo | Único; WhatsApp lo envía en vez del teléfono cuando no lo comparte |
+| `clientes_mostrador.whatsapp_lid` | Quien reservó sin cuenta desde un @lid | Único; su teléfono es solo de contacto y estos registros no se reutilizan al buscar por teléfono |
+| `verificaciones_telefono.whatsapp_lid` | Código pedido desde un @lid | `telefono` o `whatsapp_lid`, exactamente uno |
+
 ## Relaciones
 
 ```mermaid
