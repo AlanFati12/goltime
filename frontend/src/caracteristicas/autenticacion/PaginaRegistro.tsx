@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { MailCheck } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo, Casilla } from '@/componentes/ui/Campo'
+import { CampoWhatsapp } from '@/componentes/ui/CampoWhatsapp'
 import { IndicadorClave } from '@/componentes/ui/IndicadorClave'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { mensajeDeError } from '@/lib/api'
@@ -22,12 +23,13 @@ export function PaginaRegistro() {
   const [correoRegistrado, setCorreoRegistrado] = useState<string | null>(null)
   const {
     register,
+    control,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<DatosRegistro>({
     resolver: zodResolver(esquemaRegistro),
-    defaultValues: { aceptaTerminos: false },
+    defaultValues: { aceptaTerminos: false, telefono: '' },
   })
 
   if (usuario) return <Navigate to={rutaInicial(usuario)} replace />
@@ -98,20 +100,24 @@ export function PaginaRegistro() {
           error={errors.correo?.message}
           {...register('correo')}
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo
-            etiqueta="Celular"
-            type="tel"
-            autoComplete="tel"
-            error={errors.telefono?.message}
-            {...register('telefono')}
-          />
-          <Campo
-            etiqueta="Documento (opcional)"
-            error={errors.documento?.message}
-            {...register('documento')}
-          />
-        </div>
+        <Controller
+          control={control}
+          name="telefono"
+          render={({ field }) => (
+            <CampoWhatsapp
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.telefono?.message}
+              ayuda="Con este número te reconoce el bot de WhatsApp de Goltime para reservar y consultar."
+            />
+          )}
+        />
+        <Campo
+          etiqueta="Documento (opcional)"
+          error={errors.documento?.message}
+          {...register('documento')}
+        />
         <div className="flex flex-col gap-2">
           <Campo
             etiqueta="Contraseña"

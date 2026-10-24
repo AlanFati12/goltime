@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+import { MessageCircleCheck, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { nombreCompleto, type Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
@@ -16,6 +16,7 @@ import { Campo } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { mensajeDeError } from '@/lib/api'
 import { formatearFechaHora } from '@/lib/formato'
+import { formatearTelefono } from '@/lib/telefono'
 
 import { useAccionesCliente, useClientes, type FiltrosClientes } from './consultasAdmin'
 import { ModalDesactivar } from './ModalDesactivar'
@@ -110,7 +111,17 @@ export function PaginaClientes() {
                   </td>
                   <td>
                     <div>{c.correo}</div>
-                    <div className="text-texto-suave text-xs">{c.telefono ?? '—'}</div>
+                    <div className="text-texto-suave flex items-center gap-1.5 text-xs">
+                      {c.telefono ? formatearTelefono(c.telefono) : '—'}
+                      {c.telefono && c.telefonoVerificado && (
+                        <span title="WhatsApp vinculado al bot">
+                          <MessageCircleCheck
+                            className="text-primario size-3.5"
+                            aria-label="WhatsApp vinculado"
+                          />
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     {c.activo ? (

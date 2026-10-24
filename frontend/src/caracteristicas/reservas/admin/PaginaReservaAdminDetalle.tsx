@@ -11,6 +11,7 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { Migas } from '@/componentes/ui/Migas'
 import { codigoDeError, mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
+import { formatearTelefono } from '@/lib/telefono'
 
 import { InsigniaEstadoReserva } from '../InsigniaEstadoReserva'
 import { ModalReprogramar } from '../ModalReprogramar'
@@ -111,7 +112,9 @@ export function PaginaReservaAdminDetalle() {
             <dd>
               {r.cliente.nombre} {mostrador && <Insignia>De mostrador</Insignia>}
               <div className="text-texto-suave text-xs">
-                {[r.cliente.telefono, r.cliente.correo].filter(Boolean).join(' · ')}
+                {[formatearTelefono(r.cliente.telefono), r.cliente.correo]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </dd>
             <dt className="text-texto-suave">Sede y cancha</dt>

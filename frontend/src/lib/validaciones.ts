@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { MENSAJE_TELEFONO_INVALIDO, normalizarTelefono } from './telefono'
+
 const texto = (max: number) =>
   z.string().trim().min(1, 'Campo obligatorio').max(max, `Máximo ${max} caracteres`)
 
@@ -12,10 +14,13 @@ export const esquemaClave = z
   .regex(/\d/, 'Incluye al menos un número')
 
 const correo = z.string().trim().min(1, 'Campo obligatorio').email('Correo electrónico inválido')
+/** El celular es el WhatsApp del cliente: obligatorio y siempre con indicativo (E.164). */
 const telefono = z
   .string()
   .trim()
-  .regex(/^[0-9+\s-]{7,20}$/, 'Teléfono inválido (solo números, mínimo 7 dígitos)')
+  .min(1, 'Escribe tu número de WhatsApp')
+  .refine((v) => normalizarTelefono(v) !== null, MENSAJE_TELEFONO_INVALIDO)
+  .transform((v) => normalizarTelefono(v) ?? v)
 
 export const esquemaRegistro = z
   .object({

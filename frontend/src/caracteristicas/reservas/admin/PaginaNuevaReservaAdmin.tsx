@@ -9,11 +9,13 @@ import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo, CampoTexto } from '@/componentes/ui/Campo'
 import { CampoSelect } from '@/componentes/ui/CampoSelect'
+import { CampoWhatsapp } from '@/componentes/ui/CampoWhatsapp'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearHora, hoyEnBogota } from '@/lib/formato'
+import { formatearTelefono, MENSAJE_TELEFONO_INVALIDO, normalizarTelefono } from '@/lib/telefono'
 import { cn } from '@/lib/utils'
 
 import { useDisponibilidad } from '../consultas'
@@ -68,7 +70,7 @@ export function PaginaNuevaReservaAdmin() {
   const clienteListo =
     tipoCliente === 'registrado'
       ? clienteId !== null
-      : nombre.trim().length > 1 && telefono.trim().length >= 7
+      : nombre.trim().length > 1 && normalizarTelefono(telefono) !== null
   const puedeEnviar = !!cancha && !!slot && !!fin && clienteListo && duraciones.includes(minutos)
 
   const enviar = () => {
@@ -82,7 +84,7 @@ export function PaginaNuevaReservaAdmin() {
         clienteId: tipoCliente === 'registrado' ? (clienteId ?? undefined) : undefined,
         mostrador:
           tipoCliente === 'mostrador'
-            ? { nombre: nombre.trim(), telefono: telefono.trim() }
+            ? { nombre: nombre.trim(), telefono: normalizarTelefono(telefono) ?? telefono }
             : undefined,
         nombreEquipo: equipo || undefined,
         notas: notas || undefined,
@@ -250,7 +252,7 @@ export function PaginaNuevaReservaAdmin() {
                   >
                     {nombreCompleto(c)}
                     <span className="text-texto-suave block text-xs">
-                      {c.correo} · {c.telefono ?? 'sin celular'}
+                      {c.correo} · {c.telefono ? formatearTelefono(c.telefono) : 'sin celular'}
                     </span>
                   </button>
                 </li>
@@ -271,13 +273,15 @@ export function PaginaNuevaReservaAdmin() {
                 onChange={(e) => setNombre(e.target.value)}
                 maxLength={150}
               />
-              <Campo
-                etiqueta="Teléfono"
-                type="tel"
+              <CampoWhatsapp
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                maxLength={30}
-                ayuda="Si el teléfono ya existe, se reutiliza ese cliente."
+                onChange={setTelefono}
+                error={
+                  telefono && normalizarTelefono(telefono) === null
+                    ? MENSAJE_TELEFONO_INVALIDO
+                    : undefined
+                }
+                ayuda="Si el número ya existe, se reutiliza ese cliente."
               />
             </div>
             {mostradores.data && mostradores.data.length > 0 && (
@@ -291,7 +295,7 @@ export function PaginaNuevaReservaAdmin() {
                       className="border-borde hover:bg-tenue rounded-full border px-3 py-1 text-xs"
                       onClick={() => (setNombre(m.nombre), setTelefono(m.telefono ?? ''))}
                     >
-                      {m.nombre} · {m.telefono}
+                      {m.nombre} · {formatearTelefono(m.telefono)}
                     </button>
                   ))}
                 </div>
