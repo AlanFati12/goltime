@@ -63,7 +63,8 @@ El LLM solo conversa y elige herramientas. Precios, disponibilidad, políticas, 
    - Solo habla de Goltime: cualquier otro tema recibe una respuesta fija. Nunca inventa precios, horarios ni resultados; siempre consulta una herramienta. Antes de reservar, cancelar o reprogramar resume (cancha, fecha, hora, precio) y espera un «sí» explícito.
    - Cada mensaje llega con la fecha y hora de Bogotá, para resolver «mañana a las 8».
    - Solo texto; a audios e imágenes responde que por ahora solo lee texto.
-   - Credencial de OpenAI propia de Goltime para medir su costo aparte de los otros bots.
+   - Credencial de OpenAI propia de Goltime para medir su costo aparte.
+   - Implementado en `integraciones/n8n/` (generador en Python + `scripts/whatsapp/n8n-importar.sh`). Evolution 2.3.7 reemplaza `remoteJid` por `remoteJidAlt` (el teléfono) antes de llamar el webhook; el workflow además busca `senderPn` y, si solo hay un `@lid`, responde un texto fijo en vez de adivinar el número.
 
 10. **Panel de administración y web.**
     - Reservas y agenda: insignia «WhatsApp», filtro por origen y, en clientes sin cuenta, nombre y teléfono con enlace `wa.me`.

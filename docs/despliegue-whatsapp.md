@@ -39,6 +39,13 @@ flowchart LR
 
    En el celular: WhatsApp › Dispositivos vinculados › Vincular un dispositivo. El QR vence en unos 40 segundos; si no alcanzas, vuelve a correr el script o usa el código que imprime con «Vincular con el número de teléfono». También puedes ver el QR en vivo en `http://localhost:8082/manager` con `EVOLUTION_CLAVE_API`.
 4. Abrir n8n en `http://localhost:5678` y crear la cuenta de dueño (es local, la creas tú).
+5. Instalar los workflows y sus credenciales (se puede repetir; ver `integraciones/n8n/LEEME.md`):
+
+   ```bash
+   scripts/whatsapp/n8n-importar.sh
+   ```
+
+6. En n8n › Credentials › «Goltime · OpenAI», pegar la API key de OpenAI (idealmente una propia de Goltime con límite de gasto).
 
 Para apagar el bot sin tocar Docker: Configuración › `whatsapp_bot_activo = false`. El bot responde que está en pausa y la web sigue igual.
 
@@ -72,6 +79,8 @@ Lista de chequeo; nada de esto exige cambiar código:
 - [ ] Credencial de OpenAI propia de Goltime en n8n, con límite de gasto mensual en la cuenta de OpenAI.
 
 ## Riesgos conocidos
+
+- Para verificar la firma de los avisos, n8n lee `GOLTIME_SECRETO_AVISOS` con `$env` (`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`), lo que deja ver las variables de entorno a quien edite workflows. Es aceptable mientras la única cuenta de n8n sea la del dueño; si se agregan editores, mover el secreto a un nodo Crypto con credencial.
 
 - Evolution usa Baileys (WhatsApp Web no oficial): WhatsApp puede bloquear el número si detecta abuso. Mitigación: un número dedicado al bot, sin envíos masivos y respuestas solo a quien escribe. Si un día se pasa a la API oficial de WhatsApp Cloud, solo cambian los workflows de n8n; la API de Goltime no se entera.
 - Si n8n o Evolution caen, la web sigue igual y los avisos por WhatsApp de ese rato se pierden (quedan en el log de la API).

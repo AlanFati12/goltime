@@ -131,3 +131,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: el evento `ReservaCreadaEvento` suponía siempre un cliente registrado (NullPointerException con clientes sin cuenta); la duración de bloque por defecto es de 60 minutos y la primera versión de las pruebas reservaba 90.
 - Pendiente: workflows de n8n (agente con `gpt-6-luna`), panel del admin (insignia y filtro «WhatsApp», configuración del bot, estadísticas por origen) y guion de demo.
 
+### Bot de WhatsApp, parte 3: workflows de n8n (24/oct/2026)
+
+- Petición: el workflow de n8n con el agente (`gpt-6-luna`), sus herramientas hacia la API y el workflow de avisos.
+- Hecho: generador `integraciones/n8n/construir_workflows.py` (dos workflows versionados sin secretos) y `scripts/whatsapp/n8n-importar.sh` (credenciales desde `.env`, la de OpenAI vacía una sola vez, importar, publicar y reiniciar). Se partió de las versiones de nodos que ya funcionaban en el bot viejo (agente 3.1, modelo 1.3 con Responses API, HTTP Request Tool 4.2).
+- Verificado: avisos con firma falsa o ausente → 401; con firma válida llega a Evolution (número inexistente → 400, así que la credencial sirve). Mensajes simulados: el propio se ignora, el audio recibe el texto fijo y el texto llega al agente con el contexto armado (falla solo por la API key de relleno).
+- Qué se corrigió: en la base de Evolution los mensajes aparecen con `@lid`, pero el código de Evolution 2.3.7 cambia `remoteJid` por el teléfono antes del webhook; el bot viejo tomaba el número de `remoteJid` sin revisar. Los filtros opcionales vacíos que manda el modelo (`modalidad=`) se tratan como «sin filtro». `WEBHOOK_URL` pasó a `N8N_WEBHOOK_URL`.
+- Pendiente: probar el agente con la API key real y una conversación desde un celular; panel del admin.
+
