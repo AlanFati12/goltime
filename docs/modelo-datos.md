@@ -101,12 +101,22 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 
 `inscripciones_torneo` ya admitía el estado `SOLICITADA` desde la Fase 5.
 
+### V13: WhatsApp verificado (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `usuarios.telefono_verificado` | El bot de WhatsApp reconoce ese número como de la cuenta | Se vuelve `false` si la persona cambia el número |
+| Teléfonos en E.164 | `usuarios.telefono` y `clientes_mostrador.telefono` se guardan como `+573001234567` | La migración normaliza los existentes que se pueden interpretar sin dudas |
+| `uq_usuarios_telefono_verificado` | Un número verificado pertenece a una sola cuenta | Índice único parcial `WHERE telefono_verificado`: varias cuentas pueden *escribir* el mismo número |
+| `verificaciones_telefono` | Código de 6 dígitos enviado al correo para vincular el número | Solo hash; vence a los 10 min; 5 intentos; máximo 3 códigos por número por hora |
+
 ## Relaciones
 
 ```mermaid
 erDiagram
   usuarios ||--o{ refresh_tokens : "tiene"
   usuarios ||--o{ tokens_verificacion : "tiene"
+  usuarios ||--o{ verificaciones_telefono : "tiene"
   usuarios ||--o{ audit_log : "actúa en"
   usuarios |o--o{ usuarios : "desactivado_por"
   sedes ||--o{ canchas : "tiene"

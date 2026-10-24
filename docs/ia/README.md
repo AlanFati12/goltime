@@ -113,3 +113,12 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Qué se corrigió: el detalle de sede desbordaba el ancho a 1024 px (columnas de la cuadrícula sin `minmax(0, …)`); varias páginas tenían doble relleno.
 - Pendiente: revisar con usuarios reales el resto de formularios largos (canchas, sedes, bloqueos) para plegarlos igual.
 
+### Bot de WhatsApp, parte 1: teléfono normalizado y verificación (24/oct/2026)
+
+- Petición: integrar un bot de WhatsApp (n8n + Evolution API) que consulte, reserve, cancele y reprograme. Se diseñó primero con preguntas a la persona (ADR 0018) y se empezó por exigir el WhatsApp en el registro sin que `3001234567` y `+57 300 123 4567` cuenten como números distintos.
+- Backend: objeto de valor `NumeroTelefono` (E.164, Colombia por defecto, celular de 10 dígitos que empieza por 3); migración V13 (`telefono_verificado`, normalización de datos existentes, índice único parcial, `verificaciones_telefono`); `ServicioVerificacionTelefono` en `autenticacion` que identifica a quien escribe (cliente, sin verificar, sin cuenta, desactivado) y vincula el número con un código enviado al correo; el registro y el perfil rechazan un número ya verificado por otra cuenta (`TELEFONO_YA_REGISTRADO`); el teléfono de mostrador también se normaliza.
+- Frontend: `CampoWhatsapp` (indicativo + número, reconoce el país si pegan el número completo) en registro, perfil y reserva de mostrador; estado «Vinculado / Sin vincular» en el perfil; teléfonos agrupados y marca de WhatsApp vinculado en el panel.
+- Pruebas: 384 en backend (18 de `NumeroTelefono`, 3 nuevas de `Usuario`, 7 de integración de la verificación: vinculación, intentos agotados, dos cuentas con el mismo número, cambio de número, límite por hora) y 76 en frontend (10 nuevas). Verificado en Docker y en el navegador (registro con un fijo rechazado, celular guardado en E.164, perfil «Sin vincular»).
+- Qué se corrigió: la primera versión ponía la verificación en `usuarios` y creaba un ciclo `usuarios → notificaciones → usuarios` que detectó `ArquitecturaTest`; un intento fallido debía sobrevivir al rollback (`noRollbackFor`); una prueba fallaba 1 de cada 10 veces porque el «número nuevo» podía coincidir con el viejo; al teclear `+593…` carácter por carácter se perdía el `+` (ahora se guarda un borrador hasta reconocer el país); los ejemplos usaban un número real y se cambiaron por uno ficticio.
+- Pendiente: módulo `whatsapp` con los endpoints del bot, panel del admin y workflows de n8n.
+
