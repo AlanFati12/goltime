@@ -3,7 +3,6 @@ package co.edu.usco.goltime.whatsapp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,16 +16,12 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono;
 import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo;
-import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo.MensajeCorreo;
 import co.edu.usco.goltime.torneos.BaseTorneosIT;
 import co.edu.usco.goltime.whatsapp.aplicacion.EnviadorWhatsapp;
 
@@ -41,9 +36,6 @@ class WhatsappIT extends BaseTorneosIT {
 
     @MockitoBean
     EnviadorWhatsapp enviador;
-
-    @Autowired
-    ServicioVerificacionTelefono verificacion;
 
     @AfterEach
     void restaurarConfiguracion() {
@@ -89,18 +81,27 @@ class WhatsappIT extends BaseTorneosIT {
         return leer(r, "$.codigo");
     }
 
-    /** Registra un cliente con ese número y lo vincula con el código que llega al correo. */
-    private long clienteVinculado(String numero) throws Exception {
+    /** Registra un cliente (con otro teléfono) y devuelve su correo. */
+    private String registrarCliente() throws Exception {
         String correoNuevo = correoUnico();
         Map<String, Object> datos = new HashMap<>(datosRegistro(correoNuevo, CLAVE_VALIDA));
-        datos.put("telefono", numero);
+        datos.put("telefono", celular());
         esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
-        esperarEstado(bot(post(BASE + "/vinculacion/codigo"), numero, null), 200);
-        ArgumentCaptor<MensajeCorreo> captor = ArgumentCaptor.forClass(MensajeCorreo.class);
-        verify(correo, atLeastOnce()).enviar(captor.capture());
-        String codigo = captor.getAllValues().stream().filter(m -> m.destinatario().equals(correoNuevo))
-                .reduce((a, b) -> b).map(m -> (String) m.variables().get("codigo")).orElseThrow();
-        MvcResult vinculado = bot(post(BASE + "/vinculacion/confirmar"), numero, Map.of("codigo", codigo));
+        return correoNuevo;
+    }
+
+    /** El código que el cliente genera en su perfil de la web. */
+    private String codigoDelPerfil(String correoCuenta) throws Exception {
+        MvcResult r = mvc.perform(post("/api/v1/me/whatsapp/codigo")
+                .header("Authorization", "Bearer " + ingresar(correoCuenta, CLAVE_VALIDA, false).token())).andReturn();
+        esperarEstado(r, 200);
+        return leer(r, "$.codigo");
+    }
+
+    /** Registra un cliente y vincula ese número enviándole al bot el código de su perfil. */
+    private long clienteVinculado(String numero) throws Exception {
+        String correoNuevo = registrarCliente();
+        MvcResult vinculado = bot(post(BASE + "/vinculacion/confirmar"), numero, Map.of("codigo", codigoDelPerfil(correoNuevo)));
         esperarEstado(vinculado, 200);
         return jdbc.queryForObject("SELECT id FROM usuarios WHERE correo = ?", Long.class, correoNuevo);
     }
@@ -326,13 +327,6 @@ class WhatsappIT extends BaseTorneosIT {
         return bot(peticion, null, cuerpo);
     }
 
-    private String codigoDelCorreo(String destinatario) {
-        ArgumentCaptor<MensajeCorreo> captor = ArgumentCaptor.forClass(MensajeCorreo.class);
-        verify(correo, atLeastOnce()).enviar(captor.capture());
-        return captor.getAllValues().stream().filter(m -> m.destinatario().equals(destinatario))
-                .reduce((a, b) -> b).map(m -> (String) m.variables().get("codigo")).orElseThrow();
-    }
-
     @Test
     void sinNumeroVisibleSeAtiendeComoSinCuentaYLaReservaQuedaAtadaAlLid() throws Exception {
         String lid = lid();
@@ -366,27 +360,18 @@ class WhatsappIT extends BaseTorneosIT {
     }
 
     @Test
-    void desdeUnLidSeVinculaLaCuentaConElCodigoDelCorreoSinRevelarSiElCorreoExiste() throws Exception {
+    void desdeUnLidSeVinculaLaCuentaConElCodigoDelPerfilYReservaComoElla() throws Exception {
         String lid = lid();
-        String correoCuenta = correoUnico();
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoCuenta, CLAVE_VALIDA));
-        datos.put("telefono", celular());
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
+        String correoCuenta = registrarCliente();
 
-        // un correo que no existe recibe la misma respuesta, y no se envía nada
-        MvcResult inexistente = botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", "nadie-" + correoCuenta));
-        esperarEstado(inexistente, 200);
-        assertThat((List<String>) leer(inexistente, "$.correos")).hasSize(1);
-        esperarEstado(botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of()), 400); // sin correo
-
-        esperarEstado(botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", correoCuenta)), 200);
-        esperarEstado(botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", "000000x")), 400);
-        MvcResult vinculado = botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", codigoDelCorreo(correoCuenta)));
+        esperarEstado(botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", "AAAAAA")), 400);
+        MvcResult vinculado = botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", codigoDelPerfil(correoCuenta)));
         esperarEstado(vinculado, 200);
         assertThat((String) leer(vinculado, "$.nombre")).isEqualTo("Ana");
 
         MvcResult contexto = botLid(get(BASE + "/contexto"), lid, null);
         assertThat((String) leer(contexto, "$.situacion")).isEqualTo("CLIENTE");
+        assertThat((Boolean) leer(contexto, "$.vinculado")).isTrue();
         long clienteId = jdbc.queryForObject("SELECT id FROM usuarios WHERE correo = ?", Long.class, correoCuenta);
         MvcResult creada = botLid(post(BASE + "/reservas"), lid, reserva(diaHabil(10), "18:00", "19:00", null));
         esperarEstado(creada, 201);
@@ -401,12 +386,7 @@ class WhatsappIT extends BaseTorneosIT {
         verify(enviador, timeout(3000)).enviar(argThat(a -> a.numero().equals(lid + "@lid")));
 
         // ese WhatsApp ya no se puede vincular a otra cuenta
-        String otraCuenta = correoUnico();
-        Map<String, Object> otros = new HashMap<>(datosRegistro(otraCuenta, CLAVE_VALIDA));
-        otros.put("telefono", celular());
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", otros), 201);
-        MvcResult ocupado = botLid(post(BASE + "/vinculacion/codigo"), lid, Map.of("correo", otraCuenta));
+        MvcResult ocupado = botLid(post(BASE + "/vinculacion/confirmar"), lid, Map.of("codigo", codigoDelPerfil(registrarCliente())));
         esperarEstado(ocupado, 409);
     }
 }
-

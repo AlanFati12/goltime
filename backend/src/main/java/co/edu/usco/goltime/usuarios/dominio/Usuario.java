@@ -174,17 +174,27 @@ public class Usuario {
         this.correoVerificado = true;
     }
 
-    /** Quien escribe desde este número probó con el código enviado al correo que también es dueño de la cuenta. */
-    public void verificarTelefono() {
-        if (telefono == null) {
-            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "La cuenta no tiene número de WhatsApp.");
+    /**
+     * Quien escribe desde este WhatsApp envió el código que generó la cuenta en la web: ese teléfono pasa a ser el de
+     * la cuenta, ya verificado.
+     */
+    public void vincularWhatsappTelefono(String telefonoE164) {
+        if (rol != Rol.CLIENTE) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo los clientes usan el bot de WhatsApp.");
         }
+        this.telefono = NumeroTelefono.de(telefonoE164).valor();
         this.telefonoVerificado = true;
     }
 
+    /** El bot deja de reconocer la cuenta por cualquier vía. */
+    public void desvincularWhatsapp() {
+        this.telefonoVerificado = false;
+        this.whatsappLid = null;
+    }
+
     /**
-     * Quien escribe desde ese @lid (WhatsApp no compartió su teléfono) probó con el código del correo que es dueño
-     * de la cuenta. A diferencia del teléfono, no cambia si la persona edita su perfil.
+     * Quien escribe desde ese @lid (WhatsApp no compartió su teléfono) envió el código que generó la cuenta en la web.
+     * A diferencia del teléfono, no cambia si la persona edita su perfil.
      */
     public void vincularWhatsappLid(String lid) {
         if (rol != Rol.CLIENTE) {

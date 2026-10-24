@@ -111,7 +111,7 @@ class UsuarioTest {
     @Test
     void cambiarElNumeroObligaAVerificarloDeNuevo() {
         Usuario u = cliente();
-        u.verificarTelefono();
+        u.vincularWhatsappTelefono("+573001234567");
 
         u.actualizarPerfil("Ana", "Pérez", "+57 300 123 4567", null);
         assertThat(u.telefonoVerificado()).as("mismo número escrito distinto").isTrue();
@@ -119,5 +119,19 @@ class UsuarioTest {
         u.actualizarPerfil("Ana", "Pérez", "3200000000", null);
         assertThat(u.telefono()).isEqualTo("+573200000000");
         assertThat(u.telefonoVerificado()).isFalse();
+    }
+
+    @Test
+    void desvincularQuitaElTelefonoVerificadoYElLid() {
+        Usuario u = cliente();
+        u.vincularWhatsappTelefono("3009998877");
+        u.vincularWhatsappLid("164295400784036");
+        assertThat(u.telefono()).isEqualTo("+573009998877");
+        assertThat(u.whatsappVinculado()).isTrue();
+
+        u.desvincularWhatsapp();
+        assertThat(u.telefonoVerificado()).isFalse();
+        assertThat(u.whatsappLid()).isNull();
+        assertThat(u.whatsappVinculado()).isFalse();
     }
 }

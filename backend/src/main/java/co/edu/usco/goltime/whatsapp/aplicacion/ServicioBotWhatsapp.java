@@ -9,10 +9,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono;
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono.CodigoEnviado;
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono.Identificacion;
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono.Situacion;
+import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVinculacionWhatsapp;
+import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVinculacionWhatsapp.Identificacion;
+import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVinculacionWhatsapp.Situacion;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
 import co.edu.usco.goltime.compartido.dominio.ZonaHoraria;
@@ -28,9 +27,9 @@ import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
  * Lo que el bot hace a nombre de quien escribe. El remitente llega de n8n (tomado del mensaje de WhatsApp, nunca
  * del modelo de lenguaje) y decide quién es el titular de las reservas:
  * <ul>
- * <li>con teléfono: el cliente que lo verificó o, si no hay cuenta, un cliente sin cuenta con ese teléfono;</li>
- * <li>con @lid (WhatsApp no compartió el número): el cliente que lo vinculó con el código del correo o, si no,
- * un cliente sin cuenta atado a ese @lid.</li>
+ * <li>con teléfono: el cliente que lo vinculó o, si no hay cuenta, un cliente sin cuenta con ese teléfono;</li>
+ * <li>con @lid (WhatsApp no compartió el número): el cliente que lo vinculó o, si no, un cliente sin cuenta atado a
+ * ese @lid.</li>
  * </ul>
  * Toda regla de negocio la aplica el módulo de reservas, igual que en la web.
  */
@@ -39,12 +38,12 @@ public class ServicioBotWhatsapp {
 
     static final int MAX_RESERVAS_LISTADAS = 10;
 
-    private final ServicioVerificacionTelefono verificacion;
+    private final ServicioVinculacionWhatsapp verificacion;
     private final ServicioClientesSinCuenta sinCuenta;
     private final ServicioReservas reservas;
     private final ConfiguracionBot configuracion;
 
-    public ServicioBotWhatsapp(ServicioVerificacionTelefono verificacion, ServicioClientesSinCuenta sinCuenta, ServicioReservas reservas,
+    public ServicioBotWhatsapp(ServicioVinculacionWhatsapp verificacion, ServicioClientesSinCuenta sinCuenta, ServicioReservas reservas,
             ConfiguracionBot configuracion) {
         this.verificacion = verificacion;
         this.sinCuenta = sinCuenta;
@@ -73,18 +72,11 @@ public class ServicioBotWhatsapp {
 
     // ---------- Vinculación del WhatsApp con la cuenta ----------
 
-    /** Con teléfono, el código va a la cuenta que escribió ese número; con @lid, a la cuenta del correo que dé. */
-    @Transactional
-    public CodigoEnviado enviarCodigo(RemitenteWhatsapp quien, String correo) {
-        verificarActivo();
-        return quien.porLid() ? verificacion.solicitarCodigoDesdeLid(quien.lid(), correo) : verificacion.solicitarCodigo(quien.telefono());
-    }
-
+    /** Con el código que la persona generó en su perfil de la web; devuelve su nombre. */
     @Transactional(noRollbackFor = ExcepcionNegocio.class)
-    public String confirmarCodigo(RemitenteWhatsapp quien, String codigo) {
+    public String vincular(RemitenteWhatsapp quien, String codigo) {
         verificarActivo();
-        return (quien.porLid() ? verificacion.confirmarCodigoDesdeLid(quien.lid(), codigo) : verificacion.confirmarCodigo(quien.telefono(), codigo))
-                .nombres();
+        return verificacion.vincular(quien.telefono(), quien.lid(), codigo).nombres();
     }
 
     // ---------- Reservas ----------
@@ -165,7 +157,7 @@ public class ServicioBotWhatsapp {
             case SIN_CUENTA -> {
                 if (!configuracion.reservasSinCuenta()) {
                     throw new ExcepcionNegocio(CodigoError.ACCESO_DENEGADO,
-                            "Para reservar por WhatsApp necesitas una cuenta en Goltime. Regístrate en la web y vincula este WhatsApp.");
+                            "Para reservar por WhatsApp necesitas una cuenta en Goltime. Regístrate en la web y vincula este WhatsApp desde tu perfil.");
                 }
                 ClienteMostrador cliente = sinCuentaExistente(quien).orElseGet(() -> quien.porLid()
                         ? sinCuenta.registrarConLid(nombre, telefonoContacto, quien.lid())
@@ -198,6 +190,6 @@ public class ServicioBotWhatsapp {
         return situacion == Situacion.DESACTIVADO
                 ? new ExcepcionNegocio(CodigoError.USUARIO_DESACTIVADO, "Tu cuenta está desactivada. Comunícate con el administrador.")
                 : new ExcepcionNegocio(CodigoError.WHATSAPP_SIN_VINCULAR,
-                        "Este número es de una cuenta Goltime que aún no está vinculada a WhatsApp. Vincúlala primero con el código que enviamos a tu correo.");
+                        "Este número es de una cuenta Goltime que aún no está vinculada a WhatsApp. Genera un código en tu perfil de la web y envíamelo para vincularla.");
     }
 }

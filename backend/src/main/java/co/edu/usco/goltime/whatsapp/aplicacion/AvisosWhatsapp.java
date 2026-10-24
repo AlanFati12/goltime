@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVerificacionTelefono;
+import co.edu.usco.goltime.autenticacion.aplicacion.ServicioVinculacionWhatsapp;
 import co.edu.usco.goltime.compartido.dominio.FormatoTexto;
 import co.edu.usco.goltime.reservas.aplicacion.ServicioClientesSinCuenta;
 import co.edu.usco.goltime.reservas.dominio.AvisoReservaEvento;
@@ -23,12 +23,12 @@ import co.edu.usco.goltime.whatsapp.aplicacion.EnviadorWhatsapp.AvisoWhatsapp;
 @Component
 public class AvisosWhatsapp {
 
-    private final ServicioVerificacionTelefono verificacion;
+    private final ServicioVinculacionWhatsapp verificacion;
     private final ServicioClientesSinCuenta sinCuenta;
     private final ConfiguracionBot configuracion;
     private final EnviadorWhatsapp enviador;
 
-    public AvisosWhatsapp(ServicioVerificacionTelefono verificacion, ServicioClientesSinCuenta sinCuenta, ConfiguracionBot configuracion,
+    public AvisosWhatsapp(ServicioVinculacionWhatsapp verificacion, ServicioClientesSinCuenta sinCuenta, ConfiguracionBot configuracion,
             EnviadorWhatsapp enviador) {
         this.verificacion = verificacion;
         this.sinCuenta = sinCuenta;
