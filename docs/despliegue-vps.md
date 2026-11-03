@@ -30,7 +30,7 @@ Debe responder `179.66.130.88`. No sigas al paso 7 hasta que lo haga: Caddy nece
 
 ## 2. Primer ingreso y usuario de trabajo
 
-Desde tu computador:
+Desde tu computador (con tu llave SSH registrada en hPanel → VPS → Claves SSH):
 
 ```bash
 ssh root@179.66.130.88
@@ -84,9 +84,11 @@ Comprueba: `docker compose version`.
 El repositorio todavía no tiene remoto. Desde la carpeta del proyecto **en tu Mac**:
 
 ```bash
-rsync -avz --exclude node_modules --exclude target --exclude .env --exclude '.git/' --exclude uploads \
-  ./ goltime@179.66.130.88:~/goltime/
+COPYFILE_DISABLE=1 tar czf - --exclude=node_modules --exclude=target --exclude=.env --exclude=.git --exclude=uploads --exclude='*.log' --exclude=.DS_Store --exclude=dist . \
+  | ssh goltime@179.66.130.88 'mkdir -p ~/goltime && tar xzf - -C ~/goltime'
 ```
+
+(Se usa `tar` por `ssh` porque el `rsync` de macOS no es compatible con el del servidor. Los avisos «Ignoring unknown extended header keyword» son inofensivos.)
 
 (Cuando subas el proyecto a un repositorio privado, esto se reemplaza por `git clone` y `git pull`.)
 
@@ -194,7 +196,7 @@ Mantén una terminal abierta mientras pruebas entrar en otra, para no quedarte f
 
 ## 12. Actualizar la aplicación
 
-Desde tu Mac, repite el `rsync` del paso 5 y en el servidor:
+Desde tu Mac, repite el `tar` del paso 5 y en el servidor:
 
 ```bash
 cd ~/goltime
