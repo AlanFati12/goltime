@@ -28,4 +28,9 @@ public class ConfiguracionReservas {
                 configuracion.booleano("completar_reservas_automaticamente", d.completarAutomaticamente()),
                 configuracion.entero("horas_recordatorio", d.horasRecordatorio()));
     }
+
+    /** Reservas activas que puede tener a la vez alguien sin cuenta que reserva por WhatsApp (ADR 0018). */
+    public int maxSolicitudesSinCuenta() {
+        return configuracion.entero("whatsapp_max_solicitudes_sin_cuenta", 2);
+    }
 }

@@ -1,0 +1,210 @@
+{
+  "id": "GoltimeAvisos001",
+  "name": "Goltime · Avisos de reservas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "goltime-avisos",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "name": "Aviso de la API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "goltime-avisos"
+    },
+    {
+      "parameters": {
+        "jsCode": "// La API firma cada aviso con HMAC-SHA256 del cuerpo exacto (cabecera X-Firma-Goltime). Sin firma válida no se envía nada.\nconst crypto = require('crypto');\nconst item = $input.first();\nconst firma = String((item.json.headers || {})['x-firma-goltime'] || '');\nconst crudo = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst esperada = 'sha256=' + crypto.createHmac('sha256', $env.GOLTIME_SECRETO_AVISOS || '').update(crudo).digest('hex');\nconst valida = !!$env.GOLTIME_SECRETO_AVISOS && firma.length === esperada.length\n  && crypto.timingSafeEqual(Buffer.from(firma), Buffer.from(esperada));\nlet aviso = {};\ntry { aviso = JSON.parse(crudo.toString('utf8')); } catch (e) { aviso = {}; }\n// Teléfono (+57…) o chat @lid de quien no compartió su número.\nconst destino = String(aviso.numero || '');\nconst numero = destino.endsWith('@lid') ? destino : destino.replace(/\\D/g, '');\nreturn [{ json: { valida: valida && numero.length >= 8 && !!aviso.mensaje, numero, mensaje: aviso.mensaje, tipo: aviso.tipo, reservaId: aviso.reservaId } }];"
+      },
+      "name": "Verificar firma",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "¿Firma válida?",
+              "leftValue": "={{ $json.valida }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "¿Firma válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/message/sendText/goltime",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.numero, text: $json.mensaje, delay: 0 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Enviar por WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GoltimeEvoCred01",
+          "name": "Goltime · Evolution API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"enviado\": true}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Enviado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"enviado\": false}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "name": "No se pudo enviar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"enviado\": false, \"motivo\": \"firma inválida\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "name": "Firma inválida",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Aviso de la API": {
+      "main": [
+        [
+          {
+            "node": "Verificar firma",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar firma": {
+      "main": [
+        [
+          {
+            "node": "¿Firma válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Firma válida?": {
+      "main": [
+        [
+          {
+            "node": "Enviar por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Firma inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar por WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Enviado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No se pudo enviar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota"
+  },
+  "tags": []
+}

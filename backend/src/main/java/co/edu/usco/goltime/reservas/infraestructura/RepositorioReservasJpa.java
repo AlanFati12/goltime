@@ -19,6 +19,16 @@ interface RepositorioReservasJpa extends JpaRepository<ReservaEntidad, Long> {
     @Query("select count(r) from ReservaEntidad r where r.clienteId = :cliente and r.estado in :estados and r.fin > :ahora")
     int contarFuturas(long cliente, Collection<EstadoReserva> estados, Instant ahora);
 
+    @Query("select count(r) from ReservaEntidad r where r.clienteMostradorId = :mostrador and r.estado in :estados and r.fin > :ahora")
+    int contarFuturasSinCuenta(long mostrador, Collection<EstadoReserva> estados, Instant ahora);
+
+    @Query("select r from ReservaEntidad r where r.clienteMostradorId = :mostrador and r.estado in :estados and r.fin > :ahora order by r.inicio, r.id")
+    List<ReservaEntidad> proximasSinCuenta(long mostrador, Collection<EstadoReserva> estados, Instant ahora, Pageable limite);
+
+    Optional<ReservaEntidad> findByClienteMostradorIdAndClaveIdempotencia(Long clienteMostradorId, String claveIdempotencia);
+
+    Optional<ReservaEntidad> findByCodigo(String codigo);
+
     @Query("select r.id from ReservaEntidad r where r.clienteId = :cliente and r.estado in :estados and r.fin > :ahora order by r.inicio")
     List<Long> idsFuturas(long cliente, Collection<EstadoReserva> estados, Instant ahora);
 

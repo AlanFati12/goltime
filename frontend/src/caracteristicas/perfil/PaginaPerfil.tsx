@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 
 import { salir } from '@/caracteristicas/autenticacion/servicioAutenticacion'
@@ -9,6 +9,7 @@ import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
+import { CampoWhatsapp } from '@/componentes/ui/CampoWhatsapp'
 import { IndicadorClave } from '@/componentes/ui/IndicadorClave'
 import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Insignia } from '@/componentes/ui/Insignia'
@@ -24,10 +25,13 @@ import {
 
 import type { Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
 
+import { TarjetaWhatsapp } from './TarjetaWhatsapp'
+
 function FormularioDatos({ usuario }: { usuario: Usuario }) {
   const actualizarUsuario = useSesion((s) => s.actualizarUsuario)
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<DatosPerfil>({
@@ -72,12 +76,20 @@ function FormularioDatos({ usuario }: { usuario: Usuario }) {
           ayuda="El correo no se puede cambiar."
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Campo
-            etiqueta="Celular"
-            type="tel"
-            error={errors.telefono?.message}
-            {...register('telefono')}
-          />
+          <div className="flex flex-col gap-2">
+            <Controller
+              control={control}
+              name="telefono"
+              render={({ field }) => (
+                <CampoWhatsapp
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.telefono?.message}
+                />
+              )}
+            />
+          </div>
           <Campo
             etiqueta="Documento"
             error={errors.documento?.message}
@@ -168,6 +180,7 @@ export function PaginaPerfil() {
         }
       />
       <FormularioDatos usuario={usuario} />
+      {usuario.rol === 'CLIENTE' && <TarjetaWhatsapp usuario={usuario} />}
       <FormularioClave />
     </div>
   )

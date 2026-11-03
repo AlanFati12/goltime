@@ -53,6 +53,9 @@ public class ServicioRegistro {
         }
         Usuario cliente = Usuario.nuevoCliente(datos.nombres(), datos.apellidos(), datos.correo(), datos.telefono(),
                 datos.documento(), codificador.encode(datos.clave()), datos.aceptaTerminos() ? reloj.instant() : null);
+        if (usuarios.existeTelefonoVerificado(cliente.telefono(), null)) {
+            throw new ExcepcionNegocio(CodigoError.TELEFONO_YA_REGISTRADO, "Ese número de WhatsApp ya está vinculado a otra cuenta.");
+        }
         Usuario guardado = usuarios.guardar(cliente);
         enviarVerificacion(guardado);
         return guardado;

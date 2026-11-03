@@ -101,12 +101,51 @@ Además, `reservas.ck_reservas_cliente` permite reservas sin cliente solo con `o
 
 `inscripciones_torneo` ya admitía el estado `SOLICITADA` desde la Fase 5.
 
+### V13: WhatsApp verificado (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `usuarios.telefono_verificado` | El bot de WhatsApp reconoce ese número como de la cuenta | Se vuelve `false` si la persona cambia el número |
+| Teléfonos en E.164 | `usuarios.telefono` y `clientes_mostrador.telefono` se guardan como `+573001234567` | La migración normaliza los existentes que se pueden interpretar sin dudas |
+| `uq_usuarios_telefono_verificado` | Un número verificado pertenece a una sola cuenta | Índice único parcial `WHERE telefono_verificado`: varias cuentas pueden *escribir* el mismo número |
+| `verificaciones_telefono` | Código de 6 dígitos enviado al correo para vincular el número | Se eliminó en V16 |
+
+### V14: reservas por WhatsApp (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `reservas.origen` admite `WHATSAPP` | Saber qué reservas llegaron por el bot | El cliente puede ser registrado (`cliente_id`) o sin cuenta (`cliente_mostrador_id`) |
+| `uq_reservas_idempotencia_sin_cuenta` | Un mensaje reintentado por n8n no crea dos reservas | Única por (`cliente_mostrador_id`, `clave_idempotencia`) |
+| Claves `whatsapp_*` en `configuracion` | Bot activo, reservas sin cuenta, máximo de reservas activas sin cuenta (2) y número del negocio | Editables por el administrador |
+
+### V15: identificación por @lid (ADR 0018)
+
+| Cambio | Para qué sirve | Notas |
+|---|---|---|
+| `usuarios.whatsapp_lid` | El @lid que el cliente vinculó con el código del correo | Único; WhatsApp lo envía en vez del teléfono cuando no lo comparte |
+| `clientes_mostrador.whatsapp_lid` | Quien reservó sin cuenta desde un @lid | Único; su teléfono es solo de contacto y estos registros no se reutilizan al buscar por teléfono |
+| `verificaciones_telefono.whatsapp_lid` | Código pedido desde un @lid | Se eliminó en V16 |
+
+### V16: vinculación con código de la web (ADR 0018)
+
+| Tabla | Para qué sirve | Notas |
+|---|---|---|
+| `codigos_vinculacion_whatsapp` | Código que el cliente genera en su perfil y le envía al bot | Solo hash (único); vence a los 10 min; un uso; uno nuevo anula los anteriores |
+| `intentos_vinculacion_whatsapp` | Códigos equivocados por WhatsApp (teléfono o `lid:<id>`) | 5 por hora bloquean ese WhatsApp una hora |
+
+## V17: cambio de estado libre del admin (ADR 0019)
+
+| Tabla | Cambio | Notas |
+|---|---|---|
+| `reserva_historial.accion` | Nuevo valor `ESTADO_CAMBIADO` | Cambio de estado hecho por el admin: motivo, `{estado}` antes y después y `horario` (`OCUPADA` o `LIBERADA`) si la cancha cambió |
+
 ## Relaciones
 
 ```mermaid
 erDiagram
   usuarios ||--o{ refresh_tokens : "tiene"
   usuarios ||--o{ tokens_verificacion : "tiene"
+  usuarios ||--o{ codigos_vinculacion_whatsapp : "genera"
   usuarios ||--o{ audit_log : "actúa en"
   usuarios |o--o{ usuarios : "desactivado_por"
   sedes ||--o{ canchas : "tiene"

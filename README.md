@@ -189,9 +189,10 @@ Los partidos programados reservan la cancha como cualquier reserva (origen `TORN
 | Listado con filtros, CSV y detalle | `/admin/reservas`, `/admin/reservas/:id` |
 | Crear reservas a nombre de un cliente o de mostrador | `/admin/reservas/nueva` |
 | Pagos, abonos y reembolsos | Detalle de la reserva |
+| Cambiar una reserva a cualquier estado (con motivo, aunque no llegue la fecha) | Detalle de la reserva › *Cambiar estado* ([ADR 0019](docs/decisiones/0019-cambio-de-estado-libre-del-admin.md)) |
 | Bloqueos de horario (puntuales y recurrentes) | `/admin/bloqueos`: revisa las reservas afectadas y exige confirmarlas |
 | Bitácora de auditoría | `/admin/auditoria` |
-| API admin | `POST /admin/reservas`, `PATCH .../reprogramar` y `.../estado`, `GET/POST .../pagos`, `POST .../reembolsos`, `GET /admin/reservas/exportar`, `GET /admin/agenda`, `/admin/bloqueos` (+ `/previsualizar`), `GET /admin/auditoria` |
+| API admin | `POST /admin/reservas`, `PATCH .../reprogramar` y `.../estado` (+ `GET .../estado/previsualizar`), `GET/POST .../pagos`, `POST .../reembolsos`, `GET /admin/reservas/exportar`, `GET /admin/agenda`, `/admin/bloqueos` (+ `/previsualizar`), `GET /admin/auditoria` |
 
 Detalle del flujo de conflictos, pagos y agenda en el [ADR 0008](docs/decisiones/0008-bloqueos-pagos-y-agenda.md).
 

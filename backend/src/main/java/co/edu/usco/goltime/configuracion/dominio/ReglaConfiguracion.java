@@ -28,6 +28,10 @@ public record ReglaConfiguracion(Tipo tipo, int minimo, int maximo) {
             Map.entry("completar_reservas_automaticamente", new ReglaConfiguracion(Tipo.BOOLEANO, 0, 0)),
             Map.entry("modalidades_permitidas", new ReglaConfiguracion(Tipo.TEXTO, 0, 100)),
             Map.entry("contacto_negocio", new ReglaConfiguracion(Tipo.TEXTO, 0, 1000)),
+            Map.entry("whatsapp_bot_activo", new ReglaConfiguracion(Tipo.BOOLEANO, 0, 0)),
+            Map.entry("whatsapp_reservas_sin_cuenta", new ReglaConfiguracion(Tipo.BOOLEANO, 0, 0)),
+            Map.entry("whatsapp_max_solicitudes_sin_cuenta", new ReglaConfiguracion(Tipo.ENTERO, 0, 10)),
+            Map.entry("whatsapp_numero_negocio", new ReglaConfiguracion(Tipo.TEXTO, 0, 20)),
             Map.entry("terminos_y_condiciones", new ReglaConfiguracion(Tipo.TEXTO, 0, 1000)));
 
     public static Optional<ReglaConfiguracion> de(String clave) {
@@ -60,6 +64,9 @@ public record ReglaConfiguracion(Tipo tipo, int minimo, int maximo) {
                 }
                 if ("modalidades_permitidas".equals(clave) && !v.matches("(?:\\d{1,2})(?:,\\d{1,2})*")) {
                     throw invalido(clave, "debe ser una lista de números separados por coma, por ejemplo 5,6,7");
+                }
+                if ("whatsapp_numero_negocio".equals(clave) && !v.isEmpty() && !v.matches("\\+[1-9]\\d{7,14}")) {
+                    throw invalido(clave, "debe ser un número con indicativo, por ejemplo +573001234567");
                 }
                 return v;
             }

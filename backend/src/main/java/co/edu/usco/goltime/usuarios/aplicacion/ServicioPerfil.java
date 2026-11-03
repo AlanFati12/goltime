@@ -35,6 +35,9 @@ public class ServicioPerfil {
     public Usuario actualizar(long usuarioId, String nombres, String apellidos, String telefono, String documento) {
         Usuario usuario = cargar(usuarioId);
         usuario.actualizarPerfil(nombres, apellidos, telefono, documento);
+        if (usuario.telefono() != null && usuarios.existeTelefonoVerificado(usuario.telefono(), usuario.id())) {
+            throw new ExcepcionNegocio(CodigoError.TELEFONO_YA_REGISTRADO, "Ese número de WhatsApp ya está vinculado a otra cuenta.");
+        }
         return usuarios.guardar(usuario);
     }
 

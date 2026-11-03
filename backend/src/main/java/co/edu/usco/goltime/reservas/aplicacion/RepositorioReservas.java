@@ -23,6 +23,10 @@ public interface RepositorioReservas {
 
     Optional<Reserva> buscarPorClaveIdempotencia(long clienteId, String clave);
 
+    Optional<Reserva> buscarPorClaveIdempotenciaSinCuenta(long clienteMostradorId, String clave);
+
+    Optional<Reserva> buscarPorCodigo(String codigo);
+
     /** Bloquea hasta terminar la transacción a quien use la misma clave (evita dobles reservas por doble clic). */
     void bloquearPorClave(String clave);
 
@@ -30,6 +34,11 @@ public interface RepositorioReservas {
     String siguienteCodigo(int anio);
 
     int contarActivasFuturas(long clienteId, Instant ahora);
+
+    int contarActivasFuturasSinCuenta(long clienteMostradorId, Instant ahora);
+
+    /** Pendientes y confirmadas por jugar de un cliente sin cuenta, de la más próxima a la más lejana. */
+    List<Reserva> proximasSinCuenta(long clienteMostradorId, Instant ahora, int limite);
 
     /** Reservas del cliente que no se cancelaron, rechazaron ni expiraron (para saber si es su primera reserva). */
     int contarNoCanceladas(long clienteId);
