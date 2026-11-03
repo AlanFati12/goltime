@@ -85,3 +85,19 @@ Lista de chequeo; nada de esto exige cambiar código:
 
 - Evolution usa Baileys (WhatsApp Web no oficial): WhatsApp puede bloquear el número si detecta abuso. Mitigación: un número dedicado al bot, sin envíos masivos y respuestas solo a quien escribe. Si un día se pasa a la API oficial de WhatsApp Cloud, solo cambian los workflows de n8n; la API de Goltime no se entera.
 - Si n8n o Evolution caen, la web sigue igual y los avisos por WhatsApp de ese rato se pierden (quedan en el log de la API).
+
+## En el VPS (producción)
+
+Desplegado con `docker-compose.produccion-bot.yml` encima de `docker-compose.produccion.yml`. El `.env` del servidor define `COMPOSE_FILE=docker-compose.produccion.yml:docker-compose.produccion-bot.yml`, así que basta `docker compose up -d --build`.
+
+- **Nada del bot se publica a internet.** n8n (`127.0.0.1:5678`) y Evolution (`127.0.0.1:8082`) solo escuchan dentro del servidor; Caddy tampoco expone `/api/v1/integracion/**` (da 404). Para usar sus pantallas, abre un túnel desde tu Mac y entra a `http://localhost:5678` (n8n) o `http://localhost:8082/manager` (Evolution):
+
+  ```bash
+  ssh -i ~/.ssh/goltime_vps -L 5678:127.0.0.1:5678 -L 8082:127.0.0.1:8082 goltime@179.66.130.88
+  ```
+
+  La primera vez que entres a n8n te pide crear la cuenta de dueño.
+- **Instalar o actualizar los workflows** (en el servidor): `cd ~/goltime && scripts/whatsapp/n8n-importar.sh`. Si el `.env` trae `OPENAI_API_KEY`, el script la guarda en la credencial «Goltime · OpenAI»; si no, la pegas tú en n8n › Credentials.
+- **Vincular o re-vincular el número** (en el servidor): `scripts/whatsapp/conectar.sh 573239085762 /tmp/qr-whatsapp.png`; copia el PNG a tu Mac con `scp` y escanéalo antes de ~40 s (WhatsApp › Dispositivos vinculados). La sesión vive en el volumen `datos_evolution_instancias`.
+- **Un solo bot por número**: no enciendas el bot local con el mismo número mientras el del servidor esté vinculado.
+- **Respaldos**: además de la base de Goltime, conviene respaldar los volúmenes `goltime_datos_n8n`, `goltime_datos_evolution_db` y `goltime_datos_evolution_instancias`.
