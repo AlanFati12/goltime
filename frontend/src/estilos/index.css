@@ -336,7 +336,7 @@
     transition-delay: calc(var(--i, 0) * 80ms);
     clip-path: inset(0 0 0 0);
   }
-  :where(html.js) .revelar-imagen:not(.visible) {
+  :where(html.js) .revelar-contenedor:not(.visible) > .revelar-imagen {
     clip-path: inset(0 0 100% 0);
   }
 
@@ -350,7 +350,7 @@
       transform: none;
       filter: none;
     }
-    :where(html.js) .revelar-imagen:not(.visible) {
+    :where(html.js) .revelar-contenedor:not(.visible) > .revelar-imagen {
       clip-path: inset(0 0 0 0);
       opacity: 0;
     }
