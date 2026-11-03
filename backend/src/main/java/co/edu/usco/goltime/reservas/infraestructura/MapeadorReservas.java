@@ -3,6 +3,7 @@ package co.edu.usco.goltime.reservas.infraestructura;
 import co.edu.usco.goltime.reservas.aplicacion.Relacionados;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.DisponibilidadCancha;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.DisponibilidadDia;
+import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionCambioEstado;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionReprogramacion;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.ResumenDia;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
@@ -13,6 +14,7 @@ import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaDispon
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaDisponibilidadCancha;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaHistorial;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaPrevisualizacion;
+import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaPrevisualizacionEstado;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaReserva;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaResumenDia;
 import co.edu.usco.goltime.reservas.infraestructura.DtosReservas.RespuestaSedeReserva;
@@ -40,6 +42,12 @@ final class MapeadorReservas {
 
     static RespuestaPrevisualizacion aRespuesta(PrevisualizacionReprogramacion p) {
         return new RespuestaPrevisualizacion(p.disponible(), p.precioActual(), p.precioNuevo(), p.diferencia());
+    }
+
+    static RespuestaPrevisualizacionEstado aRespuesta(PrevisualizacionCambioEstado p) {
+        return new RespuestaPrevisualizacionEstado(p.actual(), p.nuevo(), p.ocuparaHorario(), p.horarioLibre(), p.liberaraHorario(),
+                p.cuentaParaPremios(), p.dejaDeContarParaPremios(), p.quedaReembolsoPendiente(), p.seCompletaraSola(), p.expiraraSola(),
+                p.avisaAlCliente());
     }
 
     static RespuestaDisponibilidad aRespuesta(DisponibilidadDia d) {

@@ -17,6 +17,9 @@ import co.edu.usco.goltime.compartido.dominio.Rol;
  * CONFIRMADA -> CANCELADA | COMPLETADA | NO_ASISTIO
  * COMPLETADA -> NO_ASISTIO (corrección del admin)
  * </pre>
+ *
+ * <p>Además, el administrador puede llevarla de cualquier estado a cualquier otro con
+ * {@link #cambiarEstadoPorAdmin} (ADR 0019): sin las reglas de tiempo, pero siempre con motivo.
  */
 public class Reserva {
 
@@ -54,9 +57,29 @@ public class Reserva {
     /** Solicitud de un cliente por la web: nace PENDIENTE y retiene el horario hasta que el admin responda. */
     public static Reserva solicitar(String codigo, long clienteId, long canchaId, Instant inicio, Instant fin,
             Precio precio, String nombreEquipo, String notas, Instant expiraEn, String claveIdempotencia) {
+        return solicitar(OrigenReserva.WEB, codigo, clienteId, null, canchaId, inicio, fin, precio, nombreEquipo, notas, expiraEn,
+                claveIdempotencia);
+    }
+
+    /**
+     * Solicitud por un canal ({@code WEB} o {@code WHATSAPP}) de un cliente registrado o, solo por WhatsApp, de uno sin
+     * cuenta (de mostrador). Igual que la de la web: nace PENDIENTE y la aprueba el administrador.
+     */
+    public static Reserva solicitar(OrigenReserva origen, String codigo, Long clienteId, Long clienteMostradorId, long canchaId,
+            Instant inicio, Instant fin, Precio precio, String nombreEquipo, String notas, Instant expiraEn, String claveIdempotencia) {
+        if ((clienteId == null) == (clienteMostradorId == null)) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "La solicitud debe ser de un cliente registrado o de uno sin cuenta.");
+        }
+        if (origen != OrigenReserva.WEB && origen != OrigenReserva.WHATSAPP) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo se solicitan reservas por la web o por WhatsApp.");
+        }
+        if (clienteMostradorId != null && origen != OrigenReserva.WHATSAPP) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Las solicitudes sin cuenta solo llegan por WhatsApp.");
+        }
         Reserva r = new Reserva();
         r.codigo = codigo;
         r.clienteId = clienteId;
+        r.clienteMostradorId = clienteMostradorId;
         r.canchaId = canchaId;
         r.inicio = inicio;
         r.fin = fin;
@@ -64,7 +87,7 @@ public class Reserva {
         r.nombreEquipo = limpiar(nombreEquipo);
         r.notas = limpiar(notas);
         r.estado = EstadoReserva.PENDIENTE;
-        r.origen = OrigenReserva.WEB;
+        r.origen = origen;
         r.estadoPago = EstadoPago.PENDIENTE;
         r.expiraEn = expiraEn;
         r.claveIdempotencia = claveIdempotencia;
@@ -271,6 +294,69 @@ public class Reserva {
         this.estado = EstadoReserva.NO_ASISTIO;
     }
 
+    /**
+     * Cambio de estado del administrador a cualquier estado, sin importar la fecha (ADR 0019). Ajusta los datos que
+     * acompañan a cada estado (quién aprobó, canceló o rechazó y por qué, la expiración de una pendiente) y el estado
+     * del pago: al dejar libre el horario con dinero abonado queda un reembolso pendiente; al volver a ocuparlo, el
+     * pago se recalcula con lo que sigue pagado. Volver a ocupar la cancha (y el choque con otra reserva) es asunto
+     * del servicio.
+     *
+     * @param expiracionSiPendiente plazo de respuesta si el destino es PENDIENTE (si ya venció, expirará sola)
+     */
+    public void cambiarEstadoPorAdmin(long adminId, EstadoReserva destino, String motivo, Instant ahora, Instant expiracionSiPendiente) {
+        if (destino == null) {
+            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Indica el estado nuevo.");
+        }
+        String motivoValido = motivoObligatorio(motivo, "El motivo del cambio de estado es obligatorio.");
+        if (destino == estado) {
+            throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "La reserva ya está " + destino.etiqueta() + ".");
+        }
+        EstadoReserva antes = estado;
+        if (antes == EstadoReserva.CANCELADA) {
+            this.canceladaPor = null;
+            this.rolCancelador = null;
+            this.motivoCancelacion = null;
+            this.fechaCancelacion = null;
+            this.cancelacionTardia = false;
+        }
+        if (antes == EstadoReserva.RECHAZADA) {
+            this.motivoRechazo = null;
+        }
+        this.estado = destino;
+        this.expiraEn = null;
+        switch (destino) {
+            case PENDIENTE -> {
+                this.aprobadaPor = null;
+                this.fechaAprobacion = null;
+                this.expiraEn = expiracionSiPendiente;
+            }
+            case CONFIRMADA -> {
+                this.aprobadaPor = adminId;
+                this.fechaAprobacion = ahora;
+            }
+            case RECHAZADA -> {
+                this.motivoRechazo = motivoValido;
+                this.aprobadaPor = adminId;
+                this.fechaAprobacion = ahora;
+            }
+            case EXPIRADA -> this.expiraEn = ahora;
+            case CANCELADA -> {
+                this.canceladaPor = adminId;
+                this.rolCancelador = Rol.ADMIN;
+                this.motivoCancelacion = motivoValido;
+                this.fechaCancelacion = ahora;
+            }
+            case COMPLETADA, NO_ASISTIO -> {
+                // solo cambia el estado
+            }
+        }
+        if (destino.liberaHorario() && !antes.liberaHorario()) {
+            pendienteDeReembolsoSiHayDinero();
+        } else if (!destino.liberaHorario() && antes.liberaHorario()) {
+            this.estadoPago = estadoPagoSegunMonto();
+        }
+    }
+
     // ---------- Pagos (registrados a mano por el administrador) ----------
 
     /**
@@ -321,7 +407,11 @@ public class Reserva {
         if (estadoPago == EstadoPago.REEMBOLSO_PENDIENTE || estadoPago == EstadoPago.REEMBOLSADO) {
             return;
         }
-        this.estadoPago = montoPagado <= 0 ? EstadoPago.PENDIENTE : montoPagado >= precio.finalAPagar() ? EstadoPago.PAGADO : EstadoPago.ABONADO;
+        this.estadoPago = estadoPagoSegunMonto();
+    }
+
+    private EstadoPago estadoPagoSegunMonto() {
+        return montoPagado <= 0 ? EstadoPago.PENDIENTE : montoPagado >= precio.finalAPagar() ? EstadoPago.PAGADO : EstadoPago.ABONADO;
     }
 
     public int saldoPendiente() {
@@ -354,6 +444,10 @@ public class Reserva {
 
     public boolean esDe(long usuarioId) {
         return clienteId != null && clienteId == usuarioId;
+    }
+
+    public boolean esDeClienteSinCuenta(long clienteMostradorId) {
+        return this.clienteMostradorId != null && this.clienteMostradorId == clienteMostradorId;
     }
 
     // ---------- Utilidades ----------

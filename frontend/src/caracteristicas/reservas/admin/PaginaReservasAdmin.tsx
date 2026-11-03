@@ -19,6 +19,7 @@ import { Paginacion } from '@/componentes/ui/Paginacion'
 import { EstadoVacio } from '@/componentes/ui/EstadoVacio'
 import { mensajeDeError } from '@/lib/api'
 import { formatearCOP, formatearFechaHora } from '@/lib/formato'
+import { formatearTelefono } from '@/lib/telefono'
 
 import { InsigniaEstadoReserva } from '../InsigniaEstadoReserva'
 import {
@@ -223,7 +224,9 @@ export function PaginaReservasAdmin() {
                   <td>
                     <div>{r.cliente.nombre}</div>
                     <div className="text-texto-suave text-xs">
-                      {r.cliente.telefono ?? r.cliente.correo}
+                      {r.cliente.telefono
+                        ? formatearTelefono(r.cliente.telefono)
+                        : r.cliente.correo}
                     </div>
                   </td>
                   <td>

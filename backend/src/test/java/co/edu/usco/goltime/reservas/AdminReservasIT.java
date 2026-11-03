@@ -115,9 +115,9 @@ class AdminReservasIT extends BaseReservasIT {
         esperarEstado(primera, 201);
         esperarEstado(segunda, 201);
         assertThat((String) leer(primera, "$.cliente.nombre")).isEqualTo("Don Pedro");
-        assertThat((String) leer(primera, "$.cliente.telefono")).isEqualTo("3201112233");
+        assertThat((String) leer(primera, "$.cliente.telefono")).isEqualTo("+573201112233");
         assertThat(jdbc.queryForObject("SELECT cliente_id IS NULL FROM reservas WHERE id = ?", Boolean.class, id(primera))).isTrue();
-        Integer mostradores = jdbc.queryForObject("SELECT count(*) FROM clientes_mostrador WHERE telefono = '3201112233'", Integer.class);
+        Integer mostradores = jdbc.queryForObject("SELECT count(*) FROM clientes_mostrador WHERE telefono = '+573201112233'", Integer.class);
         assertThat(mostradores).as("mismo teléfono = mismo cliente").isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT count(DISTINCT cliente_mostrador_id) FROM reservas WHERE id IN (?, ?)", Integer.class, id(primera), id(segunda))).isEqualTo(1);
 
@@ -221,27 +221,143 @@ class AdminReservasIT extends BaseReservasIT {
         assertThat((Boolean) leer(previa, "$.disponible")).isTrue();
     }
 
+    // ----- Cambio de estado (ADR 0019): cualquier estado, sin reglas de tiempo, siempre con motivo -----
+
+    private MvcResult cambiarEstado(long reservaId, String estado, String motivo) throws Exception {
+        Map<String, Object> cuerpo = new HashMap<>();
+        cuerpo.put("estado", estado);
+        cuerpo.put("motivo", motivo);
+        return parchear("/api/v1/admin/reservas/" + reservaId + "/estado", admin, cuerpo);
+    }
+
+    private MvcResult previsualizarEstado(long reservaId, String estado) throws Exception {
+        MvcResult r = obtener("/api/v1/admin/reservas/" + reservaId + "/estado/previsualizar?estado=" + estado, admin);
+        esperarEstado(r, 200);
+        return r;
+    }
+
     @Test
-    void marcarComoCompletadaONoAsistioSiguenLasReglasDelTiempo() throws Exception {
+    void elAdminMarcaCompletadaUnaReservaFuturaConMotivoQueQuedaEnElHistorialYLaAuditoria() throws Exception {
         long reservaId = crearParaCliente(fecha, "19:00", "20:00");
-        String url = "/api/v1/admin/reservas/" + reservaId + "/estado";
+        esperarEstado(cambiarEstado(reservaId, "COMPLETADA", " "), 400);
+        esperarEstado(cambiarEstado(reservaId, "CONFIRMADA", "Ya lo está"), 409);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + reservaId + "/estado", cliente.token(),
+                Map.of("estado", "COMPLETADA", "motivo", "x")), 403);
 
-        esperarEstado(mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(url).header("Authorization", "Bearer " + admin)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{\"estado\":\"COMPLETADA\"}")).andReturn(), 409);
-        esperarEstado(parchear(url, admin, Map.of("estado", "NO_ASISTIO")), 409);
-        esperarEstado(parchear(url, admin, Map.of("estado", "CANCELADA")), 400);
+        MvcResult previa = previsualizarEstado(reservaId, "COMPLETADA");
+        assertThat((Boolean) leer(previa, "$.cuentaParaPremios")).isTrue();
+        assertThat((Boolean) leer(previa, "$.ocuparaHorario")).isFalse();
+        assertThat((Boolean) leer(previa, "$.liberaraHorario")).isFalse();
 
-        mover(reservaId, Instant.now().minus(Duration.ofHours(3)), Instant.now().minus(Duration.ofHours(2)));
-        MvcResult completada = parchear(url, admin, Map.of("estado", "COMPLETADA"));
+        MvcResult completada = cambiarEstado(reservaId, "COMPLETADA", "Pagó y avisó que juega seguro");
         esperarEstado(completada, 200);
         assertThat((String) leer(completada, "$.estado")).isEqualTo("COMPLETADA");
+        assertThat(ocupaciones(reservaId)).isEqualTo(1); // una jugada sigue contando como horario usado
+        assertThat(acciones(reservaId)).containsExactly("CREADA", "ESTADO_CAMBIADO");
+        assertThat((String) leer(completada, "$.historial[1].motivo")).isEqualTo("Pagó y avisó que juega seguro");
+        assertThat((String) leer(completada, "$.historial[1].actorRol")).isEqualTo("ADMIN");
+        assertThat((String) leer(completada, "$.historial[1].datosAnteriores.estado")).isEqualTo("CONFIRMADA");
+        assertThat((String) leer(completada, "$.historial[1].datosNuevos.estado")).isEqualTo("COMPLETADA");
+        assertThat(auditorias("CAMBIAR_ESTADO_RESERVA", reservaId)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT motivo FROM audit_log WHERE accion = 'CAMBIAR_ESTADO_RESERVA' AND entidad_id = ?", String.class, reservaId))
+                .isEqualTo("Pagó y avisó que juega seguro");
+        assertThat(notificaciones(cliente.id(), "RESERVA_ESTADO_COMPLETADA")).isEqualTo(1);
 
-        // el admin corrige un error: en realidad no asistieron
-        MvcResult corregida = parchear(url, admin, Map.of("estado", "NO_ASISTIO"));
-        esperarEstado(corregida, 200);
-        assertThat((String) leer(corregida, "$.estado")).isEqualTo("NO_ASISTIO");
-        assertThat(acciones(reservaId)).containsExactly("CREADA", "COMPLETADA", "NO_ASISTIO");
-        assertThat(auditorias("MARCAR_NO_ASISTIO_RESERVA", reservaId)).isEqualTo(1);
+        // y la corrige a "no asistió" aunque todavía no empiece
+        esperarEstado(cambiarEstado(reservaId, "NO_ASISTIO", "Avisaron que no vienen"), 200);
+        assertThat(estadoDe(reservaId)).isEqualTo("NO_ASISTIO");
+    }
+
+    @Test
+    void unaCanceladaVuelveAConfirmadaYOcupaLaCanchaSiElHorarioSigueLibre() throws Exception {
+        long reservaId = crearParaCliente(fecha, "19:00", "20:00");
+        esperarEstado(cambiarEstado(reservaId, "CANCELADA", "Cliente llamó a cancelar"), 200);
+        assertThat(ocupaciones(reservaId)).isZero();
+        assertThat(notificaciones(cliente.id(), "RESERVA_CANCELADA_ADMIN")).isEqualTo(1);
+        assertThat((String) leer(obtener("/api/v1/admin/reservas/" + reservaId, admin), "$.motivoCancelacion")).isEqualTo("Cliente llamó a cancelar");
+
+        MvcResult previa = previsualizarEstado(reservaId, "CONFIRMADA");
+        assertThat((Boolean) leer(previa, "$.ocuparaHorario")).isTrue();
+        assertThat((Boolean) leer(previa, "$.horarioLibre")).isTrue();
+
+        MvcResult confirmada = cambiarEstado(reservaId, "CONFIRMADA", "Se arrepintió y vuelve a jugar");
+        esperarEstado(confirmada, 200);
+        assertThat((String) leer(confirmada, "$.estado")).isEqualTo("CONFIRMADA");
+        assertThat(ocupaciones(reservaId)).isEqualTo(1);
+        assertThat(notificaciones(cliente.id(), "RESERVA_CONFIRMADA")).isEqualTo(1);
+        // el horario quedó tomado otra vez
+        esperarEstado(crearAdmin(canchaId, fecha, "19:00", "20:00", cliente.id(), null, null), 409);
+    }
+
+    @Test
+    void siOtraReservaYaTomoElHorarioNoSeReactivaYNoCambiaNada() throws Exception {
+        long cancelada = crearParaCliente(fecha, "19:00", "20:00");
+        esperarEstado(cambiarEstado(cancelada, "CANCELADA", "Lluvia"), 200);
+        long otra = crearParaCliente(fecha, "19:00", "20:00");
+
+        assertThat((Boolean) leer(previsualizarEstado(cancelada, "PENDIENTE"), "$.horarioLibre")).isFalse();
+        for (String activo : List.of("CONFIRMADA", "PENDIENTE", "COMPLETADA")) {
+            MvcResult choque = cambiarEstado(cancelada, activo, "Reactivar");
+            esperarEstado(choque, 409);
+            assertThat((String) leer(choque, "$.codigo")).isEqualTo("RESERVA_SOLAPADA");
+        }
+        assertThat(estadoDe(cancelada)).isEqualTo("CANCELADA");
+        assertThat(ocupaciones(cancelada)).isZero();
+        assertThat(acciones(cancelada)).containsExactly("CREADA", "ESTADO_CAMBIADO");
+        assertThat(estadoDe(otra)).isEqualTo("CONFIRMADA");
+
+        // a otro estado que no ocupa la cancha sí puede pasar
+        esperarEstado(cambiarEstado(cancelada, "RECHAZADA", "Corrección"), 200);
+    }
+
+    @Test
+    void unaCompletadaVuelveAPendienteConPlazoYAlExpirarLiberaLaCancha() throws Exception {
+        long reservaId = crearParaCliente(fecha, "19:00", "20:00");
+        esperarEstado(cambiarEstado(reservaId, "COMPLETADA", "Se marcó antes"), 200);
+
+        MvcResult previa = previsualizarEstado(reservaId, "PENDIENTE");
+        assertThat((Boolean) leer(previa, "$.dejaDeContarParaPremios")).isTrue();
+        assertThat((Boolean) leer(previa, "$.expiraraSola")).isFalse();
+        MvcResult pendiente = cambiarEstado(reservaId, "PENDIENTE", "Falta confirmar el pago");
+        esperarEstado(pendiente, 200);
+        assertThat((String) leer(pendiente, "$.estado")).isEqualTo("PENDIENTE");
+        assertThat((String) leer(pendiente, "$.expiraEn")).isNotNull();
+        assertThat(ocupaciones(reservaId)).isEqualTo(1);
+        assertThat(notificaciones(cliente.id(), "RESERVA_ESTADO_PENDIENTE")).isEqualTo(1);
+
+        assertThat((Boolean) leer(previsualizarEstado(reservaId, "EXPIRADA"), "$.liberaraHorario")).isTrue();
+        esperarEstado(cambiarEstado(reservaId, "EXPIRADA", "No pagó"), 200);
+        assertThat(ocupaciones(reservaId)).isZero();
+        assertThat(notificaciones(cliente.id(), "RESERVA_ESTADO_EXPIRADA")).isEqualTo(1);
+    }
+
+    @Test
+    void conDineroAbonadoLiberarDejaReembolsoPendienteYReactivarLoRecupera() throws Exception {
+        long reservaId = crearParaCliente(fecha, "19:00", "20:00");
+        esperarEstado(pagar(reservaId, 30_000, "EFECTIVO", null), 201);
+        assertThat((Boolean) leer(previsualizarEstado(reservaId, "RECHAZADA"), "$.quedaReembolsoPendiente")).isTrue();
+
+        MvcResult rechazada = cambiarEstado(reservaId, "RECHAZADA", "Datos falsos");
+        esperarEstado(rechazada, 200);
+        assertThat((String) leer(rechazada, "$.estadoPago")).isEqualTo("REEMBOLSO_PENDIENTE");
+        assertThat((String) leer(rechazada, "$.motivoRechazo")).isEqualTo("Datos falsos");
+
+        MvcResult reactivada = cambiarEstado(reservaId, "CONFIRMADA", "Se aclaró el malentendido");
+        esperarEstado(reactivada, 200);
+        assertThat((String) leer(reactivada, "$.estadoPago")).isEqualTo("ABONADO");
+        assertThat(reactivada.getResponse().getContentAsString()).doesNotContain("motivoRechazo");
+    }
+
+    @Test
+    void unaYaJugadaQueVuelveAConfirmadaAvisaQueSeCompletaraSola() throws Exception {
+        long reservaId = crearParaCliente(fecha, "19:00", "20:00");
+        mover(reservaId, Instant.now().minus(Duration.ofHours(3)), Instant.now().minus(Duration.ofHours(2)));
+        esperarEstado(cambiarEstado(reservaId, "NO_ASISTIO", "No vinieron"), 200);
+        assertThat((Boolean) leer(previsualizarEstado(reservaId, "CONFIRMADA"), "$.seCompletaraSola")).isTrue();
+        esperarEstado(cambiarEstado(reservaId, "CONFIRMADA", "Sí vinieron"), 200);
+        // ya pasó: no se le dice "¡confirmada, te esperamos!", sino el aviso genérico
+        assertThat(notificaciones(cliente.id(), "RESERVA_ESTADO_CONFIRMADA")).isEqualTo(1);
+        assertThat(notificaciones(cliente.id(), "RESERVA_CONFIRMADA")).isZero();
     }
 
     // ===================== Pagos y reembolsos =====================

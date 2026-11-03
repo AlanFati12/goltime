@@ -27,9 +27,14 @@ public enum CodigoError {
     USUARIO_DESACTIVADO(403),
     CORREO_NO_VERIFICADO(403),
     CORREO_YA_REGISTRADO(409),
+    TELEFONO_YA_REGISTRADO(409),
     TOKEN_INVALIDO(400),
     SESION_INVALIDA(401),
     DEMASIADOS_INTENTOS(429),
+    /** El número escribió al bot pero pertenece a una cuenta que aún no lo ha vinculado (ADR 0018). */
+    WHATSAPP_SIN_VINCULAR(409),
+    /** El administrador apagó el bot de WhatsApp. */
+    SERVICIO_NO_DISPONIBLE(503),
     ERROR_INTERNO(500);
 
     private final int estadoHttp;

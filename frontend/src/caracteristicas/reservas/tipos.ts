@@ -86,6 +86,21 @@ export interface ResumenDia {
   horariosLibres: number
 }
 
+/** Efecto de un cambio de estado del administrador, calculado en el backend (ADR 0019). */
+export interface PrevisualizacionEstado {
+  actual: EstadoReserva
+  nuevo: EstadoReserva
+  ocuparaHorario: boolean
+  horarioLibre: boolean
+  liberaraHorario: boolean
+  cuentaParaPremios: boolean
+  dejaDeContarParaPremios: boolean
+  quedaReembolsoPendiente: boolean
+  seCompletaraSola: boolean
+  expiraraSola: boolean
+  avisaAlCliente: boolean
+}
+
 export interface PrevisualizacionReprogramacion {
   disponible: boolean
   precioActual: number

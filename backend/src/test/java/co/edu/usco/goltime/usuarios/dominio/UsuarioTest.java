@@ -16,7 +16,7 @@ class UsuarioTest {
     private static final Instant AHORA = Instant.parse("2026-10-18T10:00:00Z");
 
     private Usuario cliente() {
-        return Usuario.nuevoCliente(" Ana ", "Pérez", "  Ana.Perez@Correo.COM ", "300", null, "hash", AHORA);
+        return Usuario.nuevoCliente(" Ana ", "Pérez", "  Ana.Perez@Correo.COM ", "300 123 4567", null, "hash", AHORA);
     }
 
     @Test
@@ -31,7 +31,7 @@ class UsuarioTest {
 
     @Test
     void exigeAceptarLosTerminos() {
-        assertThatThrownBy(() -> Usuario.nuevoCliente("Ana", "Pérez", "a@b.co", "300", null, "hash", null))
+        assertThatThrownBy(() -> Usuario.nuevoCliente("Ana", "Pérez", "a@b.co", "3001234567", null, "hash", null))
                 .isInstanceOf(ExcepcionNegocio.class);
     }
 
@@ -92,5 +92,46 @@ class UsuarioTest {
     @Test
     void elAdministradorNaceConCorreoVerificado() {
         assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null, "hash").correoVerificado()).isTrue();
+    }
+
+    @Test
+    void elClienteGuardaSuWhatsappEnFormatoInternacionalYSinVerificar() {
+        Usuario u = cliente();
+        assertThat(u.telefono()).isEqualTo("+573001234567");
+        assertThat(u.telefonoVerificado()).isFalse();
+    }
+
+    @Test
+    void elClienteNoPuedeQuedarSinWhatsappPeroElAdministradorSi() {
+        assertThatThrownBy(() -> Usuario.nuevoCliente("Ana", "Pérez", "a@b.co", " ", null, "hash", AHORA))
+                .isInstanceOf(ExcepcionNegocio.class);
+        assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", " ", "hash").telefono()).isNull();
+    }
+
+    @Test
+    void cambiarElNumeroObligaAVerificarloDeNuevo() {
+        Usuario u = cliente();
+        u.vincularWhatsappTelefono("+573001234567");
+
+        u.actualizarPerfil("Ana", "Pérez", "+57 300 123 4567", null);
+        assertThat(u.telefonoVerificado()).as("mismo número escrito distinto").isTrue();
+
+        u.actualizarPerfil("Ana", "Pérez", "3200000000", null);
+        assertThat(u.telefono()).isEqualTo("+573200000000");
+        assertThat(u.telefonoVerificado()).isFalse();
+    }
+
+    @Test
+    void desvincularQuitaElTelefonoVerificadoYElLid() {
+        Usuario u = cliente();
+        u.vincularWhatsappTelefono("3009998877");
+        u.vincularWhatsappLid("164295400784036");
+        assertThat(u.telefono()).isEqualTo("+573009998877");
+        assertThat(u.whatsappVinculado()).isTrue();
+
+        u.desvincularWhatsapp();
+        assertThat(u.telefonoVerificado()).isFalse();
+        assertThat(u.whatsappLid()).isNull();
+        assertThat(u.whatsappVinculado()).isFalse();
     }
 }

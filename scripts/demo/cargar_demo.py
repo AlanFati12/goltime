@@ -133,11 +133,11 @@ def main():
             correo = f"{nombres.split()[0].lower()}.{apellidos.split()[0].lower()}@demo.goltime.test".replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
             cur.execute("""INSERT INTO usuarios (nombres, apellidos, correo, telefono, documento, clave_hash, rol, correo_verificado, acepto_terminos_en, puede_inscribir_equipos)
                            VALUES (%s, %s, %s, %s, %s, %s, 'CLIENTE', TRUE, now(), %s) RETURNING id""",
-                        (nombres, apellidos, correo, f"3{random.randint(100000000, 249999999)}", f"10{random.randint(10000000, 99999999)}", clave_hash, i in (1, 4)))
+                        (nombres, apellidos, correo, f"+573{random.randint(100000000, 249999999)}", f"10{random.randint(10000000, 99999999)}", clave_hash, i in (1, 4)))
             ids_clientes.append((cur.fetchone()[0], correo))
         cur.execute("SELECT id FROM usuarios WHERE rol = 'ADMIN' ORDER BY id LIMIT 1")
         admin_id = cur.fetchone()[0]
-        cur.execute("INSERT INTO clientes_mostrador (nombre, telefono) VALUES ('Equipo Los Amigos del Barrio', '3115550101'), ('Don Hernando Perdomo', '3125550202') RETURNING id")
+        cur.execute("INSERT INTO clientes_mostrador (nombre, telefono) VALUES ('Equipo Los Amigos del Barrio', '+573115550101'), ('Don Hernando Perdomo', '+573125550202') RETURNING id")
         mostradores = [f[0] for f in cur.fetchall()]
     bd.commit()
 

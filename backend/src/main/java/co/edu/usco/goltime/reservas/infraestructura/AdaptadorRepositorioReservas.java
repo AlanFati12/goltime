@@ -86,6 +86,16 @@ class AdaptadorRepositorioReservas implements RepositorioReservas {
     }
 
     @Override
+    public Optional<Reserva> buscarPorClaveIdempotenciaSinCuenta(long clienteMostradorId, String clave) {
+        return jpa.findByClienteMostradorIdAndClaveIdempotencia(clienteMostradorId, clave).map(AdaptadorRepositorioReservas::aDominio);
+    }
+
+    @Override
+    public Optional<Reserva> buscarPorCodigo(String codigo) {
+        return jpa.findByCodigo(codigo).map(AdaptadorRepositorioReservas::aDominio);
+    }
+
+    @Override
     public void bloquearPorClave(String clave) {
         jdbc.query("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", rs -> { }, clave);
     }
@@ -99,6 +109,17 @@ class AdaptadorRepositorioReservas implements RepositorioReservas {
     @Override
     public int contarActivasFuturas(long clienteId, Instant ahora) {
         return jpa.contarFuturas(clienteId, ACTIVAS, ahora);
+    }
+
+    @Override
+    public int contarActivasFuturasSinCuenta(long clienteMostradorId, Instant ahora) {
+        return jpa.contarFuturasSinCuenta(clienteMostradorId, ACTIVAS, ahora);
+    }
+
+    @Override
+    public List<Reserva> proximasSinCuenta(long clienteMostradorId, Instant ahora, int limite) {
+        return jpa.proximasSinCuenta(clienteMostradorId, ACTIVAS, ahora, PageRequest.of(0, limite)).stream()
+                .map(AdaptadorRepositorioReservas::aDominio).toList();
     }
 
     @Override

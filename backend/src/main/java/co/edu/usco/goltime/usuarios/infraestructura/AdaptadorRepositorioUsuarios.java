@@ -44,6 +44,21 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
     }
 
     @Override
+    public List<Usuario> buscarPorTelefono(String telefono) {
+        return jpa.findByTelefonoOrderByIdAsc(telefono).stream().map(AdaptadorRepositorioUsuarios::aDominio).toList();
+    }
+
+    @Override
+    public Optional<Usuario> buscarPorWhatsappLid(String lid) {
+        return jpa.findByWhatsappLid(lid).map(AdaptadorRepositorioUsuarios::aDominio);
+    }
+
+    @Override
+    public boolean existeTelefonoVerificado(String telefono, Long excluirId) {
+        return jpa.existeTelefonoVerificado(telefono, excluirId);
+    }
+
+    @Override
     public Usuario guardar(Usuario usuario) {
         UsuarioEntidad entidad = usuario.id() == null
                 ? nuevaEntidad(usuario)
@@ -93,6 +108,8 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
         e.setApellidos(u.apellidos());
         e.setCorreo(u.correo());
         e.setTelefono(u.telefono());
+        e.setTelefonoVerificado(u.telefonoVerificado());
+        e.setWhatsappLid(u.whatsappLid());
         e.setDocumento(u.documento());
         e.setClaveHash(u.claveHash());
         e.setActivo(u.activo());
@@ -108,7 +125,7 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
 
     static Usuario aDominio(UsuarioEntidad e) {
         return Usuario.reconstruir(e.getId(), e.getNombres(), e.getApellidos(), e.getCorreo(), e.getTelefono(),
-                e.getDocumento(), e.getClaveHash(), e.getRol(), e.isActivo(), e.isCorreoVerificado(),
+                e.isTelefonoVerificado(), e.getWhatsappLid(), e.getDocumento(), e.getClaveHash(), e.getRol(), e.isActivo(), e.isCorreoVerificado(),
                 e.getMotivoDesactivacion(), e.getDesactivadoPor(), e.getFechaDesactivacion(), e.getVersionToken(),
                 e.getUltimoLogin(), e.getAceptoTerminosEn(), e.isPuedeInscribirEquipos(), e.getCreadoEn());
     }

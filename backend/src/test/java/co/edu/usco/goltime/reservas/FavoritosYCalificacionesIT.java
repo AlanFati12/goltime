@@ -49,7 +49,7 @@ class FavoritosYCalificacionesIT extends BaseReservasIT {
         jdbc.update("UPDATE reservas SET inicio = ?, fin = ? WHERE id = ?", OffsetDateTime.ofInstant(inicio, ZoneOffset.UTC), OffsetDateTime.ofInstant(inicio.plus(Duration.ofHours(1)), ZoneOffset.UTC), id);
         jdbc.update("UPDATE ocupaciones_cancha SET rango = tstzrange(?, ?, '[)') WHERE reserva_id = ?", OffsetDateTime.ofInstant(inicio, ZoneOffset.UTC),
                 OffsetDateTime.ofInstant(inicio.plus(Duration.ofHours(1)), ZoneOffset.UTC), id);
-        esperarEstado(parchear("/api/v1/admin/reservas/" + id + "/estado", admin, Map.of("estado", "COMPLETADA")), 200);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + id + "/estado", admin, Map.of("estado", "COMPLETADA", "motivo", "Partido jugado")), 200);
         return id;
     }
 
@@ -131,7 +131,7 @@ class FavoritosYCalificacionesIT extends BaseReservasIT {
         assertThat((List<?>) leer(r, "$.ultimas")).hasSize(1); // solo la que trae comentario
 
         // el admin corrige una a "no asistió": su calificación deja de contar
-        esperarEstado(parchear("/api/v1/admin/reservas/" + r1 + "/estado", admin, Map.of("estado", "NO_ASISTIO")), 200);
+        esperarEstado(parchear("/api/v1/admin/reservas/" + r1 + "/estado", admin, Map.of("estado", "NO_ASISTIO", "motivo", "No se presentaron")), 200);
         MvcResult despues = obtener("/api/v1/publico/canchas/" + canchaId + "/calificaciones", null);
         assertThat((Integer) leer(despues, "$.total")).isEqualTo(1);
         assertThat(((Number) leer(despues, "$.promedio")).doubleValue()).isEqualTo(2.0);

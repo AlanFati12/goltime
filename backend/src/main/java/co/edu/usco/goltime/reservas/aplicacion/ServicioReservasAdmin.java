@@ -16,6 +16,7 @@ import co.edu.usco.goltime.compartido.dominio.Actor;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
 import co.edu.usco.goltime.compartido.dominio.FormatoTexto;
+import co.edu.usco.goltime.compartido.dominio.NumeroTelefono;
 import co.edu.usco.goltime.compartido.dominio.Pagina;
 import co.edu.usco.goltime.compartido.dominio.Rol;
 import co.edu.usco.goltime.compartido.dominio.SolicitudPagina;
@@ -23,16 +24,19 @@ import co.edu.usco.goltime.compartido.dominio.ZonaHoraria;
 import co.edu.usco.goltime.notificaciones.aplicacion.Notificador;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioPagos.PagoRegistrado;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.FiltroReservasAdmin;
+import co.edu.usco.goltime.reservas.aplicacion.Vistas.PrevisualizacionCambioEstado;
 import co.edu.usco.goltime.reservas.aplicacion.Vistas.VistaReserva;
 import co.edu.usco.goltime.reservas.dominio.CompletadaRevertidaEvento;
 import co.edu.usco.goltime.reservas.dominio.EstadoPago;
 import co.edu.usco.goltime.reservas.dominio.EstadoReserva;
 import co.edu.usco.goltime.reservas.dominio.MetodoPago;
+import co.edu.usco.goltime.reservas.dominio.OrigenReserva;
 import co.edu.usco.goltime.reservas.dominio.Pago;
 import co.edu.usco.goltime.reservas.dominio.PoliticaReservas;
 import co.edu.usco.goltime.reservas.dominio.Precio;
 import co.edu.usco.goltime.reservas.dominio.Reserva;
 import co.edu.usco.goltime.reservas.dominio.ReservaCompletadaEvento;
+import co.edu.usco.goltime.reservas.dominio.ReservaLiberadaEvento;
 import co.edu.usco.goltime.reservas.dominio.TipoPago;
 import co.edu.usco.goltime.sedes.aplicacion.ServicioCanchas;
 import co.edu.usco.goltime.sedes.aplicacion.Vistas.VistaCancha;
@@ -41,7 +45,7 @@ import co.edu.usco.goltime.usuarios.dominio.Usuario;
 
 /**
  * Casos de uso del administrador sobre reservas: crearlas a nombre de un cliente (registrado o de mostrador),
- * marcarlas como jugadas o no asistidas, registrar pagos, abonos y reembolsos, y exportar el listado.
+ * llevarlas a cualquier estado (ADR 0019), registrar pagos, abonos y reembolsos, y exportar el listado.
  * Cada acción queda en el historial de la reserva y en la bitácora de auditoría.
  */
 @Service
@@ -125,7 +129,7 @@ public class ServicioReservasAdmin {
             if (d.mostradorNombre() == null || d.mostradorNombre().isBlank() || d.mostradorTelefono() == null || d.mostradorTelefono().isBlank()) {
                 throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Indica el cliente registrado o el nombre y teléfono del cliente de mostrador.");
             }
-            mostradorId = mostrador.buscarOCrear(d.mostradorNombre().trim(), d.mostradorTelefono().trim());
+            mostradorId = mostrador.buscarOCrear(d.mostradorNombre().trim(), NumeroTelefono.de(d.mostradorTelefono()).valor());
         }
 
         Precio precio = calculos.calcularPrecio(cancha, d.inicio(), d.fin());
@@ -156,28 +160,72 @@ public class ServicioReservasAdmin {
     // Cambios de estado
     // ===================================================================================
 
-    /** Marca la reserva como COMPLETADA (ya terminó) o NO_ASISTIO (ya empezó; también corrige una completada por error). */
+    /**
+     * Lleva la reserva a cualquier estado, aunque no haya llegado la fecha (ADR 0019). Con motivo obligatorio, que queda
+     * en el historial y en la auditoría. Si el estado nuevo vuelve a ocupar la cancha y el horario ya lo tomó otra
+     * reserva o un bloqueo, responde {@code RESERVA_SOLAPADA} y no cambia nada; si la libera, avisa a la lista de espera.
+     * Entrar o salir de COMPLETADA otorga o revoca premios.
+     */
     @Transactional
-    public VistaReserva cambiarEstado(long id, Actor admin, EstadoReserva destino) {
+    public VistaReserva cambiarEstado(long id, Actor admin, EstadoReserva destino, String motivo) {
         Reserva reserva = cargar(id);
         EstadoReserva antes = reserva.estado();
         Instant ahora = reloj.instant();
-        switch (destino) {
-            case COMPLETADA -> reserva.completar(ahora);
-            case NO_ASISTIO -> reserva.marcarNoAsistio(ahora);
-            default -> throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS, "Solo se puede marcar como COMPLETADA o NO_ASISTIO.");
-        }
+        reserva.cambiarEstadoPorAdmin(admin.id(), destino, motivo, ahora, configuracion.politica().calcularExpiracion(ahora, reserva.inicio()));
         Reserva guardada = reservas.guardar(reserva);
-        historial.registrar(new EntradaHistorial(null, id, destino.name(), admin.id(), null, Rol.ADMIN, null, Map.of("estado", antes.name()),
-                Map.of("estado", destino.name()), ahora));
-        auditoria.registrar("MARCAR_" + destino.name() + "_RESERVA", ENTIDAD, id, Map.of("estado", Map.of("antes", antes.name(), "despues", destino.name())), null);
-        if (antes == EstadoReserva.COMPLETADA && destino != EstadoReserva.COMPLETADA) {
+        String ocupacion = null;
+        if (!antes.conservaOcupacion() && destino.conservaOcupacion()) {
+            ocupaciones.ocupar(id, CalculosReserva.idsQueOcupa(canchas.detalleAdmin(guardada.canchaId())), guardada.inicio(), guardada.fin());
+            ocupacion = "OCUPADA";
+        } else if (antes.conservaOcupacion() && !destino.conservaOcupacion()) {
+            ocupaciones.liberar(id);
+            eventos.publishEvent(new ReservaLiberadaEvento(id, guardada.clienteId()));
+            ocupacion = "LIBERADA";
+        }
+
+        String motivoValido = motivo.trim();
+        Map<String, Object> despues = new LinkedHashMap<>();
+        despues.put("estado", destino.name());
+        if (ocupacion != null) {
+            despues.put("horario", ocupacion);
+        }
+        historial.registrar(new EntradaHistorial(null, id, "ESTADO_CAMBIADO", admin.id(), null, Rol.ADMIN, motivoValido,
+                Map.of("estado", antes.name()), despues, ahora));
+        Map<String, Object> cambios = new LinkedHashMap<>();
+        cambios.put("estado", Map.of("antes", antes.name(), "despues", destino.name()));
+        if (ocupacion != null) {
+            cambios.put("horario", ocupacion);
+        }
+        auditoria.registrar("CAMBIAR_ESTADO_RESERVA", ENTIDAD, id, cambios, motivoValido);
+
+        if (antes == EstadoReserva.COMPLETADA) {
             eventos.publishEvent(new CompletadaRevertidaEvento(id, guardada.clienteId()));
         }
         if (destino == EstadoReserva.COMPLETADA) {
             eventos.publishEvent(new ReservaCompletadaEvento(id, guardada.clienteId(), guardada.canchaId(), guardada.duracionMin()));
         }
+        servicio.avisarCambioDeEstado(guardada, motivoValido);
         return servicio.detalle(id, admin);
+    }
+
+    /** Qué pasaría al cambiar el estado, sin cambiar nada (para que el administrador confirme sabiendo el efecto). */
+    @Transactional(readOnly = true)
+    public PrevisualizacionCambioEstado previsualizarCambioEstado(long id, EstadoReserva destino) {
+        Reserva r = cargar(id);
+        EstadoReserva actual = r.estado();
+        if (destino == actual) {
+            throw new ExcepcionNegocio(CodigoError.ESTADO_INVALIDO, "La reserva ya está " + destino.etiqueta() + ".");
+        }
+        Instant ahora = reloj.instant();
+        boolean ocupara = !actual.conservaOcupacion() && destino.conservaOcupacion();
+        boolean libre = !ocupara || !ocupaciones.hayOcupacion(CalculosReserva.idsQueOcupa(canchas.detalleAdmin(r.canchaId())), r.inicio(), r.fin(), r.id());
+        boolean liberara = actual.conservaOcupacion() && !destino.conservaOcupacion();
+        return new PrevisualizacionCambioEstado(actual, destino, ocupara, libre, liberara,
+                destino == EstadoReserva.COMPLETADA, actual == EstadoReserva.COMPLETADA,
+                liberara && r.montoPagado() > 0,
+                destino == EstadoReserva.CONFIRMADA && !r.fin().isAfter(ahora),
+                destino == EstadoReserva.PENDIENTE && !configuracion.politica().calcularExpiracion(ahora, r.inicio()).isAfter(ahora),
+                r.clienteId() != null || r.origen() == OrigenReserva.WHATSAPP);
     }
 
     // ===================================================================================

@@ -12,6 +12,8 @@ goltime:
     directorio: target/uploads-pruebas
   swagger:
     habilitado: true
+  whatsapp:
+    clave-integracion: clave-de-integracion-solo-para-pruebas-0123456789
   administrador-inicial:
     correo: admin-pruebas@goltime.test
     clave: ClaveAdmin2026

@@ -111,7 +111,12 @@ public final class DtosReservas {
             @NotBlank @Size(max = 500) String motivo) {
     }
 
-    public record SolicitudEstadoReserva(@NotNull EstadoReserva estado) {
+    public record SolicitudEstadoReserva(@NotNull EstadoReserva estado, @NotBlank @Size(max = 500) String motivo) {
+    }
+
+    public record RespuestaPrevisualizacionEstado(EstadoReserva actual, EstadoReserva nuevo, boolean ocuparaHorario, boolean horarioLibre,
+            boolean liberaraHorario, boolean cuentaParaPremios, boolean dejaDeContarParaPremios, boolean quedaReembolsoPendiente,
+            boolean seCompletaraSola, boolean expiraraSola, boolean avisaAlCliente) {
     }
 
     public record SolicitudPago(@Min(1) @Max(100_000_000) int monto, @NotNull MetodoPago metodo, @Size(max = 100) String referencia) {

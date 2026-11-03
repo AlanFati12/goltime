@@ -6,9 +6,11 @@ import type {
   Agenda,
   Bloqueo,
   ClienteMostrador,
+  EstadoReserva,
   MetodoPago,
   Pago,
   PrevisualizacionBloqueo,
+  PrevisualizacionEstado,
   RegistroAuditado,
   Reserva,
 } from '../tipos'
@@ -91,12 +93,39 @@ export function useAccionesPago() {
         ).data,
       onSuccess: alTerminar,
     }),
-    marcar: useMutation({
-      mutationFn: async (p: { id: number; estado: 'COMPLETADA' | 'NO_ASISTIO' }) =>
-        (await api.patch<Reserva>(`/admin/reservas/${p.id}/estado`, { estado: p.estado })).data,
-      onSuccess: alTerminar,
-    }),
   }
+}
+
+// ---------- Cambio de estado (ADR 0019) ----------
+
+/** Qué pasaría al llevar la reserva a {@code estado}; no consulta nada mientras no se elija uno. */
+export const usePrevisualizacionEstado = (id: number, estado: EstadoReserva | null) =>
+  useQuery({
+    queryKey: ['reservas', 'previsualizar-estado', id, estado],
+    queryFn: async () =>
+      (
+        await api.get<PrevisualizacionEstado>(`/admin/reservas/${id}/estado/previsualizar`, {
+          params: { estado },
+        })
+      ).data,
+    enabled: estado !== null,
+  })
+
+export function useCambiarEstadoReserva() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: async (p: { id: number; estado: EstadoReserva; motivo: string }) =>
+      (
+        await api.patch<Reserva>(`/admin/reservas/${p.id}/estado`, {
+          estado: p.estado,
+          motivo: p.motivo,
+        })
+      ).data,
+    onSuccess: () => {
+      refrescar(cliente)
+      void cliente.invalidateQueries({ queryKey: ['premios'] })
+    },
+  })
 }
 
 export function useBuscarClientesMostrador(busqueda: string) {

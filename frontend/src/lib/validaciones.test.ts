@@ -40,6 +40,14 @@ describe('esquemaRegistro', () => {
       false,
     )
   })
+  it('exige el WhatsApp y lo entrega con indicativo', () => {
+    const r = esquemaRegistro.safeParse({ ...registroValido, telefono: '300 123 4567' })
+    expect(r.success && r.data.telefono).toBe('+573001234567')
+    expect(esquemaRegistro.safeParse({ ...registroValido, telefono: '' }).success).toBe(false)
+    expect(esquemaRegistro.safeParse({ ...registroValido, telefono: '8712345' }).success).toBe(
+      false,
+    )
+  })
 })
 
 describe('esquemaCambioClave', () => {
