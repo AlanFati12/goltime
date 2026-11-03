@@ -8,5 +8,9 @@
 		-Server
 	}
 
+	# La API del bot de WhatsApp solo la usa n8n por la red interna de Docker; desde internet no existe.
+	@integracion path /api/v1/integracion/*
+	respond @integracion 404
+
 	reverse_proxy web:80
 }
