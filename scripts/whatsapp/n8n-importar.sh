@@ -6,14 +6,16 @@
 # - Genera los workflows desde integraciones/n8n/construir_workflows.py.
 # - Crea o actualiza las credenciales de la API de Goltime y de Evolution con los secretos de .env
 #   (pasan por un archivo temporal que se borra al terminar; nunca quedan en el repo).
-# - Crea la credencial «Goltime · OpenAI» vacía SOLO si no existe: la API key la pegas tú en n8n.
+# - Crea la credencial «Goltime · OpenAI»: si hay OPENAI_API_KEY en .env la usa (y la actualiza); si no, la crea vacía
+#   SOLO si no existe y la API key la pegas tú en n8n.
 # - Importa, publica los workflows y reinicia n8n para que registre los webhooks.
 # Se puede correr las veces que haga falta (por ejemplo después de cambiar el generador).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 set -a; . ./.env; set +a
 
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.whatsapp.yml)
+# En producción el .env define COMPOSE_FILE (docker-compose.produccion.yml:docker-compose.produccion-bot.yml).
+if [ -n "${COMPOSE_FILE:-}" ]; then COMPOSE=(docker compose); else COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.whatsapp.yml); fi
 N8N=("${COMPOSE[@]}" exec -T n8n)
 DESTINO=/tmp/goltime-n8n
 TEMPORAL=$(mktemp -d)
@@ -31,7 +33,7 @@ credenciales = [
 ]
 json.dump(credenciales, open(os.path.join(sys.argv[1], "credenciales.json"), "w"))
 json.dump([{"id": "GoltimeOpenAi001", "name": "Goltime · OpenAI", "type": "openAiApi",
-            "data": {"apiKey": "pega-aqui-la-api-key-de-openai"}}], open(os.path.join(sys.argv[1], "openai.json"), "w"))
+            "data": {"apiKey": os.environ.get("OPENAI_API_KEY") or "pega-aqui-la-api-key-de-openai"}}], open(os.path.join(sys.argv[1], "openai.json"), "w"))
 EOF
 
 "${N8N[@]}" mkdir -p "$DESTINO"
@@ -39,7 +41,7 @@ EOF
 "${COMPOSE[@]}" cp integraciones/n8n/workflows "n8n:$DESTINO/" >/dev/null 2>&1
 
 "${N8N[@]}" n8n import:credentials --input="$DESTINO/credenciales.json" 2>&1 | grep -iE "import|error" || true
-if "${N8N[@]}" n8n export:credentials --id=GoltimeOpenAi001 --output="$DESTINO/existe.json" >/dev/null 2>&1; then
+if [ -z "${OPENAI_API_KEY:-}" ] && "${N8N[@]}" n8n export:credentials --id=GoltimeOpenAi001 --output="$DESTINO/existe.json" >/dev/null 2>&1; then
   echo "La credencial «Goltime · OpenAI» ya existe: se conserva tu API key."
 else
   "${COMPOSE[@]}" cp "$TEMPORAL/openai.json" "n8n:$DESTINO/openai.json" >/dev/null 2>&1
