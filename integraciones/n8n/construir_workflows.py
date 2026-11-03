@@ -20,10 +20,15 @@ MODELO = "gpt-6-luna"
 # «escribiendo…» todo ese tiempo. ENVIO_MIN_MS es lo mínimo que se muestra «escribiendo…» antes de enviar.
 ESPERA_MS = 10000
 ENVIO_MIN_MS = 1500
+# Mensajes seguidos de una misma persona se tratan como uno solo: el bot espera este silencio (en segundos)
+# desde el último mensaje antes de contestar. Más alto agrupa mejor pero responde más tarde.
+SILENCIO_S = 6
+TABLA_BUFFER = "goltime_buffer_mensajes"
 
 CRED_API = {"httpHeaderAuth": {"id": "GoltimeApiCred01", "name": "Goltime · API del bot"}}
 CRED_EVOLUTION = {"httpHeaderAuth": {"id": "GoltimeEvoCred01", "name": "Goltime · Evolution API"}}
 CRED_OPENAI = {"openAiApi": {"id": "GoltimeOpenAi001", "name": "Goltime · OpenAI"}}
+CRED_BUFFER = {"postgres": {"id": "GoltimePgCred01", "name": "Goltime · Buffer de mensajes"}}
 
 NUMERO = "={{ $('Extraer mensaje').first().json.numero || '' }}"
 # Si WhatsApp no comparte el teléfono, quien escribe se identifica por su @lid (ADR 0018).
@@ -67,6 +72,9 @@ CANCELAR O REPROGRAMAR
 TORNEOS
 - torneos_activos te da los torneos y su id. Marcadores: partidos_torneo con jugados=true; próximos partidos: partidos_torneo con jugados=false o proximos_partidos. Posiciones: tabla_torneo.
 - Si preguntan cómo terminó un partido, usa resumen_partido y responde con su campo «resumen», sin agregar nada que no venga ahí.
+
+VARIOS MENSAJES SEGUIDOS
+- Si el mensaje trae varias líneas, la persona escribió varios mensajes seguidos: léelos como uno solo y respóndelos todos juntos en un único mensaje, sin contestar línea por línea.
 
 ESTILO
 - Usa *negrita* de WhatsApp solo para códigos, horas y precios. Nada de tablas ni títulos; listas cortas con «•»."""
@@ -139,6 +147,15 @@ def evolution(nombre, posicion, ruta, cuerpo, tiempo_ms):
     }, credentials=CRED_EVOLUTION, onError="continueRegularOutput", alwaysOutputData=True)
 
 
+def postgres(nombre, posicion, consulta, parametros):
+    """Consulta a la tabla de mensajes pendientes (base de Evolution). Siempre con parámetros, nunca con texto pegado."""
+    return nodo(nombre, "n8n-nodes-base.postgres", 2.5, posicion, {
+        "operation": "executeQuery",
+        "query": consulta,
+        "options": {"queryReplacement": parametros},
+    }, credentials=CRED_BUFFER)
+
+
 def si(nombre, posicion, expresion):
     return nodo(nombre, "n8n-nodes-base.if", 2.2, posicion, {
         "conditions": {
@@ -177,6 +194,7 @@ return [{ json: {
   numero: deTelefono ? '+' + deTelefono.split('@')[0].split(':')[0] : null,
   lid: !deTelefono && chatId.endsWith('@lid') ? chatId.split('@')[0] : null,
   idMensaje: clave.id || null,
+  enviadoEn: Number(datos.messageTimestamp) || Math.floor(Date.now() / 1000),
   texto,
   respuestaFija,
   recibidoEn: Date.now(),
@@ -212,6 +230,37 @@ const entrada = `[Contexto] Hoy es ${c.dia} (${c.fecha}), son las ${c.hora} en B
   + `\n[Mensaje] ${msg.texto}`;
 return [{ json: { respuestaFija: null, entrada } }];"""
 
+UNIR = r"""// Deja el mensaje listo para el resto del flujo. Si vino agrupado, el texto es la suma de los mensajes seguidos y el
+// tiempo de referencia es el del último (así la respuesta sale unos 10 s después de que la persona dejó de escribir).
+// Los mensajes que no son de texto no se agrupan: pasan tal cual y reciben su respuesta fija.
+const base = $('Leer mensaje').first().json;
+const e = $input.first().json;
+if (e.texto_junto === undefined) return [{ json: base }];
+return [{ json: {
+  ...base,
+  texto: String(e.texto_junto).slice(0, 3000),
+  idMensaje: e.ultimo_id || base.idMensaje,
+  recibidoEn: Number(e.ultimo_ms) || base.recibidoEn,
+  agrupados: Number(e.cantidad) || 1,
+} }];"""
+
+SQL_GUARDAR = f"INSERT INTO {TABLA_BUFFER} (chat, msg_id, enviado, texto) VALUES ($1, $2, $3, $4)"
+# Toma y borra, de una sola vez, todos los mensajes pendientes del chat, pero solo si el último lleva al menos
+# SILENCIO_S segundos quieto. Si dos ejecuciones llegan a la vez, la segunda no recibe nada y termina.
+SQL_TOMAR = f"""WITH tomados AS (
+  DELETE FROM {TABLA_BUFFER}
+  WHERE chat = $1
+    AND NOT EXISTS (SELECT 1 FROM {TABLA_BUFFER}
+                    WHERE chat = $1 AND creado > clock_timestamp() - interval '{SILENCIO_S} seconds')
+  RETURNING id, msg_id, enviado, texto, creado
+)
+SELECT string_agg(texto, E'\n' ORDER BY enviado, id) AS texto_junto,
+       count(*) AS cantidad,
+       (array_agg(msg_id ORDER BY enviado DESC, id DESC))[1] AS ultimo_id,
+       (extract(epoch FROM max(creado)) * 1000)::bigint AS ultimo_ms
+FROM tomados
+HAVING count(*) > 0"""
+
 FIJA = "$json.respuestaFija"
 MENSAJE = "$('Extraer mensaje').first().json"
 
@@ -234,8 +283,17 @@ def bot():
         nodo("Mensaje de WhatsApp", "n8n-nodes-base.webhook", 2, [0, 300],
              {"httpMethod": "POST", "path": "goltime-whatsapp", "responseMode": "onReceived", "options": {}},
              webhookId="goltime-whatsapp"),
-        nodo("Extraer mensaje", "n8n-nodes-base.code", 2, [220, 300], {"jsCode": EXTRAER}),
+        nodo("Leer mensaje", "n8n-nodes-base.code", 2, [220, 300], {"jsCode": EXTRAER}),
         si("¿Es para el bot?", [440, 300], "$json.procesar"),
+        # Agrupación: cada mensaje de texto se guarda y espera SILENCIO_S; el que ve que nadie escribió después
+        # se lleva todos los pendientes juntos y sigue; los demás terminan sin responder.
+        si("¿Es un texto?", [600, 300], "$json.respuestaFija === null"),
+        postgres("Guardar mensaje", [760, 200], SQL_GUARDAR,
+                 "={{ [$json.chatId, $json.idMensaje || '', $json.enviadoEn, $json.texto] }}"),
+        nodo("Esperar más mensajes", "n8n-nodes-base.wait", 1.1, [920, 200],
+             {"resume": "timeInterval", "amount": SILENCIO_S, "unit": "seconds"}, webhookId="goltime-esperar-mensajes"),
+        postgres("Tomar mensajes juntos", [1080, 200], SQL_TOMAR, "={{ [$('Leer mensaje').first().json.chatId] }}"),
+        nodo("Extraer mensaje", "n8n-nodes-base.code", 2, [1240, 300], {"jsCode": UNIR}),
         # En línea y «escribiendo…» apenas llega el mensaje. sendPresence espera todo el tiempo pedido antes de
         # responder; n8n corta la espera al segundo y medio, pero Evolution sigue mostrando «escribiendo…».
         evolution("En línea", [600, 300], f"/instance/setPresence/{INSTANCIA}", "{ presence: 'available' }", 5000),
@@ -325,10 +383,23 @@ def bot():
         h["position"] = [x + (i % 5) * 180, y + (i // 5) * 160]
     nodos += herramientas
 
+    # Los nodos de agrupación se insertaron antes de «En línea»: se corre hacia la derecha todo lo que va después.
+    de_agrupacion = {"¿Es un texto?", "Guardar mensaje", "Esperar más mensajes", "Tomar mensajes juntos", "Extraer mensaje"}
+    for n in nodos:
+        if n["name"] not in de_agrupacion and n["position"][0] >= 600:
+            n["position"][0] += 800
+
     conexiones = {
-        "Mensaje de WhatsApp": {"main": [[{"node": "Extraer mensaje", "type": "main", "index": 0}]]},
-        "Extraer mensaje": {"main": [[{"node": "¿Es para el bot?", "type": "main", "index": 0}]]},
-        "¿Es para el bot?": {"main": [[{"node": "En línea", "type": "main", "index": 0}], []]},
+        "Mensaje de WhatsApp": {"main": [[{"node": "Leer mensaje", "type": "main", "index": 0}]]},
+        "Leer mensaje": {"main": [[{"node": "¿Es para el bot?", "type": "main", "index": 0}]]},
+        "¿Es para el bot?": {"main": [[{"node": "¿Es un texto?", "type": "main", "index": 0}], []]},
+        # Texto: se agrupa. Cualquier otra cosa (audio, imagen…) sigue directo y recibe su respuesta fija.
+        "¿Es un texto?": {"main": [[{"node": "Guardar mensaje", "type": "main", "index": 0}],
+                                   [{"node": "Extraer mensaje", "type": "main", "index": 0}]]},
+        "Guardar mensaje": {"main": [[{"node": "Esperar más mensajes", "type": "main", "index": 0}]]},
+        "Esperar más mensajes": {"main": [[{"node": "Tomar mensajes juntos", "type": "main", "index": 0}]]},
+        "Tomar mensajes juntos": {"main": [[{"node": "Extraer mensaje", "type": "main", "index": 0}]]},
+        "Extraer mensaje": {"main": [[{"node": "En línea", "type": "main", "index": 0}]]},
         "En línea": {"main": [[{"node": "Escribiendo", "type": "main", "index": 0}]]},
         "Escribiendo": {"main": [[{"node": "¿Respuesta fija?", "type": "main", "index": 0}]]},
         "¿Respuesta fija?": {"main": [[{"node": "Armar respuesta", "type": "main", "index": 0}],
