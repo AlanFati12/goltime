@@ -16,7 +16,11 @@ export function Revelar({
   como?: ElementType
   /** Posición entre hermanos: cada paso retrasa la entrada 80 ms. */
   i?: number
-  /** Descubre el contenido de abajo hacia arriba (para fotos). */
+  /**
+   * Descubre el contenido de abajo hacia arriba (para fotos). El recorte se aplica a una capa interior:
+   * el elemento que se observa no puede estar recortado, o el navegador lo vería siempre fuera de
+   * pantalla y nunca lo revelaría.
+   */
   imagen?: boolean
   className?: string
   style?: CSSProperties
@@ -26,10 +30,10 @@ export function Revelar({
   return (
     <Componente
       ref={ref}
-      className={cn(imagen ? 'revelar-imagen' : 'revelar', className)}
+      className={cn(imagen ? 'revelar-contenedor' : 'revelar', className)}
       style={{ '--i': i, ...style } as CSSProperties}
     >
-      {children}
+      {imagen ? <div className="revelar-imagen absolute inset-0">{children}</div> : children}
     </Componente>
   )
 }
