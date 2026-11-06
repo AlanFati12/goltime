@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useSesion } from '@/caracteristicas/autenticacion/almacenSesion'
 import { CampanaNotificaciones } from '@/caracteristicas/notificaciones/CampanaNotificaciones'
+import { BotonWhatsapp } from '@/caracteristicas/whatsapp/BotonWhatsapp'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { cn } from '@/lib/utils'
@@ -237,6 +238,8 @@ export function LayoutPublico() {
           </Suspense>
         </div>
       </main>
+
+      {!esAcceso && pathname !== '/reservar' && <BotonWhatsapp />}
 
       <PiePagina />
     </div>
