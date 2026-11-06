@@ -3,6 +3,8 @@ package co.edu.usco.goltime.autenticacion.infraestructura;
 import java.time.Duration;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -25,6 +27,8 @@ import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
  * en nombre de la persona, solo se comprueba una firma.
  */
 final class VerificadorGoogleNimbus implements VerificadorGoogle {
+
+    private static final Logger log = LoggerFactory.getLogger(VerificadorGoogleNimbus.class);
 
     private static final String CLAVES_PUBLICAS = "https://www.googleapis.com/oauth2/v3/certs";
     private static final Set<String> EMISORES = Set.of("https://accounts.google.com", "accounts.google.com");
@@ -52,6 +56,8 @@ final class VerificadorGoogleNimbus implements VerificadorGoogle {
         try {
             jwt = decodificador.decode(credencial);
         } catch (JwtException e) {
+            // Solo el motivo (firma, destinatario, vigencia...), nunca el token.
+            log.warn("Credencial de Google rechazada: {}", e.getMessage());
             throw new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS, "No pudimos verificar tu cuenta de Google. Intenta de nuevo.");
         }
         String correo = jwt.getClaimAsString("email");
