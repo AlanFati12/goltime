@@ -132,10 +132,25 @@ export function PaginaNuevaReservaAdmin() {
             onChange={(e) => e.target.value && (setFecha(e.target.value), setHoraInicio(null))}
           />
         </div>
-        {sede && sede.canchas.length === 0 && (
-          <Alerta tipo="aviso">Esta sede no tiene canchas.</Alerta>
+        {sedes.isSuccess && sedes.data.length === 0 && (
+          <Alerta tipo="aviso">
+            Aún no hay sedes. Crea una sede con sus canchas en{' '}
+            <Link to="/admin/sedes/nueva" className="font-semibold underline">
+              Sedes
+            </Link>{' '}
+            para poder reservar.
+          </Alerta>
         )}
-        {disponibilidad.isPending && <Cargando texto="Cargando horarios…" />}
+        {sede && sede.canchas.length === 0 && (
+          <Alerta tipo="aviso">
+            Esta sede no tiene canchas.{' '}
+            <Link to={`/admin/sedes/${sede.id}`} className="font-semibold underline">
+              Agrégalas aquí
+            </Link>
+            .
+          </Alerta>
+        )}
+        {sedeActual !== null && disponibilidad.isPending && <Cargando texto="Cargando horarios…" />}
         <div className="flex flex-col gap-3">
           {disponibilidad.data?.canchas.map((c) => (
             <div
