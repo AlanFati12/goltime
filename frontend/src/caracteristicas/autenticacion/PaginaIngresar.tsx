@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { Alerta } from '@/componentes/ui/Alerta'
 import { Boton } from '@/componentes/ui/Boton'
@@ -60,8 +60,15 @@ export function PaginaIngresar() {
       descripcion="Entra con tu cuenta de Google. Si es tu primera vez, tu cuenta se crea al instante."
       pie={
         <>
-          Al continuar aceptas los términos de uso y el tratamiento de tus datos personales, que
-          usamos solo para gestionar tus reservas.
+          Al continuar aceptas los{' '}
+          <Link to="/terminos" className="underline">
+            términos de uso
+          </Link>{' '}
+          y el tratamiento de tus datos personales según la{' '}
+          <Link to="/privacidad" className="underline">
+            política de privacidad
+          </Link>
+          .
         </>
       }
     >

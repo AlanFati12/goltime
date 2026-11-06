@@ -300,6 +300,14 @@ function PiePagina() {
       <div className="border-noche-borde border-t">
         <div className="contenedor flex flex-col gap-2 py-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <span>Universidad Surcolombiana · INNOVASOFT IX · 2026</span>
+          <span className="flex gap-4">
+            <Link to="/privacidad" className="hover:text-white">
+              Privacidad
+            </Link>
+            <Link to="/terminos" className="hover:text-white">
+              Términos
+            </Link>
+          </span>
           <span>Fotografías: {CREDITOS_FOTOS.join(', ')} (Unsplash).</span>
         </div>
       </div>

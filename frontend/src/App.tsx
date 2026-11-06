@@ -80,6 +80,14 @@ const PaginaSedeDetalle = perezosa(
   () => import('@/caracteristicas/sedes/PaginaSedeDetalle'),
   'PaginaSedeDetalle',
 )
+const PaginaPrivacidad = perezosa(
+  () => import('@/caracteristicas/legal/PaginasLegales'),
+  'PaginaPrivacidad',
+)
+const PaginaTerminos = perezosa(
+  () => import('@/caracteristicas/legal/PaginasLegales'),
+  'PaginaTerminos',
+)
 const PaginaSedes = perezosa(() => import('@/caracteristicas/sedes/PaginaSedes'), 'PaginaSedes')
 const PaginaEquipoAdmin = perezosa(
   () => import('@/caracteristicas/torneos/admin/PaginaEquipoAdmin'),
@@ -214,6 +222,8 @@ export default function App() {
                 <Route path="equipos/:id" element={<PaginaEquipoPublico />} />
                 <Route path="jugadores/:id" element={<PaginaJugadorPublico />} />
                 <Route path="ingresar" element={<PaginaIngresar />} />
+                <Route path="privacidad" element={<PaginaPrivacidad />} />
+                <Route path="terminos" element={<PaginaTerminos />} />
                 <Route element={<RutaProtegida rol="CLIENTE" permitirIncompleto />}>
                   <Route path="completar-perfil" element={<PaginaCompletarPerfil />} />
                 </Route>

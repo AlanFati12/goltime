@@ -54,7 +54,14 @@ describe('PaginaIngresar', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText(/contraseña/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/regístrate|crear cuenta/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/aceptas los términos/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /términos de uso/i })).toHaveAttribute(
+      'href',
+      '/terminos',
+    )
+    expect(screen.getByRole('link', { name: /política de privacidad/i })).toHaveAttribute(
+      'href',
+      '/privacidad',
+    )
   })
 
   it('avisa si el ingreso con Google todavía no está configurado', async () => {
