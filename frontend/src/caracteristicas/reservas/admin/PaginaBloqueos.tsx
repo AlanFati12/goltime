@@ -90,7 +90,7 @@ export function PaginaBloqueos() {
         </label>
       </Tarjeta>
 
-      {isPending && <Cargando texto="Cargando bloqueos…" />}
+      {isPending && <Cargando texto="Cargando bloqueos…" variante="tabla" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && <EstadoVacio icono={Ban} titulo="No hay bloqueos" />}
       <ul className="flex flex-col gap-3">

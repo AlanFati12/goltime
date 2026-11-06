@@ -9,5 +9,7 @@ interface RepositorioFotosCanchaJpa extends JpaRepository<FotoCanchaEntidad, Lon
 
     List<FotoCanchaEntidad> findByCanchaIdOrderByOrdenAscIdAsc(long canchaId);
 
+    List<FotoCanchaEntidad> findByCanchaIdInOrderByOrdenAscIdAsc(java.util.Collection<Long> canchaIds);
+
     Optional<FotoCanchaEntidad> findByIdAndCanchaId(long id, long canchaId);
 }

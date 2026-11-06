@@ -1,5 +1,3 @@
-import { es } from 'date-fns/locale'
-import { formatInTimeZone } from 'date-fns-tz'
 import { ArrowRight, ArrowUpRight, Clock, MapPin, Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -14,8 +12,9 @@ import { marcador, nombreLado, textoRonda } from '@/caracteristicas/torneos/util
 import { Esqueleto } from '@/componentes/ui/Cargando'
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
 import { Revelar } from '@/componentes/ui/Revelar'
-import { formatearCOP, formatearHora, ZONA_HORARIA } from '@/lib/formato'
+import { diaDelMes, diaSemanaCorto, formatearCOP, formatearHora } from '@/lib/formato'
 import { cn } from '@/lib/utils'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 const PASOS = [
   {
@@ -66,32 +65,39 @@ function Portada() {
     <section className="bg-noche relative isolate flex min-h-[100svh] items-end overflow-hidden text-white">
       {/* Foto de una cancha enmallada de noche, con un desplazamiento lento al hacer scroll. */}
       <div className="grano absolute inset-0 -z-10">
-        <img
+        <ImagenSitio
           src="/img/hero-cancha-nocturna.webp"
           alt=""
-          fetchPriority="high"
+          prioridad
           className="paralaje absolute inset-0 size-full object-cover object-[60%_center]"
         />
         <div className="from-noche via-noche/80 absolute inset-0 bg-gradient-to-r to-transparent" />
         <div className="from-noche absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t to-transparent" />
         {/* El reflector: un halo lima que respira sobre la cancha. */}
-        <div className="bg-volt/25 animate-latido absolute top-[8%] right-[12%] size-[38rem] rounded-full blur-[140px] motion-reduce:animate-none" />
+        <div
+          className="animate-latido absolute top-[8%] right-[12%] size-[38rem] rounded-full motion-reduce:animate-none"
+          style={{
+            background:
+              'radial-gradient(closest-side, color-mix(in srgb, var(--color-volt) 28%, transparent), transparent)',
+          }}
+          aria-hidden="true"
+        />
       </div>
 
       <div className="contenedor pt-36 pb-10 sm:pb-14">
         <h1 className="font-titulo text-[clamp(3.4rem,9vw,8.25rem)] leading-[0.86] font-extrabold tracking-[-0.025em] uppercase">
-          <span className="animate-subir block [animation-delay:700ms]">
+          <span className="animate-subir block [animation-delay:380ms]">
             Reserva tu cancha<span className="text-volt">,</span>
           </span>
-          <span className="animate-subir text-volt-vivo block [animation-delay:820ms]">
+          <span className="animate-subir text-volt-vivo block [animation-delay:460ms]">
             juega hoy.
           </span>
         </h1>
-        <p className="animate-subir mt-7 max-w-xl text-lg leading-relaxed text-white/80 [animation-delay:1050ms] sm:text-xl">
+        <p className="animate-subir mt-7 max-w-xl text-lg leading-relaxed text-white/80 [animation-delay:560ms] sm:text-xl">
           Canchas de fútbol sintético en Neiva. Elige sede, horario y modalidad, y envía tu
           solicitud de reserva en menos de un minuto.
         </p>
-        <div className="animate-subir mt-9 flex flex-wrap gap-3 [animation-delay:1150ms]">
+        <div className="animate-subir mt-9 flex flex-wrap gap-3 [animation-delay:640ms]">
           {!esAdmin && (
             <EnlaceBoton to="/reservar" tamano="xl" variante="volt">
               Reservar una cancha
@@ -104,7 +110,7 @@ function Portada() {
         </div>
 
         {/* Lo único que cambia cada visita: qué sedes están abiertas en este momento. */}
-        <div className="animate-subir border-noche-borde/80 mt-14 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-px overflow-hidden rounded-2xl border bg-white/5 backdrop-blur-md [animation-delay:1300ms] sm:mt-20">
+        <div className="animate-subir border-noche-borde/80 mt-14 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-px overflow-hidden rounded-2xl border bg-white/5 backdrop-blur-md [animation-delay:720ms] sm:mt-20">
           {sedes.isPending &&
             [0, 1, 2].map((i) => <Esqueleto key={i} className="h-20 rounded-none opacity-10" />)}
           {sedes.data?.slice(0, 3).map((s) => (
@@ -184,10 +190,10 @@ function ComoFunciona() {
     <section aria-labelledby="titulo-como" className="contenedor py-24 sm:py-36">
       <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
         <Revelar imagen className="relative aspect-[4/5] overflow-hidden rounded-[2rem] lg:order-2">
-          <img
+          <ImagenSitio
             src="/img/balon-pies.webp"
             alt="Jugadores con un balón sobre césped sintético"
-            loading="lazy"
+            sizes="(min-width: 1024px) 42vw, 90vw"
             className="size-full object-cover"
           />
           <div className="bg-noche text-volt-vivo absolute bottom-5 left-5 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
@@ -283,10 +289,10 @@ function TarjetaSede({ sede, i, ancha }: { sede: Sede; i: number; ancha: boolean
           ancha ? 'min-h-[30rem] md:min-h-[34rem]' : 'aspect-[4/5] sm:aspect-[16/12]',
         )}
       >
-        <img
+        <ImagenSitio
           src={foto}
           alt={`Sede ${sede.nombre}`}
-          loading="lazy"
+          sizes="(min-width: 640px) 50vw, 100vw"
           className="absolute inset-0 -z-10 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-salida)] group-hover:scale-105"
         />
         <div className="from-noche via-noche/55 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />
@@ -359,10 +365,10 @@ function Torneos() {
       className="bg-noche relative isolate overflow-hidden py-24 text-white sm:py-36"
     >
       <div className="absolute inset-y-0 right-0 -z-10 w-full lg:w-[55%]">
-        <img
+        <ImagenSitio
           src="/img/jugadores-movimiento.webp"
           alt=""
-          loading="lazy"
+          sizes="(min-width: 1024px) 55vw, 100vw"
           className="size-full object-cover opacity-60"
         />
         <div className="from-noche via-noche/70 absolute inset-0 bg-gradient-to-r to-transparent" />
@@ -440,11 +446,9 @@ function FilaPartido({ partido: p }: { partido: Partido }) {
       <div className="bg-volt text-noche flex w-16 shrink-0 flex-col items-center rounded-2xl py-2 sm:w-[4.5rem]">
         {p.inicio ? (
           <>
-            <span className="text-xs font-bold uppercase">
-              {formatInTimeZone(p.inicio, ZONA_HORARIA, 'EEE', { locale: es })}
-            </span>
+            <span className="text-xs font-bold uppercase">{diaSemanaCorto(p.inicio)}</span>
             <span className="font-titulo cifras text-3xl leading-none font-extrabold">
-              {formatInTimeZone(p.inicio, ZONA_HORARIA, 'd')}
+              {diaDelMes(p.inicio)}
             </span>
             <span className="text-xs font-semibold">{formatearHora(p.inicio)}</span>
           </>
@@ -489,10 +493,10 @@ function Premios() {
     <section aria-labelledby="titulo-premios" className="contenedor py-24 sm:py-36">
       <div className="bg-noche relative isolate grid overflow-hidden rounded-[2.5rem] text-white lg:grid-cols-2">
         <Revelar imagen className="relative min-h-[22rem] lg:order-2 lg:min-h-full">
-          <img
+          <ImagenSitio
             src="/img/guayos-sintetica.webp"
             alt="Guayos sobre una cancha sintética de noche"
-            loading="lazy"
+            sizes="(min-width: 1024px) 50vw, 100vw"
             className="absolute inset-0 size-full object-cover"
           />
           <div className="from-noche absolute inset-0 bg-gradient-to-t to-transparent to-40% lg:bg-gradient-to-r" />
@@ -557,10 +561,9 @@ function Cierre() {
       aria-labelledby="titulo-cierre"
       className="bg-noche relative isolate flex min-h-[80svh] items-center overflow-hidden text-white"
     >
-      <img
+      <ImagenSitio
         src="/img/arco-niebla.webp"
         alt=""
-        loading="lazy"
         className="paralaje absolute inset-0 -z-10 size-full object-cover opacity-70"
       />
       <div className="from-noche via-noche/40 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

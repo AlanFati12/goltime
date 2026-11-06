@@ -1,6 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { avisar } from '@/componentes/ui/almacenAvisos'
 import { api, type Pagina } from '@/lib/api'
+import { useValorConRetraso } from '@/lib/useValorConRetraso'
 
 import type {
   DisponibilidadDia,
@@ -170,7 +172,10 @@ export function paramsDeFiltros(f: FiltrosReservasAdmin): Record<string, string>
   return params
 }
 
-export function useReservasAdmin(filtros: FiltrosReservasAdmin) {
+export function useReservasAdmin(entrada: FiltrosReservasAdmin) {
+  // La búsqueda sale al servidor cuando la persona deja de escribir, no por cada tecla.
+  const busqueda = useValorConRetraso(entrada.busqueda)
+  const filtros = { ...entrada, busqueda }
   return useQuery({
     queryKey: ['reservas', 'admin', filtros],
     queryFn: async () =>
@@ -219,27 +224,75 @@ export function useContadorNotificaciones(habilitado: boolean) {
   })
 }
 
-export function useNotificaciones(pagina: number, tamano = 20) {
+/** `habilitado` evita pedir la lista cuando no hace falta (visitante sin sesión o desplegable cerrado). */
+export function useNotificaciones(pagina: number, tamano = 20, habilitado = true) {
   return useQuery({
     queryKey: ['notificaciones', 'lista', pagina, tamano],
     queryFn: async () =>
       (await api.get<Pagina<Notificacion>>('/me/notificaciones', { params: { pagina, tamano } }))
         .data,
     placeholderData: keepPreviousData,
+    enabled: habilitado,
   })
 }
 
+type ListaNotificaciones = [readonly unknown[], Pagina<Notificacion> | undefined][]
+
+/**
+ * Marcar como leída es una acción sin riesgo y casi nunca falla: se refleja de inmediato en la pantalla y,
+ * si el servidor la rechaza, se deshace y se avisa. (Las reservas y los pagos NO se tratan así: ahí el
+ * servidor decide y la pantalla espera su respuesta.)
+ */
 export function useAccionesNotificaciones() {
   const cliente = useQueryClient()
-  const alTerminar = () => void cliente.invalidateQueries({ queryKey: ['notificaciones'] })
+  const refrescar = () => void cliente.invalidateQueries({ queryKey: ['notificaciones'] })
+
+  /** Aplica el cambio en el caché y devuelve cómo estaba para poder deshacerlo. */
+  const aplicar = async (
+    transformar: (n: Notificacion) => Notificacion,
+    restar: (n: number) => number,
+  ) => {
+    await cliente.cancelQueries({ queryKey: ['notificaciones'] })
+    const listas: ListaNotificaciones = cliente.getQueriesData<Pagina<Notificacion>>({
+      queryKey: ['notificaciones', 'lista'],
+    })
+    const contador = cliente.getQueryData<number>(['notificaciones', 'contador'])
+    for (const [clave, pagina] of listas) {
+      if (pagina)
+        cliente.setQueryData(clave, { ...pagina, contenido: pagina.contenido.map(transformar) })
+    }
+    if (contador !== undefined)
+      cliente.setQueryData(['notificaciones', 'contador'], restar(contador))
+    return { listas, contador }
+  }
+  const deshacer = (previo?: { listas: ListaNotificaciones; contador?: number }) => {
+    if (!previo) return
+    for (const [clave, pagina] of previo.listas) cliente.setQueryData(clave, pagina)
+    if (previo.contador !== undefined)
+      cliente.setQueryData(['notificaciones', 'contador'], previo.contador)
+    avisar.error('No se pudo marcar la notificación. Volvió a quedar como estaba.')
+  }
+
   return {
     leer: useMutation({
       mutationFn: async (id: number) => api.post(`/me/notificaciones/${id}/leer`),
-      onSuccess: alTerminar,
+      onMutate: (id) =>
+        aplicar(
+          (n) => (n.id === id ? { ...n, leida: true } : n),
+          (c) => Math.max(0, c - 1),
+        ),
+      onError: (_e, _id, previo) => deshacer(previo),
+      onSettled: refrescar,
     }),
     leerTodas: useMutation({
       mutationFn: async () => api.post('/me/notificaciones/leer-todas'),
-      onSuccess: alTerminar,
+      onMutate: () =>
+        aplicar(
+          (n) => ({ ...n, leida: true }),
+          () => 0,
+        ),
+      onError: (_e, _v, previo) => deshacer(previo),
+      onSettled: refrescar,
     }),
   }
 }

@@ -181,7 +181,7 @@ export function PaginaReservasAdmin() {
         </div>
       </Tarjeta>
 
-      {isPending && <Cargando texto="Cargando reservas…" />}
+      {isPending && <Cargando texto="Cargando reservas…" variante="tabla" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
         <EstadoVacio

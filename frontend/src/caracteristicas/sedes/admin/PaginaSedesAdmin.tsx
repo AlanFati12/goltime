@@ -33,7 +33,7 @@ export function PaginaSedesAdmin() {
           </EnlaceBoton>
         }
       />
-      {isPending && <Cargando texto="Cargando sedes…" />}
+      {isPending && <Cargando texto="Cargando sedes…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
         <EstadoVacio icono={Building2} titulo="Aún no hay sedes" descripcion="Crea la primera." />

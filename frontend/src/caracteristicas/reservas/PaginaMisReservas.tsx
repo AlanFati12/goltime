@@ -59,7 +59,7 @@ export function PaginaMisReservas() {
         }}
       />
 
-      {isPending && <Cargando texto="Cargando tus reservas…" />}
+      {isPending && <Cargando texto="Cargando tus reservas…" variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
         <EstadoVacio

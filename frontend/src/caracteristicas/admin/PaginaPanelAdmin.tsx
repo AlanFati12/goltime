@@ -44,6 +44,7 @@ import {
   useTablero,
   type Tablero,
 } from './consultasAdmin'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 function saludo(): string {
   const hora = Number(
@@ -357,9 +358,10 @@ export function PaginaPanelAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="bg-noche relative isolate flex flex-col gap-6 overflow-hidden rounded-[2rem] p-6 text-white sm:p-9">
-        <img
+        <ImagenSitio
           src="/img/hero-cancha-nocturna.webp"
           alt=""
+          prioridad
           className="absolute inset-0 -z-10 size-full object-cover opacity-30"
         />
         <div className="from-noche via-noche/85 absolute inset-0 -z-10 bg-gradient-to-r to-transparent" />

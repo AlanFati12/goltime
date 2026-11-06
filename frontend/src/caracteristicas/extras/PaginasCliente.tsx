@@ -62,7 +62,7 @@ export function PaginaFavoritos() {
         titulo="Canchas favoritas"
         descripcion="Tus canchas preferidas, a un toque de reservar."
       />
-      {isPending && <Cargando texto="Cargando favoritas…" />}
+      {isPending && <Cargando texto="Cargando favoritas…" variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
         <EstadoVacio
@@ -121,7 +121,7 @@ export function PaginaListaEspera() {
         titulo="Lista de espera"
         descripcion="Te avisamos en la app y por correo cuando uno de estos horarios se libere. El primero en solicitarlo se lo queda."
       />
-      {isPending && <Cargando texto="Cargando…" />}
+      {isPending && <Cargando texto="Cargando…" variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && (
         <EstadoVacio
@@ -200,7 +200,7 @@ export function PaginaMisSolicitudes() {
           )
         }
       />
-      {isPending && <Cargando texto="Cargando…" />}
+      {isPending && <Cargando texto="Cargando…" variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && !data.habilitado && (
         <Alerta tipo="info">

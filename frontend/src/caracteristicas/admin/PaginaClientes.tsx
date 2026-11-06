@@ -82,7 +82,7 @@ export function PaginaClientes() {
         </CampoSelect>
       </Tarjeta>
 
-      {isPending && <Cargando texto="Cargando clientes…" />}
+      {isPending && <Cargando texto="Cargando clientes…" variante="tabla" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && data.contenido.length === 0 && (
         <EstadoVacio icono={Users} titulo="No hay clientes que coincidan con la búsqueda" />

@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 interface RepositorioTarifasJpa extends JpaRepository<TarifaEntidad, Long> {
 
     List<TarifaEntidad> findByCanchaIdOrderByMinutoInicioAscIdAsc(long canchaId);
+
+    List<TarifaEntidad> findByCanchaIdInOrderByMinutoInicioAscIdAsc(java.util.Collection<Long> canchaIds);
 }

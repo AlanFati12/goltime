@@ -26,6 +26,15 @@ class AdaptadorRepositorioTarifas implements RepositorioTarifas {
     }
 
     @Override
+    public java.util.Map<Long, List<Tarifa>> deCanchas(java.util.Collection<Long> canchaIds) {
+        if (canchaIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        return jpa.findByCanchaIdInOrderByMinutoInicioAscIdAsc(canchaIds).stream().map(AdaptadorRepositorioTarifas::aDominio)
+                .collect(java.util.stream.Collectors.groupingBy(Tarifa::canchaId));
+    }
+
+    @Override
     public Optional<Tarifa> buscarPorId(long id) {
         return jpa.findById(id).map(AdaptadorRepositorioTarifas::aDominio);
     }

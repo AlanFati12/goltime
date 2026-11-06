@@ -18,3 +18,18 @@ document.documentElement.classList.add('js')
     if (meta) meta.setAttribute('content', '#080d18')
   }
 })()
+
+// Precarga la foto de la portada ("/"): la dibuja React, así que sin esto el navegador la descubre tarde,
+// cuando ya bajó y ejecutó el JavaScript. Los nombres vienen de scripts/optimizar-imagenes.py.
+if (location.pathname === '/') {
+  var foto = document.createElement('link')
+  foto.rel = 'preload'
+  foto.as = 'image'
+  foto.href = '/img/hero-cancha-nocturna-1280.webp'
+  foto.setAttribute(
+    'imagesrcset',
+    '/img/hero-cancha-nocturna-640.webp 640w, /img/hero-cancha-nocturna-1280.webp 1280w, /img/hero-cancha-nocturna-2000.webp 2000w',
+  )
+  foto.setAttribute('imagesizes', '100vw')
+  document.head.appendChild(foto)
+}

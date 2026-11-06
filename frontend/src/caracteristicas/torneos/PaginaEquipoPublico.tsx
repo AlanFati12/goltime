@@ -20,8 +20,10 @@ export function PaginaEquipoPublico() {
         <>
           <header className="bg-noche relative isolate flex items-end gap-5 overflow-hidden rounded-[2rem] p-6 text-white sm:p-10">
             <span
-              className="absolute -top-20 -right-20 -z-10 size-72 rounded-full opacity-40 blur-3xl"
-              style={{ backgroundColor: data.equipo.color ?? 'var(--color-volt)' }}
+              className="absolute -top-20 -right-20 -z-10 size-72 rounded-full opacity-40"
+              style={{
+                background: `radial-gradient(closest-side, ${data.equipo.color ?? 'var(--color-volt)'}, transparent)`,
+              }}
               aria-hidden="true"
             />
             <span

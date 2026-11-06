@@ -21,14 +21,39 @@ export const useFavoritas = (habilitado = true) =>
     queryFn: async () => (await api.get<Favorita[]>('/me/favoritos')).data,
   })
 
+/**
+ * Marcar o quitar una favorita se refleja al instante (el corazón cambia sin esperar al servidor). Si el
+ * servidor falla, el corazón vuelve a como estaba y el llamador avisa del error. Al terminar se recarga la
+ * lista para traer los datos completos de la cancha.
+ */
 export function useAlternarFavorita() {
   const cliente = useQueryClient()
+  const clave = ['extras', 'favoritas']
   return useMutation({
     mutationFn: async (p: { canchaId: number; marcar: boolean }) => {
       if (p.marcar) await api.put(`/me/favoritos/${p.canchaId}`)
       else await api.delete(`/me/favoritos/${p.canchaId}`)
     },
-    onSuccess: () => void cliente.invalidateQueries({ queryKey: ['extras', 'favoritas'] }),
+    onMutate: async (p) => {
+      await cliente.cancelQueries({ queryKey: clave })
+      const previas = cliente.getQueryData<Favorita[]>(clave)
+      if (previas) {
+        cliente.setQueryData<Favorita[]>(
+          clave,
+          p.marcar
+            ? [
+                ...previas.filter((f) => f.canchaId !== p.canchaId),
+                { canchaId: p.canchaId } as Favorita,
+              ]
+            : previas.filter((f) => f.canchaId !== p.canchaId),
+        )
+      }
+      return { previas }
+    },
+    onError: (_e, _p, contexto) => {
+      if (contexto?.previas) cliente.setQueryData(clave, contexto.previas)
+    },
+    onSettled: () => void cliente.invalidateQueries({ queryKey: clave }),
   })
 }
 

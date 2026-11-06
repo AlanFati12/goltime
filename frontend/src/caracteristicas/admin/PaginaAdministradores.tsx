@@ -44,7 +44,7 @@ export function PaginaAdministradores() {
       />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          {isPending && <Cargando />}
+          {isPending && <Cargando variante="tabla" />}
           {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
           {data && (
             <Tarjeta className="p-0 sm:p-0">

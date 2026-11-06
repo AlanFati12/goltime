@@ -10,6 +10,7 @@ import { ETIQUETA_EVENTO, ETIQUETA_ESTADO_PARTIDO } from './etiquetas'
 import { IconoEvento } from './IconoEvento'
 import type { DetallePartido } from './tipos'
 import { marcador, nombreLado, textoPenales, textoRonda } from './utilidades'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 /** Marcador grande del partido con su información y la línea de tiempo de eventos. */
 export function EncabezadoPartido({
@@ -27,9 +28,10 @@ export function EncabezadoPartido({
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-noche relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-[2rem] px-5 py-10 text-center text-white sm:py-14">
-        <img
+        <ImagenSitio
           src="/img/jugadores-movimiento.webp"
           alt=""
+          prioridad
           className="absolute inset-0 -z-10 size-full object-cover opacity-25"
         />
         <div className="from-noche via-noche/80 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

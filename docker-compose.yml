@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: ${DB_USUARIO:-goltime}
       POSTGRES_PASSWORD: ${DB_CLAVE:?Define DB_CLAVE en .env}
       TZ: UTC
+    # Deja en el registro de la base toda sentencia que tarde más de 250 ms.
+    command: ["postgres", "-c", "log_min_duration_statement=250"]
     volumes:
       - datos_db:/var/lib/postgresql/data
     ports:
@@ -17,6 +19,15 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Visor de trazas (opcional): docker compose --profile observabilidad up -d  →  http://localhost:16686
+  trazas:
+    profiles: ["observabilidad"]
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
 
   mailpit:
     image: axllent/mailpit:latest
@@ -48,6 +59,9 @@ services:
       CORREO_REMITENTE: ${CORREO_REMITENTE:-no-responder@goltime.local}
       URL_PUBLICA: ${URL_PUBLICA:-http://localhost:8081}
       VERIFICACION_CORREO_OBLIGATORIA: ${VERIFICACION_CORREO_OBLIGATORIA:-false}
+      # Trazas de rendimiento (opcional): OTEL_ACTIVADO=true y `docker compose --profile observabilidad up -d`.
+      OTEL_ACTIVADO: ${OTEL_ACTIVADO:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://trazas:4318/v1/traces}
       TZ: UTC
     volumes:
       - datos_archivos:/app/uploads

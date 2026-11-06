@@ -1,4 +1,3 @@
-import { fromZonedTime } from 'date-fns-tz'
 import { useMemo, useState } from 'react'
 
 import { Alerta } from '@/componentes/ui/Alerta'
@@ -7,7 +6,7 @@ import { CampoSelect } from '@/componentes/ui/CampoSelect'
 import { Cargando } from '@/componentes/ui/Cargando'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { mensajeDeError } from '@/lib/api'
-import { formatearCOP, formatearHora, ZONA_HORARIA } from '@/lib/formato'
+import { desdeBogota, formatearCOP, formatearHora, ZONA_HORARIA } from '@/lib/formato'
 
 import { HORAS } from './constantes'
 import { useCotizacion } from './consultas'
@@ -31,7 +30,7 @@ export function Cotizador({ cancha }: { cancha: Cancha }) {
 
   const { inicio, fin } = useMemo(() => {
     if (!fecha) return { inicio: null, fin: null }
-    const desde = fromZonedTime(`${fecha}T${hora}:00`, ZONA_HORARIA)
+    const desde = desdeBogota(`${fecha}T${hora}:00`)
     return {
       inicio: desde.toISOString(),
       fin: new Date(desde.getTime() + minutos * 60_000).toISOString(),

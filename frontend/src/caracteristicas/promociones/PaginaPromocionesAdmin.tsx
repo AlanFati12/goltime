@@ -246,7 +246,7 @@ function ModalUsos({ id, alCerrar }: { id: number; alCerrar: () => void }) {
   return (
     <Modal abierto titulo="Uso de la promoción" alCerrar={alCerrar}>
       {!data ? (
-        <Cargando texto="Cargando…" />
+        <Cargando texto="Cargando…" variante="tarjetas" />
       ) : (
         <div className="flex flex-col gap-3 text-sm">
           <p>
@@ -299,7 +299,7 @@ export function PaginaPromocionesAdmin() {
           </Boton>
         }
       />
-      {isPending && <Cargando texto="Cargando promociones…" />}
+      {isPending && <Cargando texto="Cargando promociones…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && <EstadoVacio icono={Megaphone} titulo="Aún no hay promociones" />}
       <ul className="flex flex-col gap-3">

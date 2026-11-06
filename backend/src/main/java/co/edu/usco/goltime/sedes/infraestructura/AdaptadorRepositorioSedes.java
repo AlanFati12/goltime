@@ -64,6 +64,20 @@ class AdaptadorRepositorioSedes implements RepositorioSedes {
     }
 
     @Override
+    public java.util.Map<Long, List<Foto>> fotosDe(java.util.Collection<Long> sedeIds) {
+        if (sedeIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        return fotos.findBySedeIdInOrderByOrdenAscIdAsc(sedeIds).stream().collect(java.util.stream.Collectors.groupingBy(
+                f -> f.sedeId, java.util.stream.Collectors.mapping(f -> new Foto(f.id, f.archivo, f.orden), java.util.stream.Collectors.toList())));
+    }
+
+    @Override
+    public List<Sede> buscarPorIds(java.util.Collection<Long> ids) {
+        return ids.isEmpty() ? List.of() : jpa.findAllById(ids).stream().map(AdaptadorRepositorioSedes::aDominio).toList();
+    }
+
+    @Override
     public Foto agregarFoto(long sedeId, String archivo) {
         FotoSedeEntidad f = new FotoSedeEntidad();
         f.sedeId = sedeId;

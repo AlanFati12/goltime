@@ -29,7 +29,8 @@ export function CampanaNotificaciones() {
   const [abierta, setAbierta] = useState(false)
   const contenedor = useRef<HTMLDivElement>(null)
   const { data: noLeidas = 0 } = useContadorNotificaciones(!!usuario)
-  const { data } = useNotificaciones(0, 6)
+  // La lista solo se pide al abrir el desplegable y con sesión; el contador sí se consulta siempre (con sesión).
+  const { data } = useNotificaciones(0, 6, !!usuario && abierta)
   const { leer, leerTodas } = useAccionesNotificaciones()
 
   useEffect(() => {

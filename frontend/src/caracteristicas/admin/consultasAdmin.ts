@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Usuario } from '@/caracteristicas/autenticacion/almacenSesion'
 import type { Reserva } from '@/caracteristicas/reservas/tipos'
 import { api, type Pagina } from '@/lib/api'
+import { useValorConRetraso } from '@/lib/useValorConRetraso'
 
 export interface FiltrosClientes {
   busqueda: string
@@ -12,7 +13,10 @@ export interface FiltrosClientes {
 
 const TAMANO = 15
 
-export function useClientes(filtros: FiltrosClientes) {
+export function useClientes(entrada: FiltrosClientes) {
+  // La búsqueda sale al servidor cuando la persona deja de escribir, no por cada tecla.
+  const busqueda = useValorConRetraso(entrada.busqueda)
+  const filtros = { ...entrada, busqueda }
   return useQuery({
     queryKey: ['admin', 'clientes', filtros],
     queryFn: async () => {

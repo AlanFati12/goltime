@@ -89,6 +89,15 @@ class AdaptadorRepositorioCanchas implements RepositorioCanchas {
     }
 
     @Override
+    public java.util.Map<Long, List<Foto>> fotosDe(java.util.Collection<Long> canchaIds) {
+        if (canchaIds.isEmpty()) {
+            return java.util.Map.of();
+        }
+        return fotos.findByCanchaIdInOrderByOrdenAscIdAsc(canchaIds).stream().collect(java.util.stream.Collectors.groupingBy(
+                f -> f.canchaId, java.util.stream.Collectors.mapping(f -> new Foto(f.id, f.archivo, f.orden), java.util.stream.Collectors.toList())));
+    }
+
+    @Override
     public Foto agregarFoto(long canchaId, String archivo) {
         FotoCanchaEntidad f = new FotoCanchaEntidad();
         f.canchaId = canchaId;

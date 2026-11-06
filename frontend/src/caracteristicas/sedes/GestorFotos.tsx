@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 
 import { Boton } from '@/componentes/ui/Boton'
+import { optimizarFoto } from '@/lib/imagenes'
 
 import type { Foto } from './tipos'
 
@@ -11,7 +12,7 @@ interface PropsGestor {
   alQuitar: (foto: Foto) => void
 }
 
-/** Subida y borrado de fotos (JPG, PNG o WebP, máximo 5 MB, hasta 10). */
+/** Subida y borrado de fotos (JPG, PNG o WebP, hasta 10). Antes de subir se reducen a 1600 px y se recomprimen. */
 export function GestorFotos({ fotos, subiendo, alSubir, alQuitar }: PropsGestor) {
   const entrada = useRef<HTMLInputElement>(null)
   return (
@@ -38,10 +39,11 @@ export function GestorFotos({ fotos, subiendo, alSubir, alQuitar }: PropsGestor)
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         aria-label="Elegir foto"
-        onChange={(e) => {
+        onChange={async (e) => {
           const archivo = e.target.files?.[0]
-          if (archivo) alSubir(archivo)
           e.target.value = ''
+          // Se reduce y recomprime en el navegador antes de subir (ver lib/imagenes.ts).
+          if (archivo) alSubir(await optimizarFoto(archivo))
         }}
       />
       <Boton

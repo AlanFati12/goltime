@@ -86,7 +86,7 @@ export function PaginaAuditoria() {
         </div>
       </Tarjeta>
 
-      {isPending && <Cargando texto="Cargando bitácora…" />}
+      {isPending && <Cargando texto="Cargando bitácora…" variante="tabla" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
         <EstadoVacio icono={ScrollText} titulo="No hay registros con esos filtros" />

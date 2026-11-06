@@ -12,5 +12,8 @@
 	@integracion path /api/v1/integracion/*
 	respond @integracion 404
 
-	reverse_proxy web:80
+	# Sin Accept-Encoding hacia nginx: así comprime Caddy (zstd o gzip, el mejor que entienda el navegador) y no nginx.
+	reverse_proxy web:80 {
+		header_up -Accept-Encoding
+	}
 }

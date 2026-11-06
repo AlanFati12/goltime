@@ -5,6 +5,7 @@ import { Insignia } from '@/componentes/ui/Insignia'
 import { formatearCOP } from '@/lib/formato'
 
 import type { Cancha } from './tipos'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 /** Resumen de una cancha para listados públicos. */
 export function TarjetaCancha({ cancha }: { cancha: Cancha }) {
@@ -16,17 +17,17 @@ export function TarjetaCancha({ cancha }: { cancha: Cancha }) {
     >
       <div className="bg-noche relative aspect-[16/10] overflow-hidden">
         {foto ? (
-          <img
+          <ImagenSitio
             src={foto}
             alt=""
-            loading="lazy"
+            sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
             className="size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-salida)] group-hover:scale-105"
           />
         ) : (
-          <img
+          <ImagenSitio
             src="/img/cancha-aerea.webp"
             alt=""
-            loading="lazy"
+            sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
             className="size-full object-cover opacity-60"
           />
         )}

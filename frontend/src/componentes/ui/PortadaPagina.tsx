@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { cn } from '@/lib/utils'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 /**
  * Cabecera fotográfica de las páginas públicas: la foto ocupa el ancho del contenedor, oscurecida
@@ -34,9 +35,11 @@ export function PortadaPagina({
         compacta ? 'min-h-[17rem] sm:min-h-[19rem]' : 'min-h-[22rem] sm:min-h-[27rem]',
       )}
     >
-      <img
+      <ImagenSitio
         src={imagen}
         alt={alt}
+        prioridad
+        recorte="banner"
         className="animate-acercar absolute inset-0 -z-10 size-full object-cover motion-reduce:animate-none"
       />
       <div className="from-noche via-noche/60 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

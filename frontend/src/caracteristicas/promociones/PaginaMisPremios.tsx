@@ -32,7 +32,7 @@ export function PaginaMisPremios() {
         titulo="Mis premios"
         descripcion="Cada reserva completada te acerca a un descuento."
       />
-      {isPending && <Cargando texto="Cargando tus premios…" />}
+      {isPending && <Cargando texto="Cargando tus premios…" variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && data.progreso.length === 0 && (
         <EstadoVacio

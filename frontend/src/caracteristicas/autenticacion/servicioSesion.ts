@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+import { hayRastroDeSesion } from '@/lib/rastroSesion'
+
 import { useSesion, type Usuario } from './almacenSesion'
 
 interface RespuestaSesion {
@@ -29,8 +31,16 @@ export function renovarSesion(): Promise<RespuestaSesion> {
   return renovacion
 }
 
-/** Al abrir la app intenta recuperar la sesión; si no hay cookie válida, queda como visitante. */
+/**
+ * Al abrir la app intenta recuperar la sesión; si no hay cookie válida, queda como visitante. A quien nunca inició
+ * sesión en este navegador no se le pide nada: la app se pinta de inmediato en vez de esperar una respuesta que
+ * solo podía ser un 401.
+ */
 export async function restaurarSesion(): Promise<void> {
+  if (!hayRastroDeSesion()) {
+    useSesion.getState().marcarInicializada()
+    return
+  }
   try {
     await renovarSesion()
   } catch {

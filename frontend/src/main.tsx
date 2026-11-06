@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
 
 /**
  * Retira la pantalla de arranque de index.html cuando la aplicación ya pintó. Se deja visible
- * un mínimo breve para que el logo alcance a dibujarse y la salida no parezca un parpadeo.
+ * un mínimo muy breve (400 ms) para que el logo alcance a dibujarse y la salida no parezca un parpadeo.
  */
 const arranque = document.getElementById('arranque')
 if (arranque) {
@@ -20,8 +20,8 @@ if (arranque) {
   window.setTimeout(
     () => {
       arranque.classList.add('salida')
-      window.setTimeout(() => arranque.remove(), 600)
+      window.setTimeout(() => arranque.remove(), 350)
     },
-    Math.max(0, 900 - transcurrido),
+    Math.max(0, 400 - transcurrido),
   )
 }
