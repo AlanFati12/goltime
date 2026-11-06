@@ -20,9 +20,11 @@ import co.edu.usco.goltime.sedes.aplicacion.Vistas.VistaCancha;
 import co.edu.usco.goltime.sedes.dominio.Cancha;
 import co.edu.usco.goltime.sedes.dominio.Cancha.DatosCancha;
 import co.edu.usco.goltime.sedes.dominio.EstadoCancha;
+import co.edu.usco.goltime.sedes.dominio.Foto;
 import co.edu.usco.goltime.sedes.dominio.HorarioDia;
 import co.edu.usco.goltime.sedes.dominio.HorarioSemanal;
 import co.edu.usco.goltime.sedes.dominio.Sede;
+import co.edu.usco.goltime.sedes.dominio.Tarifa;
 
 /** Casos de uso de canchas: alta, edición, composición, horario propio y cambios de estado. */
 @Service
@@ -49,28 +51,30 @@ public class ServicioCanchas {
 
     // --- Lectura ---
 
-    List<VistaCancha> vistasDeSede(Sede sede) {
-        return canchas.listar(sede.id()).stream().map(c -> vista(c, sede)).toList();
-    }
-
-    List<VistaCancha> vistasReservablesDeSede(Sede sede) {
-        return canchas.listar(sede.id()).stream().filter(Cancha::esReservable).map(c -> vista(c, sede)).toList();
+    /** Vistas de todas las canchas de varias sedes con un número fijo de consultas (clave: id de sede). */
+    Map<Long, List<VistaCancha>> vistasDeSedes(List<Sede> sedesPedidas, boolean soloReservables) {
+        Map<Long, Sede> porId = sedesPedidas.stream().collect(Collectors.toMap(Sede::id, s -> s));
+        List<Cancha> todas = canchas.listar(null).stream()
+                .filter(c -> porId.containsKey(c.sedeId()))
+                .filter(c -> !soloReservables || c.esReservable())
+                .toList();
+        return vistas(todas, porId).stream().collect(Collectors.groupingBy(v -> v.sede().id(), LinkedHashMap::new, Collectors.toList()));
     }
 
     @Transactional(readOnly = true)
     public List<VistaCancha> listarAdmin(Long sedeId) {
-        return canchas.listar(sedeId).stream().map(c -> vista(c, sedeDe(c))).toList();
+        List<Cancha> lista = canchas.listar(sedeId);
+        return vistas(lista, sedesDe(lista));
     }
 
     /** Canchas reservables de sedes activas, opcionalmente filtradas por sede y modalidad (ej. "F5"). */
     @Transactional(readOnly = true)
     public List<VistaCancha> listarPublicas(Long sedeId, String modalidad) {
-        return canchas.listar(sedeId).stream()
+        List<Cancha> lista = canchas.listar(sedeId).stream()
                 .filter(Cancha::esReservable)
                 .filter(c -> modalidad == null || modalidad.isBlank() || c.modalidad().equalsIgnoreCase(modalidad.trim()))
-                .map(c -> vista(c, sedeDe(c)))
-                .filter(v -> v.sede().activa())
                 .toList();
+        return vistas(lista, sedesDe(lista)).stream().filter(v -> v.sede().activa()).toList();
     }
 
     @Transactional(readOnly = true)
@@ -187,14 +191,41 @@ public class ServicioCanchas {
         return sedes.buscarPorId(cancha.sedeId()).orElseThrow();
     }
 
+    /** Las sedes de unas canchas, buscadas todas juntas en una sola consulta. */
+    private Map<Long, Sede> sedesDe(List<Cancha> lista) {
+        Set<Long> ids = lista.stream().map(Cancha::sedeId).collect(Collectors.toSet());
+        return sedes.buscarPorIds(ids).stream().collect(Collectors.toMap(Sede::id, s -> s));
+    }
+
     private VistaCancha vista(Cancha cancha, Sede sede) {
-        List<HorarioDia> efectivo = new ArrayList<>();
-        for (DayOfWeek dia : DayOfWeek.values()) {
-            efectivo.add(HorarioSemanal.efectivo(dia, sede.horario(), cancha.horarioPropio()));
+        return vistas(List.of(cancha), Map.of(sede.id(), sede)).get(0);
+    }
+
+    /**
+     * Arma las vistas de varias canchas pidiendo fotos, tarifas y componentes de todas a la vez. Armarlas una
+     * por una dispara 3 consultas por cancha (el problema N+1) y encarece cada visita a la portada.
+     */
+    private List<VistaCancha> vistas(List<Cancha> lista, Map<Long, Sede> sedesPorId) {
+        if (lista.isEmpty()) {
+            return List.of();
         }
-        List<Cancha> componentes = cancha.componentes().isEmpty() ? List.of()
-                : canchas.buscarPorIds(cancha.componentes()).stream().sorted((a, b) -> a.nombre().compareToIgnoreCase(b.nombre())).toList();
-        return new VistaCancha(cancha, sede, canchas.fotos(cancha.id()), tarifas.deCancha(cancha.id()), efectivo, componentes);
+        List<Long> ids = lista.stream().map(Cancha::id).toList();
+        Map<Long, List<Foto>> fotos = canchas.fotosDe(ids);
+        Map<Long, List<Tarifa>> tarifasPorCancha = tarifas.deCanchas(ids);
+        Set<Long> idsComponentes = lista.stream().flatMap(c -> c.componentes().stream()).collect(Collectors.toSet());
+        Map<Long, Cancha> componentesPorId = idsComponentes.isEmpty() ? Map.of()
+                : canchas.buscarPorIds(idsComponentes).stream().collect(Collectors.toMap(Cancha::id, c -> c));
+        return lista.stream().map(cancha -> {
+            Sede sede = sedesPorId.get(cancha.sedeId());
+            List<HorarioDia> efectivo = new ArrayList<>();
+            for (DayOfWeek dia : DayOfWeek.values()) {
+                efectivo.add(HorarioSemanal.efectivo(dia, sede.horario(), cancha.horarioPropio()));
+            }
+            List<Cancha> componentes = cancha.componentes().stream().map(componentesPorId::get).filter(java.util.Objects::nonNull)
+                    .sorted((a, b) -> a.nombre().compareToIgnoreCase(b.nombre())).toList();
+            return new VistaCancha(cancha, sede, fotos.getOrDefault(cancha.id(), List.of()),
+                    tarifasPorCancha.getOrDefault(cancha.id(), List.of()), efectivo, componentes);
+        }).toList();
     }
 
     private void verificarModalidad(int jugadoresPorEquipo) {

@@ -12,6 +12,8 @@ services:
       POSTGRES_USER: ${DB_USUARIO:-goltime}
       POSTGRES_PASSWORD: ${DB_CLAVE:?Define DB_CLAVE en .env}
       TZ: UTC
+    # Deja en el registro de la base toda sentencia que tarde más de 250 ms.
+    command: ["postgres", "-c", "log_min_duration_statement=250"]
     volumes:
       - datos_db:/var/lib/postgresql/data
     healthcheck:
@@ -45,6 +47,9 @@ services:
       CORREO_REMITENTE: ${CORREO_REMITENTE:?Define CORREO_REMITENTE en .env}
       URL_PUBLICA: https://${DOMINIO}
       VERIFICACION_CORREO_OBLIGATORIA: ${VERIFICACION_CORREO_OBLIGATORIA:-false}
+      # Trazas (opcional): apuntar OTEL_EXPORTER_OTLP_ENDPOINT a un colector propio y poner OTEL_ACTIVADO=true.
+      OTEL_ACTIVADO: ${OTEL_ACTIVADO:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318/v1/traces}
       TZ: UTC
     volumes:
       - datos_archivos:/app/uploads

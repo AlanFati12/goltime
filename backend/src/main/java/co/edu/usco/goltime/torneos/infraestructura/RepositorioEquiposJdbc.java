@@ -66,7 +66,8 @@ class RepositorioEquiposJdbc implements RepositorioEquipos {
             sql.append(" AND lower(e.nombre) LIKE ?");
             args.add("%" + escaparLike(busqueda.trim().toLowerCase()) + "%");
         }
-        sql.append(" ORDER BY lower(e.nombre)");
+        // Tope de seguridad: con búsqueda se llega a cualquier equipo; sin ella no se devuelve una lista sin fin.
+        sql.append(" ORDER BY lower(e.nombre) LIMIT 500");
         return jdbc.query(sql.toString(), (rs, i) -> new ResumenEquipo(equipo(rs), rs.getInt("jugadores"), rs.getInt("torneos")), args.toArray());
     }
 

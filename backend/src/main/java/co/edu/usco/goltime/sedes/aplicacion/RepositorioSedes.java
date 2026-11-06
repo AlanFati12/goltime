@@ -20,6 +20,12 @@ public interface RepositorioSedes {
 
     List<Foto> fotos(long sedeId);
 
+    /** Fotos de varias sedes en una sola consulta (clave: id de sede; sin entrada si no tiene fotos). */
+    java.util.Map<Long, List<Foto>> fotosDe(java.util.Collection<Long> sedeIds);
+
+    /** Varias sedes por id en una sola consulta. */
+    List<Sede> buscarPorIds(java.util.Collection<Long> ids);
+
     Foto agregarFoto(long sedeId, String archivo);
 
     Optional<Foto> quitarFoto(long sedeId, long fotoId);

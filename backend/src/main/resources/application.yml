@@ -7,6 +7,21 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/goltime}
     username: ${DB_USUARIO:goltime}
     password: ${DB_CLAVE:goltime}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAXIMO:10}
+      # Si no hay conexión libre en 5 s se falla rápido en vez de dejar la petición colgada 30 s.
+      connection-timeout: 5000
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
+  # Las tareas @Async (correo, avisos de WhatsApp) corren en un grupo acotado: no frenan la petición que las
+  # originó y, si el servidor de correo se cae, no acumulan hilos sin límite.
+  task:
+    execution:
+      thread-name-prefix: tarea-
+      pool:
+        core-size: 4
+        max-size: 8
+        queue-capacity: 1000
   jpa:
     open-in-view: false
     hibernate:
@@ -15,6 +30,12 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+        # Cuando una consulta recorre varias filas y toca sus colecciones perezosas (horarios, componentes), Hibernate
+        # las carga de a 50 filas en una sola sentencia en vez de una por fila (el problema N+1).
+        default_batch_fetch_size: 50
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -29,6 +50,10 @@ spring:
     properties:
       mail.smtp.auth: ${SMTP_AUTENTICACION:false}
       mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      # Sin estos tiempos un servidor SMTP que no responde deja el hilo esperando para siempre.
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   servlet:
     multipart:
       max-file-size: 5MB
@@ -36,6 +61,8 @@ spring:
 
 server:
   port: 8080
+  # Al apagar (por ejemplo en un despliegue) termina las peticiones en curso antes de cerrar.
+  shutdown: graceful
   forward-headers-strategy: native
   error:
     include-message: never
@@ -50,9 +77,24 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    # Que no haya servidor de correo no debe marcar la API como caída: el correo es secundario y va en segundo plano.
+    mail:
+      enabled: false
+  # Trazas OpenTelemetry (ADR 0022): apagadas por defecto; con OTEL_ACTIVADO=true se envían a OTEL_EXPORTER_OTLP_ENDPOINT.
+  tracing:
+    enabled: ${OTEL_ACTIVADO:false}
+    sampling:
+      probability: ${OTEL_MUESTREO:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
 
 goltime:
   zona-horaria: America/Bogota
+  observabilidad:
+    # Toda petición que tarde más de esto queda en el registro como advertencia, con su ruta y duración.
+    umbral-peticion-lenta-ms: ${UMBRAL_PETICION_LENTA_MS:800}
   seguridad:
     # Secreto HS256: mínimo 32 caracteres (256 bits). Obligatorio por variable de entorno.
     jwt-secreto: ${JWT_SECRETO}

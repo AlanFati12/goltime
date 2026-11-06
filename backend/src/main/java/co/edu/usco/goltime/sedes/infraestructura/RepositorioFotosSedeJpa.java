@@ -9,5 +9,7 @@ interface RepositorioFotosSedeJpa extends JpaRepository<FotoSedeEntidad, Long> {
 
     List<FotoSedeEntidad> findBySedeIdOrderByOrdenAscIdAsc(long sedeId);
 
+    List<FotoSedeEntidad> findBySedeIdInOrderByOrdenAscIdAsc(java.util.Collection<Long> sedeIds);
+
     Optional<FotoSedeEntidad> findByIdAndSedeId(long id, long sedeId);
 }

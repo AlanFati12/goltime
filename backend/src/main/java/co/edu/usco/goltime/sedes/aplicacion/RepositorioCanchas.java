@@ -25,6 +25,9 @@ public interface RepositorioCanchas {
 
     List<Foto> fotos(long canchaId);
 
+    /** Fotos de varias canchas en una sola consulta (clave: id de cancha; sin entrada si no tiene fotos). */
+    java.util.Map<Long, List<Foto>> fotosDe(java.util.Collection<Long> canchaIds);
+
     Foto agregarFoto(long canchaId, String archivo);
 
     Optional<Foto> quitarFoto(long canchaId, long fotoId);

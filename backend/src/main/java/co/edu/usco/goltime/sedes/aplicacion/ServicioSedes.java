@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.usco.goltime.auditoria.aplicacion.RegistroAuditoria;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
+import co.edu.usco.goltime.sedes.aplicacion.Vistas.VistaCancha;
 import co.edu.usco.goltime.sedes.aplicacion.Vistas.VistaSede;
+import co.edu.usco.goltime.sedes.dominio.Foto;
 import co.edu.usco.goltime.sedes.dominio.HorarioSemanal;
 import co.edu.usco.goltime.sedes.dominio.Sede;
 import co.edu.usco.goltime.sedes.dominio.Sede.DatosSede;
@@ -37,13 +39,23 @@ public class ServicioSedes {
     /** Sedes activas con sus canchas reservables (vista pública). */
     @Transactional(readOnly = true)
     public List<VistaSede> listarPublicas() {
-        return sedes.listar(true).stream().map(s -> new VistaSede(s, sedes.fotos(s.id()), canchas.vistasReservablesDeSede(s))).toList();
+        return conCanchasYFotos(sedes.listar(true), true);
     }
 
     /** Todas las sedes, activas o no, con todas sus canchas (vista de administración). */
     @Transactional(readOnly = true)
     public List<VistaSede> listarAdmin() {
-        return sedes.listar(false).stream().map(s -> new VistaSede(s, sedes.fotos(s.id()), canchas.vistasDeSede(s))).toList();
+        return conCanchasYFotos(sedes.listar(false), false);
+    }
+
+    /** Fotos y canchas de todas las sedes pedidas con un número fijo de consultas, sin importar cuántas sean. */
+    private List<VistaSede> conCanchasYFotos(List<Sede> lista, boolean soloReservables) {
+        if (lista.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, List<Foto>> fotos = sedes.fotosDe(lista.stream().map(Sede::id).toList());
+        Map<Long, List<VistaCancha>> canchasPorSede = canchas.vistasDeSedes(lista, soloReservables);
+        return lista.stream().map(s -> new VistaSede(s, fotos.getOrDefault(s.id(), List.of()), canchasPorSede.getOrDefault(s.id(), List.of()))).toList();
     }
 
     @Transactional(readOnly = true)
@@ -52,13 +64,13 @@ public class ServicioSedes {
         if (!sede.activa()) {
             throw noExiste();
         }
-        return new VistaSede(sede, sedes.fotos(id), canchas.vistasReservablesDeSede(sede));
+        return conCanchasYFotos(List.of(sede), true).get(0);
     }
 
     @Transactional(readOnly = true)
     public VistaSede detalleAdmin(long id) {
         Sede sede = cargar(id);
-        return new VistaSede(sede, sedes.fotos(id), canchas.vistasDeSede(sede));
+        return conCanchasYFotos(List.of(sede), false).get(0);
     }
 
     @Transactional
