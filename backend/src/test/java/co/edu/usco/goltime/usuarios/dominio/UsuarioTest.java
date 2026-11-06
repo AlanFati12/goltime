@@ -55,6 +55,15 @@ class UsuarioTest {
     }
 
     @Test
+    void unaCuentaCreadaConElIngresoDePruebaPasaAUnaCuentaRealDeGoogleSinPerderse() {
+        Usuario u = Usuario.nuevoClienteGoogle("Ana", "Pérez", "a@b.co", "prueba-a@b.co", AHORA);
+        u.vincularGoogle("109876543210987654321");
+        assertThat(u.googleSub()).isEqualTo("109876543210987654321");
+        // ya vinculada a una cuenta real, no se puede pasar a otra
+        assertThatThrownBy(() -> u.vincularGoogle("100000000000000000001")).isInstanceOf(ExcepcionNegocio.class);
+    }
+
+    @Test
     void desactivarExigeMotivoEInvalidaLosTokens() {
         Usuario u = cliente();
         assertThatThrownBy(() -> u.desactivar("  ", 1L, AHORA)).isInstanceOf(ExcepcionNegocio.class);

@@ -136,9 +136,17 @@ public class Usuario {
         this.documento = limpiar(documento);
     }
 
-    /** Une la cuenta con su cuenta de Google. Google ya confirmó que el correo es de quien entra. */
+    /** Prefijo del identificador que genera el ingreso de prueba (solo desarrollo); el de Google de verdad es numérico. */
+    static final String PREFIJO_SUB_DE_PRUEBA = "prueba-";
+
+    /**
+     * Une la cuenta con su cuenta de Google. Google ya confirmó que el correo es de quien entra. Una cuenta creada con el
+     * ingreso de prueba (solo desarrollo) se puede pasar a una cuenta real de Google sin perderla; una ya vinculada a
+     * otra cuenta de Google real, no.
+     */
     public void vincularGoogle(String sub) {
-        if (this.googleSub != null && !this.googleSub.equals(sub)) {
+        boolean eraDePrueba = this.googleSub != null && this.googleSub.startsWith(PREFIJO_SUB_DE_PRUEBA);
+        if (this.googleSub != null && !this.googleSub.equals(sub) && !eraDePrueba) {
             throw new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS, "Ese correo ya está vinculado a otra cuenta de Google.");
         }
         this.googleSub = sub;
