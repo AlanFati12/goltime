@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/lib/api'
+import { useValorConRetraso } from '@/lib/useValorConRetraso'
 
 import type {
   DetalleEquipo,
@@ -89,8 +90,10 @@ export const usePerfilJugador = (id: number) =>
 
 // ===================== Administración: equipos =====================
 
-export const useEquipos = (busqueda: string, incluirInactivos: boolean) =>
-  useQuery({
+export function useEquipos(entrada: string, incluirInactivos: boolean) {
+  // La búsqueda sale al servidor cuando la persona deja de escribir, no por cada tecla.
+  const busqueda = useValorConRetraso(entrada)
+  return useQuery({
     queryKey: ['torneos', 'equipos', busqueda, incluirInactivos],
     queryFn: async () =>
       (
@@ -98,7 +101,9 @@ export const useEquipos = (busqueda: string, incluirInactivos: boolean) =>
           params: { busqueda: busqueda || undefined, incluirInactivos },
         })
       ).data,
+    placeholderData: keepPreviousData,
   })
+}
 
 export const useEquipo = (id: number) =>
   useQuery({
@@ -106,13 +111,15 @@ export const useEquipo = (id: number) =>
     queryFn: async () => (await api.get<DetalleEquipo>(`/admin/equipos/${id}`)).data,
   })
 
-export const useBuscarJugadores = (texto: string) =>
-  useQuery({
+export function useBuscarJugadores(entrada: string) {
+  const texto = useValorConRetraso(entrada)
+  return useQuery({
     queryKey: ['torneos', 'buscar-jugadores', texto],
     enabled: texto.trim().length >= 3,
     queryFn: async () =>
       (await api.get<JugadorEquipo[]>('/admin/jugadores', { params: { texto } })).data,
   })
+}
 
 export interface DatosEquipo {
   nombre: string
