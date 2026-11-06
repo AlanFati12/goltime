@@ -39,6 +39,7 @@ export function PortadaPagina({
         src={imagen}
         alt={alt}
         prioridad
+        recorte="banner"
         className="animate-acercar absolute inset-0 -z-10 size-full object-cover motion-reduce:animate-none"
       />
       <div className="from-noche via-noche/60 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

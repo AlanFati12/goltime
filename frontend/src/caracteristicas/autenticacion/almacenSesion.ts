@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+import { borrarRastroDeSesion, dejarRastroDeSesion } from '@/lib/rastroSesion'
+
 export type Rol = 'ADMIN' | 'CLIENTE'
 
 /** Usuario tal como lo devuelve la API (nunca incluye datos sensibles). */
@@ -41,10 +43,16 @@ export const useSesion = create<EstadoSesion>((set) => ({
   tokenAcceso: null,
   usuario: null,
   inicializada: false,
-  iniciar: (tokenAcceso, usuario) => set({ tokenAcceso, usuario, inicializada: true }),
+  iniciar: (tokenAcceso, usuario) => {
+    dejarRastroDeSesion()
+    set({ tokenAcceso, usuario, inicializada: true })
+  },
   actualizarToken: (tokenAcceso) => set({ tokenAcceso }),
   actualizarUsuario: (usuario) => set({ usuario }),
-  cerrar: () => set({ tokenAcceso: null, usuario: null }),
+  cerrar: () => {
+    borrarRastroDeSesion()
+    set({ tokenAcceso: null, usuario: null })
+  },
   marcarInicializada: () => set({ inicializada: true }),
 }))
 

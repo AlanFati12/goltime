@@ -37,7 +37,13 @@ export function Cargando({
     )
   }
   return (
-    <div role="status" aria-busy="true" className={cn('flex flex-col gap-4', className)}>
+    <div
+      role="status"
+      aria-busy="true"
+      // El alto mínimo mantiene el pie de página fuera de la pantalla mientras carga: si subiera de golpe al
+      // llegar el contenido, el navegador lo contaría como un salto de diseño (CLS).
+      className={cn('flex min-h-[60svh] flex-col gap-4', className)}
+    >
       <span className="sr-only">{texto}</span>
       {forma === 'pagina' && <EsqueletoPagina />}
       {forma === 'tabla' && <EsqueletoTabla />}

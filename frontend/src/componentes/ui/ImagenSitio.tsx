@@ -14,6 +14,11 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'srcSet' | 'width
   sizes?: string
   /** La imagen más grande de la primera pantalla: se pide ya (sin carga diferida) y con prioridad alta. */
   prioridad?: boolean
+  /**
+   * `banner` usa la franja central 2:1 de las fotos verticales (si la foto la tiene): para cabeceras anchas
+   * pesa menos de la mitad que bajar la foto entera. Ver scripts/optimizar-imagenes.py.
+   */
+  recorte?: 'banner'
 }
 
 /**
@@ -27,6 +32,7 @@ export function ImagenSitio({
   alt,
   sizes = '100vw',
   prioridad = false,
+  recorte,
   className,
   ...resto
 }: Props) {
@@ -41,14 +47,17 @@ export function ImagenSitio({
     ...resto,
   }
   if (!nombre || !datos) return <img src={src} {...comunes} />
-  const variantes = datos.variantes
+  const franja = recorte === 'banner' && datos.banner.length > 0
+  const variantes = franja ? datos.banner : datos.variantes
+  const base = franja ? `${nombre}-banner` : nombre
+  const mayor = variantes[variantes.length - 1]
   return (
     <img
-      src={`/img/${nombre}-${variantes[variantes.length - 1]}.webp`}
-      srcSet={variantes.map((w) => `/img/${nombre}-${w}.webp ${w}w`).join(', ')}
+      src={`/img/${base}-${mayor}.webp`}
+      srcSet={variantes.map((w) => `/img/${base}-${w}.webp ${w}w`).join(', ')}
       sizes={sizes}
-      width={datos.ancho}
-      height={datos.alto}
+      width={franja ? mayor : datos.ancho}
+      height={franja ? Math.round(mayor / 2) : datos.alto}
       {...comunes}
     />
   )
