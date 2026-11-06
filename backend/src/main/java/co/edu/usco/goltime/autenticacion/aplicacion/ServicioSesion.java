@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,61 +15,59 @@ import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
 import co.edu.usco.goltime.usuarios.aplicacion.RepositorioUsuarios;
 import co.edu.usco.goltime.usuarios.dominio.Usuario;
 
-/** Ingreso, renovación con rotación de refresh tokens y cierre de sesión. */
+/**
+ * Ingreso con Google, renovación con rotación de refresh tokens y cierre de sesión. No hay contraseñas: la identidad
+ * la afirma Google (ver {@link VerificadorGoogle}) y la sesión sigue siendo la propia de Goltime.
+ */
 @Service
 public class ServicioSesion {
-
-    private static final String MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos.";
 
     private final RepositorioUsuarios usuarios;
     private final RepositorioTokensRefresco tokens;
     private final EmisorTokenAcceso emisor;
-    private final ControlIntentos intentos;
-    private final PasswordEncoder codificador;
+    private final VerificadorGoogle google;
     private final PropiedadesAutenticacion propiedades;
     private final Clock reloj;
-    /** Hash válido de una clave cualquiera: se compara cuando el correo no existe para igualar tiempos. */
-    private final String hashFalso;
 
     public ServicioSesion(RepositorioUsuarios usuarios, RepositorioTokensRefresco tokens, EmisorTokenAcceso emisor,
-            ControlIntentos intentos, PasswordEncoder codificador, PropiedadesAutenticacion propiedades, Clock reloj) {
+            VerificadorGoogle google, PropiedadesAutenticacion propiedades, Clock reloj) {
         this.usuarios = usuarios;
         this.tokens = tokens;
         this.emisor = emisor;
-        this.intentos = intentos;
-        this.codificador = codificador;
+        this.google = google;
         this.propiedades = propiedades;
         this.reloj = reloj;
-        this.hashFalso = codificador.encode(GeneradorTokens.generar());
     }
 
+    /**
+     * Entra con el token de identidad de Google. La cuenta se busca por el identificador de Google; si es la primera
+     * vez, por el correo (un administrador autorizado de antemano, o una cuenta anterior) y se vincula; y si el correo
+     * es nuevo se crea un cliente. Nadie se vuelve administrador entrando: ese rol solo lo da otro administrador.
+     */
     @Transactional
-    public ResultadoSesion ingresar(String correo, String clave, boolean recordar, String userAgent, String ip) {
-        String claveIntentos = Usuario.normalizarCorreo(correo) + "|" + ip;
-        if (intentos.estaBloqueado(claveIntentos)) {
-            throw new ExcepcionNegocio(CodigoError.DEMASIADOS_INTENTOS,
-                    "Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.");
+    public ResultadoSesion ingresarConGoogle(String credencial, boolean recordar, String userAgent, String ip) {
+        IdentidadGoogle identidad = google.verificar(credencial);
+        if (!identidad.correoVerificado()) {
+            throw new ExcepcionNegocio(CodigoError.CORREO_NO_VERIFICADO,
+                    "Google no confirma que ese correo sea tuyo. Entra con otra cuenta de Google.");
         }
-        Usuario usuario = usuarios.buscarPorCorreo(correo).orElse(null);
-        String hash = usuario != null ? usuario.claveHash() : hashFalso;
-        boolean coincide = codificador.matches(clave, hash);
-        if (usuario == null || !coincide) {
-            intentos.registrarFallo(claveIntentos);
-            throw new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS, MENSAJE_CREDENCIALES);
+        Instant ahora = reloj.instant();
+        Usuario usuario = usuarios.buscarPorGoogleSub(identidad.sub()).orElse(null);
+        if (usuario == null) {
+            usuario = usuarios.buscarPorCorreo(identidad.correo()).orElse(null);
+            if (usuario != null) {
+                usuario.vincularGoogle(identidad.sub());
+            } else {
+                usuario = Usuario.nuevoClienteGoogle(identidad.nombres(), identidad.apellidos(), identidad.correo(),
+                        identidad.sub(), ahora);
+            }
         }
-        // Solo con credenciales correctas se revela el estado de la cuenta.
         if (!usuario.activo()) {
             throw new ExcepcionNegocio(CodigoError.USUARIO_DESACTIVADO,
                     "Tu cuenta está desactivada. Comunícate con el administrador.");
         }
-        if (propiedades.verificacionCorreoObligatoria() && !usuario.correoVerificado()) {
-            throw new ExcepcionNegocio(CodigoError.CORREO_NO_VERIFICADO,
-                    "Debes verificar tu correo antes de ingresar. Revisa tu bandeja de entrada.");
-        }
-        intentos.limpiar(claveIntentos);
-        Instant ahora = reloj.instant();
         usuario.registrarIngreso(ahora);
-        usuarios.guardar(usuario);
+        usuario = usuarios.guardar(usuario);
         Emision emision = emitirRefresco(usuario, UUID.randomUUID(), recordar, userAgent, ip);
         return resultado(usuario, emision);
     }

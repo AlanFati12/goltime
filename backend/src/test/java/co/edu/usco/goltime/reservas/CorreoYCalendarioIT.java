@@ -71,7 +71,10 @@ class CorreoYCalendarioIT extends BaseReservasIT {
 
     @Test
     void sinCorreoVerificadoNoSeEnviaNadaPeroLaNotificacionInAppSigue() throws Exception {
-        Sesion cliente = nuevoClienteConSesion(); // sin verificar el correo
+        Sesion cliente = nuevoClienteConSesion();
+        // Con Google todas las cuentas nacen verificadas; la regla del Notificador (no escribir a un correo sin verificar) se
+        // conserva por si algún día hay cuentas así, y se prueba forzando ese estado.
+        jdbc.update("UPDATE usuarios SET correo_verificado = FALSE WHERE id = ?", cliente.id());
         long reservaId = solicitarOk(cliente.token(), canchaId, fecha, "19:00", "20:00");
 
         aprobar(admin, reservaId);

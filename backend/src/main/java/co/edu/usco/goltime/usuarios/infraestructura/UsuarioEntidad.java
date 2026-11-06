@@ -42,8 +42,8 @@ public class UsuarioEntidad extends EntidadAuditable {
 
     private String documento;
 
-    @Column(name = "clave_hash", nullable = false)
-    private String claveHash;
+    @Column(name = "google_sub", length = 64)
+    private String googleSub;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -97,8 +97,8 @@ public class UsuarioEntidad extends EntidadAuditable {
     public void setWhatsappLid(String whatsappLid) { this.whatsappLid = whatsappLid; }
     public String getDocumento() { return documento; }
     public void setDocumento(String documento) { this.documento = documento; }
-    public String getClaveHash() { return claveHash; }
-    public void setClaveHash(String claveHash) { this.claveHash = claveHash; }
+    public String getGoogleSub() { return googleSub; }
+    public void setGoogleSub(String googleSub) { this.googleSub = googleSub; }
     public Rol getRol() { return rol; }
     public void setRol(Rol rol) { this.rol = rol; }
     public boolean isActivo() { return activo; }

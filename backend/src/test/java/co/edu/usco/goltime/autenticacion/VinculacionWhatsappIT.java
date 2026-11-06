@@ -31,11 +31,21 @@ class VinculacionWhatsappIT extends BaseIntegracion {
         celular = "3" + ThreadLocalRandom.current().nextLong(100_000_000L, 999_999_999L);
     }
 
+    /** Edita el WhatsApp del perfil (con Google no se pide al entrar). */
+    private MvcResult ponerTelefono(Sesion sesion, String telefono) throws Exception {
+        Map<String, Object> datos = new HashMap<>(Map.of("nombres", "Ana", "apellidos", "Pérez"));
+        if (telefono != null) {
+            datos.put("telefono", telefono);
+        }
+        return mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/me")
+                .header("Authorization", "Bearer " + sesion.token()).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(datos))).andReturn();
+    }
+
+    /** Cuenta nueva (entra con Google) con ese WhatsApp en el perfil. */
     private String registrarCon(String telefono) throws Exception {
         String correoNuevo = correoUnico();
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoNuevo, CLAVE_VALIDA));
-        datos.put("telefono", telefono);
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
+        esperarEstado(ponerTelefono(entrar(correoNuevo, false), telefono), 200);
         return correoNuevo;
     }
 
@@ -56,26 +66,24 @@ class VinculacionWhatsappIT extends BaseIntegracion {
     }
 
     @Test
-    void elRegistroGuardaElWhatsappEnFormatoInternacionalYSinVerificar() throws Exception {
+    void elPerfilGuardaElWhatsappEnFormatoInternacionalYSinVerificar() throws Exception {
         String cuenta = registrarCon(celular.substring(0, 3) + " " + celular.substring(3));
         assertThat(estado(cuenta)).containsEntry("telefono", "+57" + celular).containsEntry("telefono_verificado", false);
     }
 
     @Test
-    void elRegistroRechazaUnWhatsappInvalidoOAusente() throws Exception {
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        datos.put("telefono", "8712345");
-        MvcResult invalido = enviar("/api/v1/autenticacion/registrar", datos);
+    void elPerfilRechazaUnWhatsappInvalidoYAceptaDejarloVacio() throws Exception {
+        Sesion sesion = entrar(correoUnico(), false);
+        MvcResult invalido = ponerTelefono(sesion, "8712345");
         esperarEstado(invalido, 400);
         assertThat((String) JsonPath.read(invalido.getResponse().getContentAsString(), "$.codigo")).isEqualTo("DATOS_INVALIDOS");
-        datos.remove("telefono");
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 400);
+        esperarEstado(ponerTelefono(sesion, null), 200);
     }
 
     @Test
     void conElCodigoDelPerfilElWhatsappQuedaVinculadoYElCodigoSirveUnaVez() throws Exception {
         String cuenta = registrarCon(celular);
-        String codigo = generarCodigo(ingresar(cuenta, CLAVE_VALIDA, false));
+        String codigo = generarCodigo(entrar(cuenta, false));
         assertThat(codigo).hasSize(6);
 
         // escribiéndolo en minúsculas y con espacios también sirve; vincula el WhatsApp desde el que llegó
@@ -91,7 +99,7 @@ class VinculacionWhatsappIT extends BaseIntegracion {
     @Test
     void desdeUnLidSeGuardaElLidYUnCodigoNuevoAnulaElAnterior() throws Exception {
         String cuenta = registrarCon(celular);
-        Sesion sesion = ingresar(cuenta, CLAVE_VALIDA, false);
+        Sesion sesion = entrar(cuenta, false);
         String viejo = generarCodigo(sesion);
         String nuevo = generarCodigo(sesion);
         esperarEstado(confirmar("X-WhatsApp-Lid", "164295400784036@lid", viejo), 400);
@@ -104,22 +112,20 @@ class VinculacionWhatsappIT extends BaseIntegracion {
     void unWhatsappVinculadoNoSeVinculaAOtraCuenta() throws Exception {
         String telefono = "+57" + celular;
         String primera = registrarCon(celular);
-        esperarEstado(confirmar("X-WhatsApp-Numero", telefono, generarCodigo(ingresar(primera, CLAVE_VALIDA, false))), 200);
+        esperarEstado(confirmar("X-WhatsApp-Numero", telefono, generarCodigo(entrar(primera, false))), 200);
 
         String segunda = registrarCon("3" + celular.substring(1, 9) + (celular.charAt(9) == '9' ? '0' : (char) (celular.charAt(9) + 1)));
-        MvcResult r = confirmar("X-WhatsApp-Numero", telefono, generarCodigo(ingresar(segunda, CLAVE_VALIDA, false)));
+        MvcResult r = confirmar("X-WhatsApp-Numero", telefono, generarCodigo(entrar(segunda, false)));
         esperarEstado(r, 409);
         assertThat((String) JsonPath.read(r.getResponse().getContentAsString(), "$.codigo")).isEqualTo("TELEFONO_YA_REGISTRADO");
-        // ni registrarse con ese número ya vinculado
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        datos.put("telefono", telefono);
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 409);
+        // ni ponerlo en otro perfil
+        esperarEstado(ponerTelefono(entrar(correoUnico(), false), telefono), 409);
     }
 
     @Test
     void cincoCodigosEquivocadosBloqueanEseWhatsappUnaHora() throws Exception {
         String cuenta = registrarCon(celular);
-        String bueno = generarCodigo(ingresar(cuenta, CLAVE_VALIDA, false));
+        String bueno = generarCodigo(entrar(cuenta, false));
         String telefono = "+57" + celular;
         for (int i = 0; i < 5; i++) {
             esperarEstado(confirmar("X-WhatsApp-Numero", telefono, i % 2 == 0 ? "AAAAAA" : "12"), 400);
@@ -132,7 +138,7 @@ class VinculacionWhatsappIT extends BaseIntegracion {
     @Test
     void cambiarElNumeroQuitaLaVerificacionYDesvincularQuitaTodo() throws Exception {
         String cuenta = registrarCon(celular);
-        Sesion sesion = ingresar(cuenta, CLAVE_VALIDA, false);
+        Sesion sesion = entrar(cuenta, false);
         esperarEstado(confirmar("X-WhatsApp-Numero", "+57" + celular, generarCodigo(sesion)), 200);
 
         MvcResult edicion = mvc.perform(put("/api/v1/me").header("Authorization", "Bearer " + sesion.token())

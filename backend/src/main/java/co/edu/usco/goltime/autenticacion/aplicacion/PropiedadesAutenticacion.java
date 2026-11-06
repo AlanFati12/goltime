@@ -8,8 +8,5 @@ public record PropiedadesAutenticacion(
         int accesoMinutos,
         int refrescoDias,
         int refrescoSesionHoras,
-        int intentosMaximos,
-        int bloqueoMinutos,
-        boolean verificacionCorreoObligatoria,
         String urlPublica) {
 }

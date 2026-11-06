@@ -43,27 +43,29 @@ public class ControladorPerfil {
                 solicitud.telefono(), solicitud.documento()));
     }
 
-    @PostMapping("/clave")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Cambiar mi contraseña", description = "Cierra todas las sesiones; hay que volver a ingresar.")
-    public void cambiarClave(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SolicitudCambioClave solicitud) {
-        perfil.cambiarClave(idDe(jwt), solicitud.claveActual(), solicitud.claveNueva(), solicitud.confirmacion());
+    @PostMapping("/completar-perfil")
+    @Operation(summary = "Completar el perfil tras entrar con Google",
+            description = "Pide los datos que Google no da: apellidos y WhatsApp son obligatorios; el documento es opcional.")
+    public UsuarioResumen completar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SolicitudCompletarPerfil solicitud) {
+        return UsuarioResumen.de(perfil.actualizar(idDe(jwt), solicitud.nombres(), solicitud.apellidos(),
+                solicitud.telefono(), solicitud.documento()));
     }
 
     private static long idDe(Jwt jwt) {
         return Long.parseLong(jwt.getSubject());
     }
 
-    public record SolicitudPerfil(
+    public record SolicitudCompletarPerfil(
             @NotBlank @Size(max = 100) String nombres,
             @NotBlank @Size(max = 100) String apellidos,
             @NotBlank @Size(max = 30) String telefono,
             @Size(max = 30) String documento) {
     }
 
-    public record SolicitudCambioClave(
-            @NotBlank String claveActual,
-            @NotBlank @Size(max = 200) String claveNueva,
-            @NotBlank String confirmacion) {
+    public record SolicitudPerfil(
+            @NotBlank @Size(max = 100) String nombres,
+            @Size(max = 100) String apellidos,
+            @Size(max = 30) String telefono,
+            @Size(max = 30) String documento) {
     }
 }

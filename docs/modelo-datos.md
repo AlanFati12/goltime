@@ -8,10 +8,9 @@ Convenciones: ids `BIGINT` identity, fechas `timestamptz` (UTC), enums como `VAR
 
 | Tabla | Propósito | Notas |
 |---|---|---|
-| `usuarios` | Cuentas de `ADMIN` y `CLIENTE` | Correo único sin distinguir mayúsculas (`uq_usuarios_correo` sobre `lower(correo)`). `version_token` invalida tokens al desactivar o cambiar clave. `puede_inscribir_equipos` lo habilita el admin por cliente. `version` para bloqueo optimista |
+| `usuarios` | Cuentas de `ADMIN` y `CLIENTE` | Correo único sin distinguir mayúsculas (`uq_usuarios_correo` sobre `lower(correo)`). `google_sub` (único) es el identificador estable de la cuenta de Google (V18); ya no hay contraseña. `version_token` invalida tokens al desactivar. `puede_inscribir_equipos` lo habilita el admin por cliente. `version` para bloqueo optimista |
 | `clientes_mostrador` | Personas sin cuenta para las que el admin crea reservas | Nombre y teléfono |
 | `refresh_tokens` | Refresh tokens opacos | Solo se guarda el hash. `familia_id` agrupa la cadena de rotación; `reemplazado_por` enlaza al token siguiente |
-| `tokens_verificacion` | Tokens de un solo uso | Tipos `VERIFICAR_CORREO` y `RESTABLECER_CLAVE`; solo hash; expiran a los 30 min |
 | `configuracion` | Parámetros del negocio (clave/valor tipado) | Se siembran los valores por defecto aprobados: 4 h de cancelación, 2 reprogramaciones, expiración de pendientes 12 h o 2 h antes del inicio, etc. |
 | `audit_log` | Bitácora de acciones administrativas | `cambios` en JSONB; índices por entidad y por fecha |
 

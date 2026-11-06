@@ -22,13 +22,7 @@ const ENLACES = [
 const ENLACES_CLIENTE = [{ a: '/mis-reservas', texto: 'Mis reservas' }]
 
 /** Rutas de acceso: se muestran a pantalla completa con su propia composición. */
-const RUTAS_ACCESO = [
-  '/ingresar',
-  '/registro',
-  '/olvide-clave',
-  '/restablecer-clave',
-  '/verificar-correo',
-]
+const RUTAS_ACCESO = ['/ingresar', '/completar-perfil']
 
 /** Fotografías usadas en el sitio (licencia Unsplash); su crédito va en el pie. */
 const CREDITOS_FOTOS = [
@@ -165,14 +159,6 @@ export function LayoutPublico() {
                 >
                   Ingresar
                 </EnlaceBoton>
-                <EnlaceBoton
-                  to="/registro"
-                  tamano="sm"
-                  variante={transparente ? 'claro' : 'secundario'}
-                  className="hidden lg:inline-flex"
-                >
-                  Crear cuenta
-                </EnlaceBoton>
               </>
             )}
             <button
@@ -209,12 +195,7 @@ export function LayoutPublico() {
                 ? [{ a: '/admin', texto: 'Panel de administración' }]
                 : []),
               ...enlaces,
-              ...(!usuario
-                ? [
-                    { a: '/ingresar', texto: 'Ingresar' },
-                    { a: '/registro', texto: 'Crear cuenta' },
-                  ]
-                : []),
+              ...(!usuario ? [{ a: '/ingresar', texto: 'Ingresar' }] : []),
             ].map((e, i) => (
               <li
                 key={e.a}
@@ -297,10 +278,7 @@ function PiePagina() {
                     { a: '/mis-premios', texto: 'Mis premios' },
                     { a: '/perfil', texto: 'Mi perfil' },
                   ]
-              : [
-                  { a: '/ingresar', texto: 'Ingresar' },
-                  { a: '/registro', texto: 'Crear cuenta' },
-                ]
+              : [{ a: '/ingresar', texto: 'Ingresar' }]
             ).map((e) => (
               <li key={e.a}>
                 <Link to={e.a} className="text-white/75 transition-colors hover:text-white">

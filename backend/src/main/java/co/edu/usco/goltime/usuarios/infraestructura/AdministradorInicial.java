@@ -11,8 +11,9 @@ import co.edu.usco.goltime.usuarios.aplicacion.RepositorioUsuarios;
 import co.edu.usco.goltime.usuarios.aplicacion.ServicioAdministradores;
 
 /**
- * Crea el primer administrador a partir de {@code ADMIN_CORREO} y {@code ADMIN_CLAVE}.
- * Si el correo ya existe no hace nada; si faltan las variables solo avisa en el log.
+ * Autoriza al primer administrador a partir de {@code ADMIN_CORREO}: queda creado sin contraseña y se vincula con
+ * su cuenta de Google la primera vez que entra con ese correo. Si el correo ya existe no hace nada; si falta la
+ * variable solo avisa en el log.
  */
 @Component
 class AdministradorInicial implements ApplicationRunner {
@@ -22,27 +23,24 @@ class AdministradorInicial implements ApplicationRunner {
     private final ServicioAdministradores administradores;
     private final RepositorioUsuarios usuarios;
     private final String correo;
-    private final String clave;
 
     AdministradorInicial(ServicioAdministradores administradores, RepositorioUsuarios usuarios,
-            @Value("${goltime.administrador-inicial.correo:}") String correo,
-            @Value("${goltime.administrador-inicial.clave:}") String clave) {
+            @Value("${goltime.administrador-inicial.correo:}") String correo) {
         this.administradores = administradores;
         this.usuarios = usuarios;
         this.correo = correo;
-        this.clave = clave;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (correo.isBlank() || clave.isBlank()) {
-            log.warn("ADMIN_CORREO / ADMIN_CLAVE no definidos: no se crea administrador inicial.");
+        if (correo.isBlank()) {
+            log.warn("ADMIN_CORREO no definido: no se crea administrador inicial.");
             return;
         }
         if (usuarios.existePorCorreo(correo)) {
             return;
         }
-        administradores.crear("Administrador", "Goltime", correo, null, clave);
+        administradores.crear("Administrador", "Goltime", correo, null);
         log.info("Administrador inicial creado: {}", correo);
     }
 }

@@ -182,21 +182,9 @@ const PaginaIngresar = perezosa(
   () => import('@/caracteristicas/autenticacion/PaginaIngresar'),
   'PaginaIngresar',
 )
-const PaginaOlvideClave = perezosa(
-  () => import('@/caracteristicas/autenticacion/PaginaOlvideClave'),
-  'PaginaOlvideClave',
-)
-const PaginaRegistro = perezosa(
-  () => import('@/caracteristicas/autenticacion/PaginaRegistro'),
-  'PaginaRegistro',
-)
-const PaginaRestablecerClave = perezosa(
-  () => import('@/caracteristicas/autenticacion/PaginaRestablecerClave'),
-  'PaginaRestablecerClave',
-)
-const PaginaVerificarCorreo = perezosa(
-  () => import('@/caracteristicas/autenticacion/PaginaVerificarCorreo'),
-  'PaginaVerificarCorreo',
+const PaginaCompletarPerfil = perezosa(
+  () => import('@/caracteristicas/autenticacion/PaginaCompletarPerfil'),
+  'PaginaCompletarPerfil',
 )
 const PaginaPerfil = perezosa(() => import('@/caracteristicas/perfil/PaginaPerfil'), 'PaginaPerfil')
 const LayoutAdmin = perezosa(() => import('@/componentes/layout/LayoutAdmin'), 'LayoutAdmin')
@@ -226,10 +214,9 @@ export default function App() {
                 <Route path="equipos/:id" element={<PaginaEquipoPublico />} />
                 <Route path="jugadores/:id" element={<PaginaJugadorPublico />} />
                 <Route path="ingresar" element={<PaginaIngresar />} />
-                <Route path="registro" element={<PaginaRegistro />} />
-                <Route path="olvide-clave" element={<PaginaOlvideClave />} />
-                <Route path="restablecer-clave" element={<PaginaRestablecerClave />} />
-                <Route path="verificar-correo" element={<PaginaVerificarCorreo />} />
+                <Route element={<RutaProtegida rol="CLIENTE" permitirIncompleto />}>
+                  <Route path="completar-perfil" element={<PaginaCompletarPerfil />} />
+                </Route>
                 <Route element={<RutaProtegida />}>
                   <Route path="mis-reservas/:id" element={<PaginaReservaDetalle />} />
                   <Route element={<LayoutCuenta />}>

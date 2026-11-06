@@ -1,10 +1,15 @@
+spring:
+  datasource:
+    hikari:
+      # En pruebas hay muchas peticiones concurrentes y la máquina puede ir cargada: holgura para no fallar por el pool.
+      maximum-pool-size: 20
+      connection-timeout: 30000
+
 goltime:
   reservas:
     intervalo-tareas-ms: 3600000
   limite-tasa:
     ingreso-por-minuto: 100000
-    registro-por-hora: 100000
-    recuperacion-por-hora: 100000
   seguridad:
     jwt-secreto: secreto-solo-para-pruebas-automaticas-0123456789
     cookie-segura: false
@@ -16,4 +21,5 @@ goltime:
     clave-integracion: clave-de-integracion-solo-para-pruebas-0123456789
   administrador-inicial:
     correo: admin-pruebas@goltime.test
-    clave: ClaveAdmin2026
+  google:
+    modo-prueba: true

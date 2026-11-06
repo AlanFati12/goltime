@@ -18,7 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/** Aplica límite de tasa por IP a ingreso, registro y recuperación de contraseña. */
+/** Aplica límite de tasa por IP al ingreso con Google. */
 @Component
 class FiltroLimiteTasa extends OncePerRequestFilter {
 
@@ -30,10 +30,7 @@ class FiltroLimiteTasa extends OncePerRequestFilter {
     FiltroLimiteTasa(PropiedadesLimiteTasa limites, ObjectMapper mapeador) {
         this.mapeador = mapeador;
         this.limitadores = Map.of(
-                BASE + "/ingresar", new LimitadorTasa(limites.ingresoPorMinuto(), Duration.ofMinutes(1)),
-                BASE + "/registrar", new LimitadorTasa(limites.registroPorHora(), Duration.ofHours(1)),
-                BASE + "/olvide-clave", new LimitadorTasa(limites.recuperacionPorHora(), Duration.ofHours(1)),
-                BASE + "/restablecer-clave", new LimitadorTasa(limites.recuperacionPorHora(), Duration.ofHours(1)));
+                BASE + "/google", new LimitadorTasa(limites.ingresoPorMinuto(), Duration.ofMinutes(1)));
     }
 
     @Override

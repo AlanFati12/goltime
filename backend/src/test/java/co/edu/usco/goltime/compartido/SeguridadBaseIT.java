@@ -37,13 +37,13 @@ class SeguridadBaseIT extends BaseIntegracion {
     void flywayAplicaLasMigracionesYLaExtensionDeExclusion() {
         Integer tablas = jdbc.queryForObject(
                 "SELECT count(*) FROM information_schema.tables WHERE table_name IN "
-                        + "('usuarios','refresh_tokens','tokens_verificacion','configuracion','audit_log')",
+                        + "('usuarios','refresh_tokens','configuracion','audit_log')",
                 Integer.class);
         Integer extension = jdbc.queryForObject("SELECT count(*) FROM pg_extension WHERE extname = 'btree_gist'", Integer.class);
         Integer recordar = jdbc.queryForObject(
                 "SELECT count(*) FROM information_schema.columns WHERE table_name='refresh_tokens' AND column_name='recordar'",
                 Integer.class);
-        assertThat(tablas).isEqualTo(5);
+        assertThat(tablas).isEqualTo(4);
         assertThat(extension).isEqualTo(1);
         assertThat(recordar).isEqualTo(1);
     }

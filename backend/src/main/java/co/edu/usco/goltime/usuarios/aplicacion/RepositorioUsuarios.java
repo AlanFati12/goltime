@@ -12,6 +12,9 @@ public interface RepositorioUsuarios {
 
     Optional<Usuario> buscarPorId(long id);
 
+    /** La cuenta de Google (`sub`) con la que se entró antes; es el identificador estable, aunque cambie el correo. */
+    Optional<Usuario> buscarPorGoogleSub(String sub);
+
     /** El correo se compara sin distinguir mayúsculas. */
     Optional<Usuario> buscarPorCorreo(String correo);
 

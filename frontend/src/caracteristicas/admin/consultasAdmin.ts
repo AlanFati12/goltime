@@ -88,12 +88,8 @@ export function useAdministradores() {
 export function useCrearAdministrador() {
   const cliente = useQueryClient()
   return useMutation({
-    mutationFn: async (datos: {
-      nombres: string
-      apellidos: string
-      correo: string
-      clave: string
-    }) => (await api.post<Usuario>('/admin/administradores', datos)).data,
+    mutationFn: async (datos: { nombres: string; apellidos: string; correo: string }) =>
+      (await api.post<Usuario>('/admin/administradores', datos)).data,
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['admin', 'administradores'] }),
   })
 }

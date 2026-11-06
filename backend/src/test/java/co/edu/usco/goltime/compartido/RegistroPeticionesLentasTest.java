@@ -47,8 +47,10 @@ class RegistroPeticionesLentasTest {
     void advierte_de_las_peticiones_que_pasan_el_umbral_sin_registrar_la_consulta() throws Exception {
         atender(new RegistroPeticionesLentas(20), "/api/v1/admin/clientes", 60);
 
-        assertThat(registro.list).hasSize(1);
-        ILoggingEvent evento = registro.list.get(0);
+        // Otras pruebas de la misma ejecución pueden dejar avisos propios en el mismo registro: solo importan los de esta.
+        var propios = registro.list.stream().filter(e -> e.getFormattedMessage().contains("/api/v1/admin/clientes")).toList();
+        assertThat(propios).hasSize(1);
+        ILoggingEvent evento = propios.get(0);
         assertThat(evento.getLevel()).isEqualTo(Level.WARN);
         assertThat(evento.getFormattedMessage()).contains("GET /api/v1/admin/clientes").doesNotContain("juan");
     }
@@ -58,6 +60,6 @@ class RegistroPeticionesLentasTest {
         atender(new RegistroPeticionesLentas(500), "/api/v1/publico/sedes", 1);
         atender(new RegistroPeticionesLentas(0), "/actuator/health", 1);
 
-        assertThat(registro.list).isEmpty();
+        assertThat(registro.list.stream().filter(e -> e.getFormattedMessage().contains("/api/v1/publico/sedes") || e.getFormattedMessage().contains("/actuator"))).isEmpty();
     }
 }

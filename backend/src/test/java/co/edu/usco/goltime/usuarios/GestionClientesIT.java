@@ -35,7 +35,7 @@ class GestionClientesIT extends BaseIntegracion {
     void listaClientesConBusquedaYFiltroDeEstado() throws Exception {
         Sesion admin = ingresarAdmin();
         String correo = correoUnico();
-        registrar(correo, CLAVE_VALIDA);
+        entrar(correo, false);
 
         MvcResult porCorreo = consultar("/api/v1/admin/clientes?busqueda=" + correo.substring(0, 16), admin.token());
         esperarEstado(porCorreo, 200);
@@ -52,8 +52,8 @@ class GestionClientesIT extends BaseIntegracion {
     void desactivarExigeMotivoYCierraLaSesionDeInmediato() throws Exception {
         Sesion admin = ingresarAdmin();
         String correo = correoUnico();
-        registrar(correo, CLAVE_VALIDA);
-        Sesion cliente = ingresar(correo, CLAVE_VALIDA, true);
+        entrar(correo, false);
+        Sesion cliente = entrar(correo, true);
         String url = "/api/v1/admin/clientes/" + cliente.id();
 
         esperarEstado(enviarConToken(url + "/desactivar", Map.of("motivo", "  "), admin.token()), 400);
@@ -67,11 +67,11 @@ class GestionClientesIT extends BaseIntegracion {
         // su refresh token ya no renueva
         esperarEstado(enviar("/api/v1/autenticacion/refrescar", Map.of(), cookie(cliente.refresco())), 401);
         // no puede iniciar sesión y recibe un mensaje claro
-        MvcResult login = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", correo, "clave", CLAVE_VALIDA));
+        MvcResult login = ingresoGoogle(credencialGoogle(correo, "Ana", "Pérez"), false);
         esperarEstado(login, 403);
         assertThat(codigo(login)).isEqualTo("USUARIO_DESACTIVADO");
-        // con clave incorrecta NO se revela que está desactivada
-        esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", correo, "clave", "Incorrecta99")), 401);
+        // un token de Google que no es válido ni siquiera llega a revelar el estado de la cuenta
+        esperarEstado(ingresoGoogle("inventado", false), 401);
 
         // quedó en la bitácora con el admin como actor
         Map<String, Object> fila = jdbc.queryForMap(
@@ -83,7 +83,7 @@ class GestionClientesIT extends BaseIntegracion {
 
         // reactivar devuelve el acceso
         esperarEstado(enviarConToken(url + "/activar", Map.of(), admin.token()), 200);
-        esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", correo, "clave", CLAVE_VALIDA)), 200);
+        esperarEstado(ingresoGoogle(credencialGoogle(correo, "Ana", "Pérez"), false), 200);
     }
 
     @Test
@@ -125,20 +125,26 @@ class GestionClientesIT extends BaseIntegracion {
     }
 
     @Test
-    void elAdminCreaOtroAdministradorYElRegistroPublicoNuncaLoHace() throws Exception {
+    void elAdminAutorizaOtroAdministradorPorCorreoYEntrarConGoogleNuncaDaEseRol() throws Exception {
         Sesion admin = ingresarAdmin();
         String correo = "segundo-admin-" + System.nanoTime() + "@goltime.test";
 
         MvcResult creado = enviarConToken("/api/v1/admin/administradores",
-                Map.of("nombres", "Luisa", "apellidos", "Rojas", "correo", correo, "clave", "AdminClave123"), admin.token());
+                Map.of("nombres", "Luisa", "apellidos", "Rojas", "correo", correo), admin.token());
         esperarEstado(creado, 201);
         assertThat((String) JsonPath.read(creado.getResponse().getContentAsString(), "$.rol")).isEqualTo("ADMIN");
 
-        Sesion nuevoAdmin = ingresar(correo, "AdminClave123", false);
+        // Entra con la cuenta de Google de ese correo y queda vinculada: es administradora.
+        Sesion nuevoAdmin = entrar(correo, false);
         esperarEstado(consultar("/api/v1/admin/clientes", nuevoAdmin.token()), 200);
+        assertThat(jdbc.queryForObject("SELECT rol FROM usuarios WHERE correo = ?", String.class, correo)).isEqualTo("ADMIN");
+
+        // Un correo cualquiera que entra con Google solo llega a ser cliente, y no abre nada de administración.
+        Sesion cualquiera = nuevoClienteConSesion();
+        esperarEstado(consultar("/api/v1/admin/clientes", cualquiera.token()), 403);
 
         MvcResult duplicado = enviarConToken("/api/v1/admin/administradores",
-                Map.of("nombres", "Luisa", "apellidos", "Rojas", "correo", correo.toUpperCase(), "clave", "AdminClave123"), admin.token());
+                Map.of("nombres", "Luisa", "apellidos", "Rojas", "correo", correo.toUpperCase()), admin.token());
         esperarEstado(duplicado, 409);
     }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deja la base de datos vacía para hacer pruebas: borra TODOS los datos (reservas, sedes, torneos, usuarios, fotos…)
-# y deja solo el administrador de .env (ADMIN_CORREO / ADMIN_CLAVE) y un cliente de prueba
-# (CLIENTE_PRUEBA_CORREO / CLIENTE_PRUEBA_CLAVE, que se agregan a .env si no existen).
+# y deja solo el administrador de .env (ADMIN_CORREO) y un cliente de prueba (CLIENTE_PRUEBA_CORREO, que se agrega
+# a .env si no existe). Nadie tiene contraseña: se entra con Google (en local, con GOOGLE_MODO_PRUEBA=true).
 #
 # Uso:  ./scripts/reiniciar-base.sh        (pide confirmación)
 #       ./scripts/reiniciar-base.sh --si   (sin preguntar)
@@ -16,7 +16,6 @@ if ! grep -q '^CLIENTE_PRUEBA_CORREO=' .env; then
     echo ""
     echo "# --- Cliente de prueba (lo crea scripts/reiniciar-base.sh) ---"
     echo "CLIENTE_PRUEBA_CORREO=cliente@goltime.local"
-    echo "CLIENTE_PRUEBA_CLAVE=Cliente$(openssl rand -hex 3)9"
   } >> .env
 fi
 
@@ -54,16 +53,16 @@ done
 [ "$estado" = "healthy" ] || { echo "La API no arrancó. Revisa: docker compose logs api"; exit 1; }
 
 echo "5/5 Creando el cliente de prueba…"
-codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/autenticacion/registrar" -H 'Content-Type: application/json' -d "{
-  \"nombres\": \"Cliente\", \"apellidos\": \"De Prueba\", \"correo\": \"$CLIENTE_PRUEBA_CORREO\", \"telefono\": \"3001234567\",
-  \"clave\": \"$CLIENTE_PRUEBA_CLAVE\", \"confirmacionClave\": \"$CLIENTE_PRUEBA_CLAVE\", \"aceptaTerminos\": true }")
-[ "$codigo" = "201" ] || [ "$codigo" = "200" ] || { echo "No se pudo registrar el cliente (HTTP $codigo)."; exit 1; }
-# Correo verificado y habilitado para inscribir equipos, para probar todo sin pasos extra.
+# Se inserta directo: ya no hay registro con formulario. Perfil completo, habilitado para inscribir equipos, y se
+# vincula con su cuenta de Google la primera vez que entra con ese correo.
 docker compose exec -T db psql -q -U "$DB_USUARIO" -d "$DB_NOMBRE" \
-  -c "UPDATE usuarios SET correo_verificado = TRUE, puede_inscribir_equipos = TRUE WHERE correo = '$CLIENTE_PRUEBA_CORREO';"
+  -c "INSERT INTO usuarios (nombres, apellidos, correo, telefono, rol, correo_verificado, acepto_terminos_en, puede_inscribir_equipos)
+      VALUES ('Cliente', 'De Prueba', '$CLIENTE_PRUEBA_CORREO', '+573001234567', 'CLIENTE', TRUE, now(), TRUE)
+      ON CONFLICT DO NOTHING;"
 
 echo ""
 echo "Listo. Base vacía con dos usuarios:"
-echo "  Administrador: $ADMIN_CORREO   (clave: ADMIN_CLAVE en .env)"
-echo "  Cliente:       $CLIENTE_PRUEBA_CORREO   (clave: CLIENTE_PRUEBA_CLAVE en .env)"
+echo "  Administrador: $ADMIN_CORREO"
+echo "  Cliente:       $CLIENTE_PRUEBA_CORREO"
+echo "Se entra con Google; en local (GOOGLE_MODO_PRUEBA=true) basta escribir el correo."
 echo "Abre http://localhost:${WEB_PUERTO:-8081}"
