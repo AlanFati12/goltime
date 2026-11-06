@@ -73,6 +73,11 @@ export function PaginaReservar() {
       navegar('/ingresar', { state: { desde: ubicacion.pathname + ubicacion.search } })
       return
     }
+    // Con Google no se piden el WhatsApp ni los apellidos al entrar: primero se completan.
+    if (usuario.rol === 'CLIENTE' && !usuario.perfilCompleto) {
+      navegar('/completar-perfil', { state: { desde: ubicacion.pathname + ubicacion.search } })
+      return
+    }
     setElegido({ cancha, slot })
   }
 

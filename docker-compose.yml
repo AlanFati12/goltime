@@ -49,7 +49,9 @@ services:
       CORS_ORIGENES: ${CORS_ORIGENES:-http://localhost:8081,http://localhost:5173}
       COOKIE_SEGURA: ${COOKIE_SEGURA:-false}
       ADMIN_CORREO: ${ADMIN_CORREO:-}
-      ADMIN_CLAVE: ${ADMIN_CLAVE:-}
+      # Ingreso con Google (ADR 0023). En local, GOOGLE_MODO_PRUEBA=true deja entrar sin Google (solo desarrollo).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_MODO_PRUEBA: ${GOOGLE_MODO_PRUEBA:-false}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PUERTO: ${SMTP_PUERTO:-1025}
       SMTP_USUARIO: ${SMTP_USUARIO:-}
@@ -58,7 +60,6 @@ services:
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       CORREO_REMITENTE: ${CORREO_REMITENTE:-no-responder@goltime.local}
       URL_PUBLICA: ${URL_PUBLICA:-http://localhost:8081}
-      VERIFICACION_CORREO_OBLIGATORIA: ${VERIFICACION_CORREO_OBLIGATORIA:-false}
       # Trazas de rendimiento (opcional): OTEL_ACTIVADO=true y `docker compose --profile observabilidad up -d`.
       OTEL_ACTIVADO: ${OTEL_ACTIVADO:-false}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://trazas:4318/v1/traces}
@@ -85,8 +86,6 @@ services:
     environment:
       API_URL: http://api:8080/api/v1
       ADMIN_CORREO: ${ADMIN_CORREO:?Define ADMIN_CORREO en .env}
-      ADMIN_CLAVE: ${ADMIN_CLAVE:?Define ADMIN_CLAVE en .env}
-      DEMO_CLAVE_CLIENTES: ${DEMO_CLAVE_CLIENTES:-Demo2026*}
       DB_HOST: db
       DB_PUERTO: 5432
       DB_NOMBRE: ${DB_NOMBRE:-goltime}

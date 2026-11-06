@@ -16,23 +16,42 @@ class UsuarioTest {
     private static final Instant AHORA = Instant.parse("2026-10-18T10:00:00Z");
 
     private Usuario cliente() {
-        return Usuario.nuevoCliente(" Ana ", "Pérez", "  Ana.Perez@Correo.COM ", "300 123 4567", null, "hash", AHORA);
+        Usuario u = Usuario.nuevoClienteGoogle(" Ana ", "Pérez", "  Ana.Perez@Correo.COM ", "sub-123", AHORA);
+        u.actualizarPerfil("Ana", "Pérez", "300 123 4567", null);
+        return u;
     }
 
     @Test
-    void elRegistroNormalizaElCorreoYCreaUnClienteActivo() {
+    void laPrimeraEntradaConGoogleNormalizaElCorreoYCreaUnClienteActivoYVerificado() {
         Usuario u = cliente();
         assertThat(u.correo()).isEqualTo("ana.perez@correo.com");
         assertThat(u.nombres()).isEqualTo("Ana");
         assertThat(u.rol()).isEqualTo(Rol.CLIENTE);
         assertThat(u.activo()).isTrue();
         assertThat(u.puedeInscribirEquipos()).isFalse();
+        assertThat(u.googleSub()).isEqualTo("sub-123");
+        assertThat(u.correoVerificado()).as("Google ya confirmó el correo").isTrue();
+        assertThat(u.aceptoTerminosEn()).isEqualTo(AHORA);
     }
 
     @Test
-    void exigeAceptarLosTerminos() {
-        assertThatThrownBy(() -> Usuario.nuevoCliente("Ana", "Pérez", "a@b.co", "3001234567", null, "hash", null))
-                .isInstanceOf(ExcepcionNegocio.class);
+    void entrarConGoogleNoPideWhatsappPeroSePuedeAgregarDespues() {
+        Usuario u = Usuario.nuevoClienteGoogle("Ana", "", "a@b.co", "sub-1", AHORA);
+        assertThat(u.telefono()).isNull();
+        assertThat(u.apellidos()).as("Google no siempre da apellido").isEmpty();
+        u.actualizarPerfil("Ana", "Pérez", "3001234567", null);
+        assertThat(u.telefono()).isEqualTo("+573001234567");
+    }
+
+    @Test
+    void vincularGoogleConfirmaElCorreoYRechazaOtraCuentaDeGoogle() {
+        Usuario admin = Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null);
+        assertThat(admin.googleSub()).isNull();
+        admin.vincularGoogle("sub-root");
+        assertThat(admin.googleSub()).isEqualTo("sub-root");
+        admin.vincularGoogle("sub-root"); // repetir con la misma cuenta es inofensivo
+        assertThatThrownBy(() -> admin.vincularGoogle("sub-otro"))
+                .isInstanceOfSatisfying(ExcepcionNegocio.class, e -> assertThat(e.codigo()).isEqualTo(CodigoError.CREDENCIALES_INVALIDAS));
     }
 
     @Test
@@ -56,7 +75,7 @@ class UsuarioTest {
         u.desactivar("Motivo", 1L, AHORA);
         assertThatThrownBy(() -> u.desactivar("Otra vez", 1L, AHORA)).isInstanceOf(ExcepcionNegocio.class);
 
-        Usuario admin = Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null, "hash");
+        Usuario admin = Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null);
         assertThatThrownBy(() -> admin.desactivar("No", 1L, AHORA))
                 .isInstanceOfSatisfying(ExcepcionNegocio.class, e -> assertThat(e.codigo()).isEqualTo(CodigoError.DATOS_INVALIDOS));
     }
@@ -72,16 +91,8 @@ class UsuarioTest {
     }
 
     @Test
-    void cambiarClaveIncrementaLaVersionDelToken() {
-        Usuario u = cliente();
-        u.cambiarClave("nuevoHash");
-        assertThat(u.claveHash()).isEqualTo("nuevoHash");
-        assertThat(u.versionToken()).isEqualTo(1);
-    }
-
-    @Test
     void soloLosClientesPuedenInscribirEquipos() {
-        Usuario admin = Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null, "hash");
+        Usuario admin = Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null);
         assertThatThrownBy(() -> admin.habilitarInscripcionEquipos(true)).isInstanceOf(ExcepcionNegocio.class);
 
         Usuario u = cliente();
@@ -91,7 +102,7 @@ class UsuarioTest {
 
     @Test
     void elAdministradorNaceConCorreoVerificado() {
-        assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null, "hash").correoVerificado()).isTrue();
+        assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", null).correoVerificado()).isTrue();
     }
 
     @Test
@@ -102,10 +113,9 @@ class UsuarioTest {
     }
 
     @Test
-    void elClienteNoPuedeQuedarSinWhatsappPeroElAdministradorSi() {
-        assertThatThrownBy(() -> Usuario.nuevoCliente("Ana", "Pérez", "a@b.co", " ", null, "hash", AHORA))
-                .isInstanceOf(ExcepcionNegocio.class);
-        assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", " ", "hash").telefono()).isNull();
+    void elWhatsappEsOpcionalParaTodos() {
+        assertThat(Usuario.nuevoClienteGoogle("Ana", "Pérez", "a@b.co", "sub-1", AHORA).telefono()).isNull();
+        assertThat(Usuario.nuevoAdministrador("Root", "Admin", "root@goltime.co", " ").telefono()).isNull();
     }
 
     @Test

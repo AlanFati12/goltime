@@ -36,14 +36,4 @@ class GeneradorTokensTest {
         assertThat(token.revocado()).isTrue();
     }
 
-    @Test
-    void unTokenDeVerificacionSoloSirveUnaVezYAntesDeVencer() {
-        Instant ahora = Instant.parse("2026-10-18T10:00:00Z");
-        TokenVerificacion token = TokenVerificacion.nuevo(1L, TipoTokenVerificacion.RESTABLECER_CLAVE, "h",
-                ahora.plusSeconds(1800));
-        assertThat(token.estaVigente(ahora)).isTrue();
-        assertThat(token.estaVigente(ahora.plusSeconds(1800))).isFalse();
-        token.marcarUsado(ahora);
-        assertThat(token.estaVigente(ahora)).isFalse();
-    }
 }

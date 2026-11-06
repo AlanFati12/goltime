@@ -3,7 +3,7 @@
 
 Qué crea (todo por la API real salvo el historial, que necesita fechas pasadas):
   - 2 sedes en Neiva (una con 3 canchas de F5 y 1 de F8 techada que depende de dos F5; otra con 2 de F7) con tarifas por franja.
-  - 16 clientes con nombres colombianos (clave de todos: la de DEMO_CLAVE_CLIENTES).
+  - 16 clientes con nombres colombianos (sin contraseña: en local entran con el ingreso de prueba de Google).
   - ~3 meses de reservas históricas con pagos, cancelaciones y no asistencias (para estadísticas y mapa de calor), y premios ganados.
   - Reservas futuras (pendientes y confirmadas), una serie recurrente, un bloqueo puntual y uno recurrente.
   - 2 promociones, 2 reglas de premio.
@@ -21,13 +21,10 @@ import time
 import urllib.error
 import urllib.request
 
-import bcrypt
 import psycopg
 
 API = os.environ.get("API_URL", "http://api:8080/api/v1")
 ADMIN_CORREO = os.environ["ADMIN_CORREO"]
-ADMIN_CLAVE = os.environ["ADMIN_CLAVE"]
-CLAVE_CLIENTES = os.environ.get("DEMO_CLAVE_CLIENTES", "Demo2026*")
 BOGOTA = dt.timezone(dt.timedelta(hours=-5))
 random.seed(2026)
 
@@ -60,8 +57,9 @@ def ok(metodo, ruta, token=None, cuerpo=None):
     return llamar(metodo, ruta, token, cuerpo)[1]
 
 
-def ingresar(correo, clave):
-    return ok("POST", "/autenticacion/ingresar", None, {"correo": correo, "clave": clave, "recordarme": False})["tokenAcceso"]
+def ingresar(correo):
+    """Entra con el ingreso de MENTIRA de Google (GOOGLE_MODO_PRUEBA=true, solo desarrollo): no hay contraseñas."""
+    return ok("POST", "/autenticacion/google", None, {"credencial": f"prueba|{correo}|Demo|Goltime", "recordarme": False})["tokenAcceso"]
 
 
 def iso(fecha, hora, minuto=0):
@@ -91,7 +89,7 @@ PILA = ["Diego", "Jhon", "Yeison", "Kevin", "Camilo", "Esteban", "Mauricio", "Fe
 
 
 def main():
-    admin = ingresar(ADMIN_CORREO, ADMIN_CLAVE)
+    admin = ingresar(ADMIN_CORREO)
     if any(s["nombre"] == "Goltime Neiva Centro" for s in ok("GET", "/admin/sedes", admin)):
         print("Los datos de demostración ya están cargados. Para repetir: docker compose down -v y volver a arrancar.")
         return
@@ -126,14 +124,13 @@ def main():
                                                                  "precioHora": int(base * 1.4 / 1000) * 1000})
 
     print("2/8 Clientes…")
-    clave_hash = "{bcrypt}" + bcrypt.hashpw(CLAVE_CLIENTES.encode(), bcrypt.gensalt(12)).decode()  # el prefijo lo exige DelegatingPasswordEncoder
     ids_clientes = []
     with bd.cursor() as cur:
         for i, (nombres, apellidos) in enumerate(NOMBRES):
             correo = f"{nombres.split()[0].lower()}.{apellidos.split()[0].lower()}@demo.goltime.test".replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
-            cur.execute("""INSERT INTO usuarios (nombres, apellidos, correo, telefono, documento, clave_hash, rol, correo_verificado, acepto_terminos_en, puede_inscribir_equipos)
-                           VALUES (%s, %s, %s, %s, %s, %s, 'CLIENTE', TRUE, now(), %s) RETURNING id""",
-                        (nombres, apellidos, correo, f"+573{random.randint(100000000, 249999999)}", f"10{random.randint(10000000, 99999999)}", clave_hash, i in (1, 4)))
+            cur.execute("""INSERT INTO usuarios (nombres, apellidos, correo, telefono, documento, rol, correo_verificado, acepto_terminos_en, puede_inscribir_equipos)
+                           VALUES (%s, %s, %s, %s, %s, 'CLIENTE', TRUE, now(), %s) RETURNING id""",
+                        (nombres, apellidos, correo, f"+573{random.randint(100000000, 249999999)}", f"10{random.randint(10000000, 99999999)}", i in (1, 4)))
             ids_clientes.append((cur.fetchone()[0], correo))
         cur.execute("SELECT id FROM usuarios WHERE rol = 'ADMIN' ORDER BY id LIMIT 1")
         admin_id = cur.fetchone()[0]
@@ -166,7 +163,7 @@ def main():
     torneo_abierto(admin, centro, equipos[:5], ids_clientes, hoy)
 
     bd.close()
-    print("\nListo. Administrador:", ADMIN_CORREO, "· Clientes: ver docs/guion-demo.md (clave:", CLAVE_CLIENTES + ")")
+    print("\nListo. Administrador:", ADMIN_CORREO, "· Clientes: ver docs/guion-demo.md (entran con Google; en local, con GOOGLE_MODO_PRUEBA=true)")
 
 
 # ------------------------------------------------------------------ Historial
@@ -260,7 +257,7 @@ def futuras(admin, f5, f8, f7, clientes, mostradores, centro, norte, hoy):
     todas = [c["id"] for c in f5 + [f8] + f7]
     tokens = {}
     for cid, correo in clientes[:7]:
-        tokens[cid] = ingresar(correo, CLAVE_CLIENTES)
+        tokens[cid] = ingresar(correo)
     reservas = []
     for i, (cid, token) in enumerate(tokens.items()):
         for _ in range(2):
@@ -402,7 +399,7 @@ def torneo_abierto(admin, sede, equipos, clientes, hoy):
     ok("POST", f"/admin/torneos/{t}/estado", admin, {"estado": "INSCRIPCIONES"})
     # una solicitud pendiente hecha por un cliente habilitado, para mostrar la aprobación
     cid, correo = clientes[1]
-    token = ingresar(correo, CLAVE_CLIENTES)
+    token = ingresar(correo)
     jugadores = [{"nombres": random.choice(PILA), "apellidos": f"{random.choice(APELLIDOS)} {random.choice(APELLIDOS)}", "documento": f"12{random.randint(10000000, 99999999)}{i}", "dorsal": i}
                  for i in range(1, 6)]
     llamar("POST", f"/torneos/{t}/solicitudes", token, {"nombreEquipo": "Los Nuevos del Barrio", "color": "#e11d48", "jugadores": jugadores}, esperado=(409, 422, 400))

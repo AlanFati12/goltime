@@ -179,3 +179,11 @@ Apartado exigido por la rúbrica. Se actualiza al cierre de cada fase.
 - Pruebas: 417 en backend (2 nuevas: N+1 y registro de lentitud) y 92 en frontend (10 nuevas: retraso de búsqueda, optimistas con reversión, renovación de sesión, medidas de imagen).
 - Pendiente: probar en un teléfono físico, decidir si se pone Cloudflare delante del dominio y elegir un centro de datos cercano a Colombia al volver a desplegar.
 
+### Ingreso solo con Google (nov/2026)
+
+- Petición: no hay verificación por correo ni por código, así que la única forma de crear cuenta e ingresar debe ser Google; quitar el registro y pedir, tras el primer ingreso, los datos que Google no da (WhatsApp y demás).
+- Qué se hizo (ADR 0023): `POST /autenticacion/google` verifica el token de identidad contra las claves públicas de Google; cuentas por `sub` y por correo; administradores autorizados por correo; pantalla «Completa tu perfil» obligatoria antes de reservar (también en el servidor); migración V18 que elimina `clave_hash` y `tokens_verificacion`; modo de prueba solo para desarrollo con una guarda que impide arrancar en producción.
+- Pruebas: reescritas las de autenticación y los ayudantes de integración; nuevas para la verificación, el perfil incompleto, el modo de prueba y la guarda de rutas. Verificado en el navegador: primer ingreso → «Completa tu perfil» → guardar → inicio.
+- Qué se descubrió: más de un centenar de pruebas dependían de registrarse con contraseña a través de ayudantes comunes, así que el cambio se hizo reemplazando esos ayudantes y no cada prueba; Google no siempre entrega el apellido y la columna es obligatoria, por eso queda vacío hasta completar el perfil.
+- Pendiente: crear el ID de cliente en Google Cloud (guía en `docs/google-oauth.md`) y redactar la política de privacidad y los términos de uso.
+

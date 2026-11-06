@@ -51,7 +51,7 @@ PostgreSQL corre dentro de Docker, así que no hay que instalarlo en el equipo. 
 ./scripts/reiniciar-base.sh
 ```
 
-Borra todos los datos (y las fotos subidas) y deja solo dos usuarios: el administrador de `ADMIN_CORREO` / `ADMIN_CLAVE` y un cliente de prueba (`CLIENTE_PRUEBA_CORREO` / `CLIENTE_PRUEBA_CLAVE`, que el script agrega a tu `.env` si no existen), con el correo verificado y habilitado para inscribir equipos.
+Borra todos los datos (y las fotos subidas) y deja solo dos usuarios: el administrador de `ADMIN_CORREO` y un cliente de prueba (`CLIENTE_PRUEBA_CORREO`, que el script agrega a tu `.env` si no existe), con el perfil completo y habilitado para inscribir equipos. Nadie tiene contraseña: se entra con Google (en local, con `GOOGLE_MODO_PRUEBA=true`).
 
 ### Datos de demostración
 
@@ -71,11 +71,12 @@ Todas están documentadas en [.env.example](.env.example). Nunca se suben secret
 |---|---|
 | `DB_NOMBRE`, `DB_USUARIO`, `DB_CLAVE` | Base de datos |
 | `JWT_SECRETO` | Firma de tokens (HS256), mínimo 32 caracteres. La API no arranca sin él |
-| `ADMIN_CORREO`, `ADMIN_CLAVE` | Administrador inicial (lo crea la Fase 1) |
+| `ADMIN_CORREO` | Administrador inicial: se autoriza por correo en el primer arranque y entra con la cuenta de Google de ese correo |
+| `GOOGLE_CLIENT_ID` | ID de cliente OAuth de Google (público). Obligatorio en producción; ver [docs/google-oauth.md](docs/google-oauth.md) |
+| `GOOGLE_MODO_PRUEBA` | Solo desarrollo: `true` deja entrar escribiendo un correo, sin Google. Con `PERFIL=prod` la API no arranca si está activo |
 | `SMTP_*`, `CORREO_REMITENTE` | Correo. Por defecto apunta a Mailpit; para correo real basta cambiar estos valores |
 | `CORS_ORIGENES` | Orígenes del front permitidos |
 | `PERFIL` | Perfil de Spring: `dev`, `test`, `prod` |
-| `DEMO_CLAVE_CLIENTES` | Clave de los clientes de demostración (por defecto `Demo2026*`); solo la usa el servicio `demo` |
 
 ## Desarrollo sin Docker (opcional)
 
@@ -127,9 +128,9 @@ Las políticas (antelación, cancelación, expiración de solicitudes, recordato
 
 ## Usuarios de prueba
 
-- **Administrador:** se crea en el primer arranque con `ADMIN_CORREO` y `ADMIN_CLAVE` del `.env`. Entra por <http://localhost:8081/ingresar> y llega al panel `/admin`.
-- **Cliente de prueba:** lo crea `./scripts/reiniciar-base.sh` con `CLIENTE_PRUEBA_CORREO` y `CLIENTE_PRUEBA_CLAVE` del `.env`.
-- **Más clientes:** se crean desde <http://localhost:8081/registro>. Los correos de verificación y recuperación se ven en Mailpit (<http://localhost:8025>).
+- **Administrador:** se autoriza en el primer arranque con `ADMIN_CORREO` del `.env`. En <http://localhost:8081/ingresar>, con `GOOGLE_MODO_PRUEBA=true`, escribe ese correo y llegas al panel `/admin`; en producción entra con su cuenta de Google.
+- **Cliente de prueba:** lo crea `./scripts/reiniciar-base.sh` con `CLIENTE_PRUEBA_CORREO` del `.env`.
+- **Más clientes:** basta entrar con otro correo: la primera vez se crea la cuenta y se pide completar el perfil (WhatsApp y apellidos). No hay registro con formulario.
 
 ## Extras (Fase 8)
 
@@ -226,14 +227,13 @@ Las reglas de precio, horarios y canchas dependientes están en [ADR 0006](docs/
 
 | Qué | Cómo funciona |
 |---|---|
-| Registro | `POST /api/v1/autenticacion/registrar`. Siempre crea `CLIENTE`. Exige aceptar términos (Ley 1581) |
+| Ingreso | `POST /api/v1/autenticacion/google` con el token de identidad del botón «Continuar con Google» (ADR 0023). El servidor lo verifica contra las claves públicas de Google (firma, emisor, destinatario y vigencia) y crea la cuenta como `CLIENTE` si es la primera vez. Nadie se vuelve administrador entrando |
+| Completar perfil | `POST /api/v1/me/completar-perfil`: el WhatsApp y los apellidos (Google no los da) son obligatorios; sin ellos no se puede reservar (`PERFIL_INCOMPLETO`) |
 | Sesión | Access token JWT de 15 min en el cuerpo (el front lo guarda en memoria) y refresh token opaco en cookie `HttpOnly; SameSite=Strict` |
 | Renovación | `POST /api/v1/autenticacion/refrescar` rota el refresh token. Reutilizar uno ya rotado revoca toda la familia |
 | Cierre | `POST /api/v1/autenticacion/salir` revoca el refresh y borra la cookie |
-| Recuperación | `POST .../olvide-clave` (siempre 202) y `POST .../restablecer-clave` con token de un solo uso de 30 min |
-| Verificación de correo | Enlace por correo. Si `VERIFICACION_CORREO_OBLIGATORIA=true`, sin verificar no se puede ingresar |
-| Protección | Límite de tasa por IP (Bucket4j) y bloqueo temporal tras 5 fallos de ingreso (correo + IP) |
-| Desactivación | El token de un usuario desactivado o con contraseña cambiada deja de servir al instante (`version_token`) |
-| Admin | `/api/v1/admin/clientes` (listar, desactivar con previsualización, reactivar, habilitar inscripción de equipos) y `/api/v1/admin/administradores` |
+| Protección | Límite de tasa por IP (Bucket4j) en el ingreso; no hay contraseñas que adivinar |
+| Desactivación | El token de un usuario desactivado deja de servir al instante (`version_token`) |
+| Admin | `/api/v1/admin/clientes` (listar, desactivar con previsualización, reactivar, habilitar inscripción de equipos) y `/api/v1/admin/administradores` (autorizar a alguien como administrador por su correo de Google) |
 
 La documentación interactiva completa está en Swagger.

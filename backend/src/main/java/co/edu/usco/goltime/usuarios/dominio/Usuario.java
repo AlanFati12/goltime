@@ -23,7 +23,7 @@ public class Usuario {
     private boolean telefonoVerificado;
     private String whatsappLid;
     private String documento;
-    private String claveHash;
+    private String googleSub;
     private final Rol rol;
     private boolean activo;
     private boolean correoVerificado;
@@ -40,42 +40,45 @@ public class Usuario {
         this.rol = rol;
     }
 
-    /** Alta de un cliente desde el registro público. */
-    public static Usuario nuevoCliente(String nombres, String apellidos, String correo, String telefono,
-            String documento, String claveHash, Instant aceptoTerminosEn) {
-        if (aceptoTerminosEn == null) {
-            throw new ExcepcionNegocio(CodigoError.DATOS_INVALIDOS,
-                    "Debes aceptar los términos y el tratamiento de datos personales.");
-        }
-        Usuario usuario = nuevo(Rol.CLIENTE, nombres, apellidos, correo, telefono, documento, claveHash);
+    /**
+     * Alta de un cliente la primera vez que entra con Google. Google ya confirmó el correo; el teléfono (WhatsApp)
+     * queda vacío hasta que la persona lo agregue en su perfil. Entrar aceptando el aviso de términos de la pantalla
+     * de ingreso cuenta como aceptación.
+     */
+    public static Usuario nuevoClienteGoogle(String nombres, String apellidos, String correo, String googleSub,
+            Instant aceptoTerminosEn) {
+        Usuario usuario = nuevo(Rol.CLIENTE, nombres, apellidos, correo, null, null);
+        usuario.googleSub = googleSub;
+        // La columna es obligatoria: sin apellido (Google no siempre lo da) queda vacío hasta que la persona lo complete.
+        usuario.apellidos = apellidos == null ? "" : apellidos.trim();
+        usuario.correoVerificado = true;
         usuario.aceptoTerminosEn = aceptoTerminosEn;
         return usuario;
     }
 
-    /** Alta de un administrador (seed inicial o creado por otro administrador). */
-    public static Usuario nuevoAdministrador(String nombres, String apellidos, String correo, String telefono,
-            String claveHash) {
-        Usuario usuario = nuevo(Rol.ADMIN, nombres, apellidos, correo, telefono, null, claveHash);
+    /** Alta de un administrador (seed inicial o creado por otro administrador): queda autorizado y se vincula con su
+     * cuenta de Google la primera vez que entra con ese correo. */
+    public static Usuario nuevoAdministrador(String nombres, String apellidos, String correo, String telefono) {
+        Usuario usuario = nuevo(Rol.ADMIN, nombres, apellidos, correo, telefono, null);
         usuario.correoVerificado = true;
         return usuario;
     }
 
     private static Usuario nuevo(Rol rol, String nombres, String apellidos, String correo, String telefono,
-            String documento, String claveHash) {
+            String documento) {
         Usuario usuario = new Usuario(rol);
         usuario.nombres = limpiar(nombres);
         usuario.apellidos = limpiar(apellidos);
         usuario.correo = normalizarCorreo(correo);
         usuario.telefono = normalizarTelefono(rol, telefono);
         usuario.documento = limpiar(documento);
-        usuario.claveHash = claveHash;
         usuario.activo = true;
         return usuario;
     }
 
     /** Reconstruye un usuario existente desde el almacenamiento (sin validar reglas de alta). */
     public static Usuario reconstruir(Long id, String nombres, String apellidos, String correo, String telefono,
-            boolean telefonoVerificado, String whatsappLid, String documento, String claveHash, Rol rol, boolean activo, boolean correoVerificado,
+            boolean telefonoVerificado, String whatsappLid, String documento, String googleSub, Rol rol, boolean activo, boolean correoVerificado,
             String motivoDesactivacion, Long desactivadoPor, Instant fechaDesactivacion, int versionToken,
             Instant ultimoLogin, Instant aceptoTerminosEn, boolean puedeInscribirEquipos, Instant creadoEn) {
         Usuario u = new Usuario(rol);
@@ -87,7 +90,7 @@ public class Usuario {
         u.telefonoVerificado = telefonoVerificado;
         u.whatsappLid = whatsappLid;
         u.documento = documento;
-        u.claveHash = claveHash;
+        u.googleSub = googleSub;
         u.activo = activo;
         u.correoVerificado = correoVerificado;
         u.motivoDesactivacion = motivoDesactivacion;
@@ -105,9 +108,9 @@ public class Usuario {
         return correo == null ? null : correo.trim().toLowerCase(Locale.ROOT);
     }
 
-    /** El cliente siempre tiene WhatsApp (lo usa el bot para reconocerlo); para el administrador es opcional. */
+    /** El WhatsApp es opcional (con Google no se pide al entrar): sin él el bot solo reconoce al cliente si lo vincula con el código. */
     private static String normalizarTelefono(Rol rol, String telefono) {
-        return rol == Rol.CLIENTE ? NumeroTelefono.de(telefono).valor() : NumeroTelefono.normalizarOpcional(telefono);
+        return NumeroTelefono.normalizarOpcional(telefono);
     }
 
     private static String limpiar(String texto) {
@@ -122,7 +125,8 @@ public class Usuario {
 
     public void actualizarPerfil(String nombres, String apellidos, String telefono, String documento) {
         this.nombres = limpiar(nombres);
-        this.apellidos = limpiar(apellidos);
+        // Con Google puede no haber apellido: la columna es obligatoria, así que queda vacío.
+        this.apellidos = apellidos == null ? "" : apellidos.trim();
         String nuevoTelefono = normalizarTelefono(rol, telefono);
         if (nuevoTelefono == null ? this.telefono != null : !nuevoTelefono.equals(this.telefono)) {
             // Un número nuevo hay que volver a probarlo desde WhatsApp.
@@ -132,10 +136,13 @@ public class Usuario {
         this.documento = limpiar(documento);
     }
 
-    /** Cambia la contraseña e invalida todos los tokens de acceso emitidos antes. */
-    public void cambiarClave(String nuevoHash) {
-        this.claveHash = nuevoHash;
-        this.versionToken++;
+    /** Une la cuenta con su cuenta de Google. Google ya confirmó que el correo es de quien entra. */
+    public void vincularGoogle(String sub) {
+        if (this.googleSub != null && !this.googleSub.equals(sub)) {
+            throw new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS, "Ese correo ya está vinculado a otra cuenta de Google.");
+        }
+        this.googleSub = sub;
+        this.correoVerificado = true;
     }
 
     /** Solo se desactivan clientes; el motivo es obligatorio. Invalida los tokens vigentes. */
@@ -164,6 +171,17 @@ public class Usuario {
         this.motivoDesactivacion = null;
         this.desactivadoPor = null;
         this.fechaDesactivacion = null;
+    }
+
+    /**
+     * ¿Ya dio los datos que Google no entrega y Goltime necesita? Un cliente necesita nombre, apellido y WhatsApp (con
+     * él el administrador lo contacta y el bot lo reconoce). El documento es opcional. El administrador no necesita nada.
+     */
+    public boolean perfilCompleto() {
+        if (rol != Rol.CLIENTE) {
+            return true;
+        }
+        return nombres != null && !nombres.isBlank() && apellidos != null && !apellidos.isBlank() && telefono != null;
     }
 
     public void registrarIngreso(Instant ahora) {
@@ -222,7 +240,7 @@ public class Usuario {
     /** El bot reconoce la cuenta, por su teléfono verificado o por su @lid. */
     public boolean whatsappVinculado() { return telefonoVerificado || whatsappLid != null; }
     public String documento() { return documento; }
-    public String claveHash() { return claveHash; }
+    public String googleSub() { return googleSub; }
     public Rol rol() { return rol; }
     public boolean activo() { return activo; }
     public boolean correoVerificado() { return correoVerificado; }

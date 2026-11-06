@@ -112,8 +112,9 @@ Qué completar:
 
 - `DOMINIO=goltime.alanpc.tech`
 - `DB_CLAVE` y `JWT_SECRETO` con los valores generados.
-- `ADMIN_CORREO` y `ADMIN_CLAVE`: tu cuenta de administrador. Usa una clave fuerte; es la puerta de entrada al panel.
-- Correo (`SMTP_*` y `CORREO_REMITENTE`): ver el paso 9. Mientras no lo tengas, deja valores provisionales; la app arranca igual, pero los correos no saldrán.
+- `GOOGLE_CLIENT_ID`: el ID de cliente OAuth de Google (paso previo en [google-oauth.md](google-oauth.md)). Sin él la API no arranca.
+- `ADMIN_CORREO`: el correo de la **cuenta de Google** del primer administrador. No hay contraseña: entra con esa cuenta.
+- Correo (`SMTP_*` y `CORREO_REMITENTE`): ver el paso 9. Ya no se usa para entrar (Google confirma el correo), solo para los avisos de reservas. Mientras no lo tengas, deja valores provisionales; la app arranca igual, pero esos correos no saldrán.
 
 Protege el archivo: `chmod 600 .env`.
 
@@ -132,17 +133,11 @@ docker compose -f docker-compose.produccion.yml logs -f caddy   # busca "certifi
 docker compose -f docker-compose.produccion.yml logs api | grep -i "Administrador inicial"
 ```
 
-Abre `https://goltime.alanpc.tech` y entra con `ADMIN_CORREO` y `ADMIN_CLAVE`.
+Abre `https://goltime.alanpc.tech/ingresar` y pulsa «Continuar con Google» con la cuenta de `ADMIN_CORREO`: entras al panel de administración.
 
-## 8. Datos de demostración (opcional)
+## 8. Datos de demostración
 
-Solo si la base está vacía y quieres sedes, clientes y torneos de ejemplo:
-
-```bash
-docker compose -f docker-compose.produccion.yml --profile demo up demo
-```
-
-Las cuentas de clientes de demostración usan `DEMO_CLAVE_CLIENTES`: cámbiala en el `.env` antes de correrlo si el sitio será público.
+No existen en producción: los clientes de demostración solo se pueden usar con el ingreso de prueba, que está prohibido fuera de desarrollo. Los datos reales los crea el administrador desde el panel.
 
 ## 9. Correo real
 
@@ -152,7 +147,7 @@ Mailpit no existe en producción. Opciones gratuitas: Brevo, Resend, SendGrid. C
 2. Copia el servidor SMTP, el puerto (587), el usuario y la clave a `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO` y `SMTP_CLAVE`.
 3. `CORREO_REMITENTE` debe ser una dirección del dominio verificado, por ejemplo `no-responder@alanpc.tech`.
 4. Reinicia la API: `docker compose -f docker-compose.produccion.yml up -d api`.
-5. Regístrate como cliente de prueba y comprueba que llega el correo. Entonces pon `VERIFICACION_CORREO_OBLIGATORIA=true` y vuelve a ejecutar el paso anterior.
+5. Entra como cliente con otra cuenta de Google, completa el perfil, haz una reserva y comprueba que llega el correo de confirmación cuando la apruebes.
 
 ## 10. Respaldos
 
@@ -212,7 +207,8 @@ Las migraciones de Flyway se aplican solas al arrancar la API.
 - [ ] `curl -I https://goltime.alanpc.tech` muestra `strict-transport-security`.
 - [ ] `https://goltime.alanpc.tech/swagger-ui.html` **no** muestra Swagger (ves la página normal de la app).
 - [ ] Desde fuera, los puertos 5432 y 8080 no responden: `nc -zv 179.66.130.88 5432`.
-- [ ] Llega el correo de verificación y de reserva confirmada.
+- [ ] Se puede entrar con Google como administrador y como cliente (el cliente nuevo ve «Completa tu perfil»).
+- [ ] Llega el correo de reserva confirmada.
 - [ ] Existe al menos un respaldo en `~/respaldos`.
 
 ## Problemas frecuentes

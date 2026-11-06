@@ -19,6 +19,8 @@ export interface Usuario {
   rol: Rol
   activo: boolean
   correoVerificado: boolean
+  /** Un cliente nuevo debe dar los datos que Google no entrega (WhatsApp, apellidos) antes de reservar. */
+  perfilCompleto: boolean
   motivoDesactivacion: string | null
   fechaDesactivacion: string | null
   puedeInscribirEquipos: boolean

@@ -1,153 +1,169 @@
 package co.edu.usco.goltime.autenticacion;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.jayway.jsonpath.JsonPath;
 
 import co.edu.usco.goltime.BaseIntegracion;
-import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo;
-import co.edu.usco.goltime.notificaciones.aplicacion.EnviadorCorreo.MensajeCorreo;
 
+/**
+ * Ingreso con Google (ADR 0023). En pruebas el verificador acepta credenciales {@code prueba|correo|nombres|apellidos}
+ * en lugar de un token real de Google; todo lo demás (cuentas, sesión, cookie, renovación) es el código de producción.
+ */
 class AutenticacionIT extends BaseIntegracion {
 
-    @MockitoBean
-    EnviadorCorreo correo;
-
-    @BeforeEach
-    void limpiarMock() {
-        reset(correo);
+    private static String texto(MvcResult r, String ruta) throws Exception {
+        return JsonPath.read(r.getResponse().getContentAsString(), ruta);
     }
 
-    private String tokenDelUltimoCorreo() {
-        ArgumentCaptor<MensajeCorreo> captor = ArgumentCaptor.forClass(MensajeCorreo.class);
-        verify(correo).enviar(captor.capture());
-        Matcher m = Pattern.compile("token=([^&\\s]+)").matcher((String) captor.getValue().variables().get("enlace"));
-        assertThat(m.find()).isTrue();
-        return m.group(1);
-    }
+    // --- Ingreso con Google ---
 
-    // --- Registro ---
-
+    @SuppressWarnings("unchecked")
     @Test
-    void registraUnClienteSinExponerElHashNiPermitirElegirRol() throws Exception {
-        String correoNuevo = "Nueva.Persona@Prueba.TEST";
-        Map<String, Object> datos = new java.util.HashMap<>(datosRegistro(correoNuevo, CLAVE_VALIDA));
-        datos.put("rol", "ADMIN"); // intento de escalar privilegios: debe ignorarse
+    void laPrimeraVezCreaUnClienteConElCorreoVerificadoSinWhatsappNiContrasena() throws Exception {
+        String correo = "Nueva.Persona-" + System.nanoTime() + "@Prueba.TEST";
 
-        MvcResult r = enviar("/api/v1/autenticacion/registrar", datos);
-
-        esperarEstado(r, 201);
-        String cuerpo = r.getResponse().getContentAsString();
-        assertThat((String) JsonPath.read(cuerpo, "$.rol")).isEqualTo("CLIENTE");
-        assertThat((String) JsonPath.read(cuerpo, "$.correo")).isEqualTo("nueva.persona@prueba.test");
-        assertThat(cuerpo).doesNotContain("claveHash").doesNotContain("clave_hash").doesNotContain("$2");
-    }
-
-    @Test
-    void rechazaCorreoDuplicadoSinImportarMayusculas() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        MvcResult r = enviar("/api/v1/autenticacion/registrar", datosRegistro(c.toUpperCase(), CLAVE_VALIDA));
-        esperarEstado(r, 409);
-        assertThat((String) JsonPath.read(r.getResponse().getContentAsString(), "$.codigo")).isEqualTo("CORREO_YA_REGISTRADO");
-    }
-
-    @Test
-    void rechazaClavesDebilesYTerminosNoAceptados() throws Exception {
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datosRegistro(correoUnico(), "sololetras")), 400);
-
-        Map<String, Object> sinTerminos = new java.util.HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        sinTerminos.put("aceptaTerminos", false);
-        MvcResult r = enviar("/api/v1/autenticacion/registrar", sinTerminos);
-        esperarEstado(r, 400);
-        assertThat((String) JsonPath.read(r.getResponse().getContentAsString(), "$.codigo")).isEqualTo("DATOS_INVALIDOS");
-
-        Map<String, Object> noCoincide = new java.util.HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        noCoincide.put("confirmacionClave", "OtraClave99");
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", noCoincide), 400);
-    }
-
-    @Test
-    void verificaElCorreoConUnTokenDeUnSoloUso() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        String token = tokenDelUltimoCorreo();
-
-        esperarEstado(enviar("/api/v1/autenticacion/verificar-correo", Map.of("token", token)), 204);
-        assertThat(jdbc.queryForObject("SELECT correo_verificado FROM usuarios WHERE correo = ?", Boolean.class, c)).isTrue();
-
-        MvcResult repetido = enviar("/api/v1/autenticacion/verificar-correo", Map.of("token", token));
-        esperarEstado(repetido, 400);
-        assertThat((String) JsonPath.read(repetido.getResponse().getContentAsString(), "$.codigo")).isEqualTo("TOKEN_INVALIDO");
-    }
-
-    // --- Ingreso ---
-
-    @Test
-    void ingresaYDejaElRefreshEnUnaCookieSegura() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-
-        MvcResult r = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", CLAVE_VALIDA, "recordarme", true));
+        MvcResult r = ingresoGoogle(credencialGoogle(correo, "Nueva", "Persona"), true);
 
         esperarEstado(r, 200);
-        String cabecera = r.getResponse().getHeader("Set-Cookie");
+        String cuerpo = r.getResponse().getContentAsString();
+        assertThat((String) JsonPath.read(cuerpo, "$.usuario.rol")).isEqualTo("CLIENTE");
+        assertThat((String) JsonPath.read(cuerpo, "$.usuario.correo")).isEqualTo(correo.toLowerCase());
+        assertThat((Boolean) JsonPath.read(cuerpo, "$.usuario.correoVerificado")).isTrue();
+        assertThat((Map<String, Object>) JsonPath.read(cuerpo, "$.usuario")).as("Google no da el WhatsApp").doesNotContainKey("telefono");
+        assertThat(cuerpo).doesNotContain("googleSub").doesNotContain("claveHash").doesNotContain("prueba-");
+        // acepta los términos al entrar (aviso en la pantalla de ingreso)
+        assertThat(jdbc.queryForObject("SELECT acepto_terminos_en IS NOT NULL FROM usuarios WHERE lower(correo) = ?", Boolean.class,
+                correo.toLowerCase())).isTrue();
+    }
+
+    @Test
+    void laSegundaVezEntraALaMismaCuentaSinDuplicarla() throws Exception {
+        String correo = correoUnico();
+        long primera = entrar(correo, false).id();
+        long segunda = entrar(correo, false).id();
+
+        assertThat(segunda).isEqualTo(primera);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM usuarios WHERE lower(correo) = ?", Integer.class, correo)).isEqualTo(1);
+    }
+
+    @Test
+    void elAdministradorAutorizadoDeAntemanoEntraComoAdministradorYQuedaVinculado() throws Exception {
+        Sesion admin = ingresarAdmin();
+
+        assertThat((String) JsonPath.read(consultar("/api/v1/me", admin.token()).getResponse().getContentAsString(), "$.rol")).isEqualTo("ADMIN");
+        esperarEstado(consultar("/api/v1/admin/clientes", admin.token()), 200);
+        assertThat(jdbc.queryForObject("SELECT google_sub FROM usuarios WHERE correo = ?", String.class, ADMIN_CORREO)).isNotBlank();
+    }
+
+    @Test
+    void cualquierOtraPersonaQueEntraSoloLlegaASerClienteYNoAbreLaAdministracion() throws Exception {
+        Sesion cliente = nuevoClienteConSesion();
+
+        assertThat((String) JsonPath.read(consultar("/api/v1/me", cliente.token()).getResponse().getContentAsString(), "$.rol")).isEqualTo("CLIENTE");
+        esperarEstado(consultar("/api/v1/admin/clientes", cliente.token()), 403);
+    }
+
+    @Test
+    void siGoogleNoConfirmaElCorreoNoSeEntraNiSeCreaLaCuenta() throws Exception {
+        String correo = correoUnico();
+
+        MvcResult r = ingresoGoogle("noverificado|" + correo + "|Ana|Pérez", false);
+
+        esperarEstado(r, 403);
+        assertThat(texto(r, "$.codigo")).isEqualTo("CORREO_NO_VERIFICADO");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM usuarios WHERE lower(correo) = ?", Integer.class, correo)).isZero();
+    }
+
+    @Test
+    void unaCredencialInventadaOVaciaSeRechaza() throws Exception {
+        MvcResult inventada = ingresoGoogle("esto-no-es-un-token", false);
+        esperarEstado(inventada, 401);
+        assertThat(texto(inventada, "$.codigo")).isEqualTo("CREDENCIALES_INVALIDAS");
+
+        esperarEstado(enviar("/api/v1/autenticacion/google", Map.of("credencial", "", "recordarme", false)), 400);
+    }
+
+    @Test
+    void dejaElRefreshEnUnaCookieSeguraYSinRecordarmeEsDeSesion() throws Exception {
+        MvcResult recordado = ingresoGoogle(credencialGoogle(correoUnico(), "Ana", "Pérez"), true);
+        esperarEstado(recordado, 200);
+        String cabecera = recordado.getResponse().getHeader("Set-Cookie");
         assertThat(cabecera).contains("goltime_refresco=").contains("HttpOnly").contains("SameSite=Strict")
                 .contains("Path=/api/v1/autenticacion").contains("Max-Age=");
-        assertThat(r.getResponse().getContentAsString()).doesNotContain(valorCookie(r));
-        // el access token abre /me
-        Sesion s = sesionDe(r);
-        MvcResult me = consultar("/api/v1/me", s.token());
-        esperarEstado(me, 200);
-        assertThat((String) JsonPath.read(me.getResponse().getContentAsString(), "$.correo")).isEqualTo(c);
+        assertThat(recordado.getResponse().getContentAsString()).doesNotContain(valorCookie(recordado));
+
+        MvcResult deSesion = ingresoGoogle(credencialGoogle(correoUnico(), "Ana", "Pérez"), false);
+        assertThat(deSesion.getResponse().getHeader("Set-Cookie")).doesNotContain("Max-Age=");
     }
 
     @Test
-    void sinRecordarmeLaCookieEsDeSesion() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        MvcResult r = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", CLAVE_VALIDA, "recordarme", false));
-        assertThat(r.getResponse().getHeader("Set-Cookie")).doesNotContain("Max-Age=");
+    void laConfiguracionPublicaDiceComoMostrarElBoton() throws Exception {
+        MvcResult r = consultar("/api/v1/autenticacion/configuracion", null);
+
+        esperarEstado(r, 200);
+        assertThat((Boolean) JsonPath.read(r.getResponse().getContentAsString(), "$.modoPrueba")).isTrue();
+        assertThat((String) JsonPath.read(r.getResponse().getContentAsString(), "$.googleClientId")).isEmpty();
     }
 
     @Test
-    void elErrorDeCredencialesEsGenericoParaCorreoInexistenteOClaveMala() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-
-        MvcResult claveMala = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", "Incorrecta99"));
-        MvcResult noExiste = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", correoUnico(), "clave", "Incorrecta99"));
-
-        esperarEstado(claveMala, 401);
-        esperarEstado(noExiste, 401);
-        assertThat(claveMala.getResponse().getContentAsString()).isEqualTo(noExiste.getResponse().getContentAsString());
-        assertThat((String) JsonPath.read(claveMala.getResponse().getContentAsString(), "$.codigo")).isEqualTo("CREDENCIALES_INVALIDAS");
-    }
-
-    @Test
-    void bloqueaTemporalmenteTrasVariosFallos() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        for (int i = 0; i < 5; i++) {
-            esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", "Incorrecta99")), 401);
+    void yaNoExistenElRegistroNiLasContrasenas() throws Exception {
+        for (String ruta : new String[] { "/registrar", "/ingresar", "/olvide-clave", "/restablecer-clave", "/verificar-correo" }) {
+            assertThat(enviar("/api/v1/autenticacion" + ruta, Map.of("correo", correoUnico(), "clave", "Clave1234")).getResponse().getStatus())
+                    .as(ruta).isEqualTo(404);
         }
-        MvcResult bloqueado = enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", CLAVE_VALIDA));
-        esperarEstado(bloqueado, 429);
-        assertThat((String) JsonPath.read(bloqueado.getResponse().getContentAsString(), "$.codigo")).isEqualTo("DEMASIADOS_INTENTOS");
+        Sesion s = nuevoClienteConSesion();
+        assertThat(enviarConToken("/api/v1/me/clave", Map.of("claveActual", "x", "claveNueva", "y", "confirmacion", "y"), s.token())
+                .getResponse().getStatus()).isEqualTo(404);
+    }
+
+    // --- Completar el perfil tras entrar con Google ---
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void unClienteNuevoNoTieneElPerfilCompletoYNoPuedeReservarHastaCompletarlo() throws Exception {
+        MvcResult r = ingresoGoogle(credencialGoogle(correoUnico(), "Ana", "Pérez"), false);
+        Sesion s = sesionDe(r);
+        assertThat((Boolean) JsonPath.read(r.getResponse().getContentAsString(), "$.usuario.perfilCompleto")).isFalse();
+
+        // sin WhatsApp no se puede solicitar una reserva (el servidor lo exige, no solo la pantalla)
+        MvcResult bloqueada = enviarConToken("/api/v1/reservas", Map.of("canchaId", 1, "inicio", "2030-01-01T15:00:00Z", "fin", "2030-01-01T16:00:00Z"), s.token());
+        esperarEstado(bloqueada, 409);
+        assertThat(texto(bloqueada, "$.codigo")).isEqualTo("PERFIL_INCOMPLETO");
+
+        MvcResult completo = enviarConToken("/api/v1/me/completar-perfil",
+                Map.of("nombres", "Ana María", "apellidos", "Pérez Gómez", "telefono", "300 123 4567", "documento", "1075123456"), s.token());
+        esperarEstado(completo, 200);
+        String cuerpo = completo.getResponse().getContentAsString();
+        assertThat((Boolean) JsonPath.read(cuerpo, "$.perfilCompleto")).isTrue();
+        assertThat((String) JsonPath.read(cuerpo, "$.telefono")).isEqualTo("+573001234567");
+        assertThat((Boolean) JsonPath.read(cuerpo, "$.telefonoVerificado")).as("el WhatsApp se verifica después, con el bot").isFalse();
+        assertThat((Map<String, Object>) JsonPath.read(consultar("/api/v1/me", s.token()).getResponse().getContentAsString(), "$"))
+                .containsEntry("perfilCompleto", true);
+    }
+
+    @Test
+    void completarElPerfilExigeApellidosYWhatsappValido() throws Exception {
+        Sesion s = sesionDe(ingresoGoogle(credencialGoogle(correoUnico(), "Ana", ""), false));
+
+        esperarEstado(enviarConToken("/api/v1/me/completar-perfil", Map.of("nombres", "Ana", "apellidos", "", "telefono", "3001234567"), s.token()), 400);
+        esperarEstado(enviarConToken("/api/v1/me/completar-perfil", Map.of("nombres", "Ana", "apellidos", "Pérez", "telefono", ""), s.token()), 400);
+        MvcResult invalido = enviarConToken("/api/v1/me/completar-perfil", Map.of("nombres", "Ana", "apellidos", "Pérez", "telefono", "8712345"), s.token());
+        esperarEstado(invalido, 400);
+        assertThat(texto(invalido, "$.codigo")).isEqualTo("DATOS_INVALIDOS");
+        // sin sesión no se puede
+        esperarEstado(enviar("/api/v1/me/completar-perfil", Map.of("nombres", "Ana", "apellidos", "Pérez", "telefono", "3001234567")), 401);
+    }
+
+    @Test
+    void elAdministradorNuncaNecesitaCompletarElPerfil() throws Exception {
+        Sesion admin = ingresarAdmin();
+        assertThat((Boolean) JsonPath.read(consultar("/api/v1/me", admin.token()).getResponse().getContentAsString(), "$.perfilCompleto")).isTrue();
     }
 
     // --- Refresh con rotación ---
@@ -184,92 +200,6 @@ class AutenticacionIT extends BaseIntegracion {
         esperarEstado(enviar("/api/v1/autenticacion/refrescar", Map.of(), cookie(s.refresco())), 401);
         // idempotente
         esperarEstado(enviar("/api/v1/autenticacion/salir", Map.of()), 204);
-    }
-
-    // --- Cambio de contraseña ---
-
-    @Test
-    void cambiarLaClaveInvalidaElTokenActualLosRefreshYLaClaveVieja() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        Sesion s = ingresar(c, CLAVE_VALIDA, false);
-
-        esperarEstado(enviarConToken("/api/v1/me/clave",
-                Map.of("claveActual", "Equivocada1", "claveNueva", "Nueva56789", "confirmacion", "Nueva56789"), s.token()), 401);
-
-        esperarEstado(enviarConToken("/api/v1/me/clave",
-                Map.of("claveActual", CLAVE_VALIDA, "claveNueva", "Nueva56789", "confirmacion", "Nueva56789"), s.token()), 204);
-
-        esperarEstado(consultar("/api/v1/me", s.token()), 401);
-        esperarEstado(enviar("/api/v1/autenticacion/refrescar", Map.of(), cookie(s.refresco())), 401);
-        esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", CLAVE_VALIDA)), 401);
-        esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", "Nueva56789")), 200);
-    }
-
-    // --- Recuperación ---
-
-    @Test
-    void recuperarLaClaveNoRevelaSiElCorreoExiste() throws Exception {
-        esperarEstado(enviar("/api/v1/autenticacion/olvide-clave", Map.of("correo", correoUnico())), 202);
-        verify(correo, never()).enviar(any());
-    }
-
-    @Test
-    void restableceLaClaveConUnTokenDeUnSoloUsoYCierraLasSesiones() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        reset(correo); // descarta el correo de verificación
-        Sesion s = ingresar(c, CLAVE_VALIDA, true);
-
-        esperarEstado(enviar("/api/v1/autenticacion/olvide-clave", Map.of("correo", c)), 202);
-        String token = tokenDelUltimoCorreo();
-
-        esperarEstado(enviar("/api/v1/autenticacion/restablecer-clave",
-                Map.of("token", token, "claveNueva", "Restablecida7", "confirmacion", "Restablecida7")), 204);
-
-        esperarEstado(enviar("/api/v1/autenticacion/ingresar", Map.of("correo", c, "clave", "Restablecida7")), 200);
-        esperarEstado(enviar("/api/v1/autenticacion/refrescar", Map.of(), cookie(s.refresco())), 401);
-        esperarEstado(consultar("/api/v1/me", s.token()), 401);
-
-        // El mismo enlace no sirve dos veces.
-        MvcResult repetido = enviar("/api/v1/autenticacion/restablecer-clave",
-                Map.of("token", token, "claveNueva", "OtraMas1234", "confirmacion", "OtraMas1234"));
-        esperarEstado(repetido, 400);
-    }
-
-    @Test
-    void elTokenDeRecuperacionNoSirveParaVerificarCorreoNiAlReves() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        String tokenVerificacion = tokenDelUltimoCorreo();
-
-        esperarEstado(enviar("/api/v1/autenticacion/restablecer-clave",
-                Map.of("token", tokenVerificacion, "claveNueva", "Restablecida7", "confirmacion", "Restablecida7")), 400);
-    }
-
-    @Test
-    void soloElUltimoEnlaceDeRecuperacionEsValido() throws Exception {
-        String c = correoUnico();
-        registrar(c, CLAVE_VALIDA);
-        reset(correo);
-
-        enviar("/api/v1/autenticacion/olvide-clave", Map.of("correo", c));
-        ArgumentCaptor<MensajeCorreo> primero = ArgumentCaptor.forClass(MensajeCorreo.class);
-        verify(correo).enviar(primero.capture());
-        String tokenViejo = token(primero.getValue());
-
-        reset(correo);
-        enviar("/api/v1/autenticacion/olvide-clave", Map.of("correo", c));
-        esperarEstado(enviar("/api/v1/autenticacion/restablecer-clave",
-                Map.of("token", tokenViejo, "claveNueva", "Restablecida7", "confirmacion", "Restablecida7")), 400);
-        esperarEstado(enviar("/api/v1/autenticacion/restablecer-clave",
-                Map.of("token", tokenDelUltimoCorreo(), "claveNueva", "Restablecida7", "confirmacion", "Restablecida7")), 204);
-    }
-
-    private static String token(MensajeCorreo mensaje) {
-        Matcher m = Pattern.compile("token=([^&\\s]+)").matcher((String) mensaje.variables().get("enlace"));
-        assertThat(m.find()).isTrue();
-        return m.group(1);
     }
 
     // --- Perfil ---

@@ -42,14 +42,13 @@ public class ControladorAdministradores {
     @Operation(summary = "Crear otro administrador")
     public UsuarioResumen crear(@Valid @RequestBody SolicitudAdministrador solicitud) {
         return UsuarioResumen.de(administradores.crear(solicitud.nombres(), solicitud.apellidos(),
-                solicitud.correo(), solicitud.telefono(), solicitud.clave()));
+                solicitud.correo(), solicitud.telefono()));
     }
 
     public record SolicitudAdministrador(
             @NotBlank @Size(max = 100) String nombres,
             @NotBlank @Size(max = 100) String apellidos,
             @NotBlank @Email @Size(max = 255) String correo,
-            @Size(max = 30) String telefono,
-            @NotBlank @Size(max = 200) String clave) {
+            @Size(max = 30) String telefono) {
     }
 }

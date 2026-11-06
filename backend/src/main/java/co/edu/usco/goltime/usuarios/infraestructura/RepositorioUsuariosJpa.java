@@ -14,6 +14,8 @@ interface RepositorioUsuariosJpa extends JpaRepository<UsuarioEntidad, Long>, Jp
     @Query("select u from UsuarioEntidad u where lower(u.correo) = lower(:correo)")
     Optional<UsuarioEntidad> buscarPorCorreo(String correo);
 
+    Optional<UsuarioEntidad> findByGoogleSub(String googleSub);
+
     @Query("select count(u) > 0 from UsuarioEntidad u where lower(u.correo) = lower(:correo)")
     boolean existePorCorreo(String correo);
 

@@ -9,9 +9,11 @@ Revisión hecha sobre el código de las Fases 0 a 9 con la lista de la sección 
 | Access token JWT corto, firmado HS256 con secreto de entorno | Cumple | `EmisorTokenAccesoJwt`; el arranque falla sin `JWT_SECRETO` ≥ 32 caracteres. Pruebas de tokens falsificados y vencidos en `AutenticacionIT` |
 | Refresh token opaco, hasheado, en cookie `HttpOnly` + `SameSite=Strict`, con rotación y detección de reutilización | Cumple | `ServicioSesion`, `CookieRefresco`; `Secure` se activa con `COOKIE_SEGURA=true` (obligatorio al poner HTTPS). Prueba de reutilización revoca la familia |
 | Access token solo en memoria en el navegador | Cumple | `almacenSesion.ts` (zustand, sin `localStorage`) |
-| Desactivar o cambiar la clave invalida los tokens | Cumple | `version_token` validado en cada petición (`ValidadorEstadoUsuario`); prueba de desactivación inmediata |
-| BCrypt, nunca se devuelve el hash ni se registra en logs | Cumple | `DelegatingPasswordEncoder` (BCrypt 12); los DTO de usuario no incluyen la clave |
-| Límite de intentos y bloqueo temporal | Cumple | `FiltroLimiteTasa` (ingreso, registro, recuperación) y `ControlIntentos`; mensajes de error de ingreso genéricos |
+| Desactivar la cuenta invalida los tokens | Cumple | `version_token` validado en cada petición (`ValidadorEstadoUsuario`); prueba de desactivación inmediata |
+| Sin contraseñas: la identidad la afirma Google | Cumple | ADR 0023. `VerificadorGoogleNimbus` valida firma (claves públicas de Google), emisor, destinatario (ID de cliente) y vigencia; un correo que Google no confirma se rechaza. No existe columna de contraseña (V18); los DTO no exponen el identificador de Google. Pruebas en `AutenticacionIT` |
+| Límite de peticiones en el ingreso | Cumple | `FiltroLimiteTasa` sobre `/autenticacion/google`; no hay contraseñas que adivinar |
+| El modo de prueba nunca llega a producción | Cumple | `ConfiguracionGoogle` se niega a arrancar con `GOOGLE_MODO_PRUEBA=true` y el perfil `prod`; `docker-compose.produccion.yml` ni siquiera pasa la variable (`ConfiguracionGoogleTest`) |
+| Nadie se vuelve administrador entrando | Cumple | Un correo nuevo solo crea `CLIENTE`; el rol `ADMIN` lo da el administrador inicial o otro administrador por correo (`AutenticacionIT`, `GestionClientesIT`) |
 
 ## Autorización
 
@@ -50,8 +52,9 @@ Revisión hecha sobre el código de las Fases 0 a 9 con la lista de la sección 
 
 ## Riesgos aceptados y siguientes pasos
 
-1. **Datos de demostración**: las cuentas de `docs/guion-demo.md` usan una clave conocida. Solo deben existir en entornos de demostración; no cargar el perfil `demo` en producción.
+1. **Datos de demostración**: las cuentas de `docs/guion-demo.md` no tienen contraseña pero solo se pueden usar con el ingreso de prueba (solo desarrollo); aun así, no cargar los datos de demostración en producción.
 2. **Límite de tasa en memoria**: protege una instancia; con varias réplicas hay que moverlo a Redis o al proxy.
 3. **Pagos**: se registran a mano; al integrar una pasarela, validar firmas de webhooks y no guardar datos de tarjetas.
-4. **Correo**: solo se envía a cuentas con correo verificado; el enlace de verificación vence en 30 minutos.
+4. **Correo**: solo se envía a cuentas con correo verificado (todas lo están: Google lo confirma). Ya no hay correos de verificación ni de recuperación de contraseña.
+6. **Dependencia de Google**: si Google no está disponible nadie puede ingresar (las sesiones abiertas siguen vivas hasta que venza su renovación). Quien pierda su cuenta de Google pierde el acceso; el administrador no puede restablecerle nada.
 5. **Copias de seguridad**: la base de datos y el volumen de fotos no tienen respaldo automático; definirlo en el despliegue.

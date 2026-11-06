@@ -34,9 +34,7 @@ import jakarta.servlet.http.Cookie;
 @ActiveProfiles("test")
 public abstract class BaseIntegracion {
 
-    public static final String CLAVE_VALIDA = "Clave1234";
     public static final String ADMIN_CORREO = "admin-pruebas@goltime.test";
-    public static final String ADMIN_CLAVE = "ClaveAdmin2026";
     public static final String COOKIE = "goltime_refresco";
 
     @ServiceConnection
@@ -63,13 +61,6 @@ public abstract class BaseIntegracion {
         return "cliente-" + UUID.randomUUID().toString().substring(0, 8) + "@prueba.test";
     }
 
-    protected Map<String, Object> datosRegistro(String correo, String clave) {
-        return Map.ofEntries(
-                Map.entry("nombres", "Ana"), Map.entry("apellidos", "Pérez"), Map.entry("correo", correo),
-                Map.entry("telefono", "3001234567"), Map.entry("clave", clave), Map.entry("confirmacionClave", clave),
-                Map.entry("aceptaTerminos", true));
-    }
-
     protected MvcResult enviar(String url, Object cuerpo, Cookie... cookies) throws Exception {
         MockHttpServletRequestBuilder peticion = post(url).contentType(MediaType.APPLICATION_JSON)
                 .content(json.writeValueAsString(cuerpo));
@@ -92,27 +83,54 @@ public abstract class BaseIntegracion {
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(cuerpo))).andReturn();
     }
 
-    protected void registrar(String correo, String clave) throws Exception {
-        MvcResult r = enviar("/api/v1/autenticacion/registrar", datosRegistro(correo, clave));
-        org.assertj.core.api.Assertions.assertThat(r.getResponse().getStatus()).isEqualTo(201);
+    /** Credencial de prueba que acepta el verificador de Google del perfil `test` (ver VerificadorGooglePrueba). */
+    protected static String credencialGoogle(String correo, String nombres, String apellidos) {
+        return "prueba|" + correo + "|" + nombres + "|" + apellidos;
     }
 
-    protected Sesion ingresar(String correo, String clave, boolean recordar) throws Exception {
-        MvcResult r = enviar("/api/v1/autenticacion/ingresar",
-                Map.of("correo", correo, "clave", clave, "recordarme", recordar));
+    /** Ingreso con Google (de mentira): crea la cuenta si es la primera vez. Devuelve la respuesta completa. */
+    protected MvcResult ingresoGoogle(String credencial, boolean recordar) throws Exception {
+        return enviar("/api/v1/autenticacion/google", Map.of("credencial", credencial, "recordarme", recordar));
+    }
+
+    /**
+     * Entra con Google con ese correo (la cuenta se crea la primera vez como cliente «Ana Pérez»). Si la cuenta aún no
+     * tiene WhatsApp se le pone uno de prueba, como tenían todos los clientes cuando se registraban con formulario.
+     */
+    protected Sesion entrar(String correo, boolean recordar) throws Exception {
+        MvcResult r = ingresoGoogle(credencialGoogle(correo, "Ana", "Pérez"), recordar);
         org.assertj.core.api.Assertions.assertThat(r.getResponse().getStatus()).isEqualTo(200);
-        return sesionDe(r);
+        Sesion sesion = sesionDe(r);
+        String cuerpo = r.getResponse().getContentAsString();
+        Map<String, Object> usuario = JsonPath.read(cuerpo, "$.usuario");
+        // la API omite los campos nulos: sin clave «telefono» es que la cuenta no tiene WhatsApp
+        if ("CLIENTE".equals(usuario.get("rol")) && usuario.get("telefono") == null) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/me")
+                    .header("Authorization", "Bearer " + sesion.token()).contentType(MediaType.APPLICATION_JSON)
+                    .content(json.writeValueAsString(Map.of("nombres", "Ana", "apellidos", "Pérez", "telefono", "3001234567"))))
+                    .andReturn();
+        }
+        return sesion;
     }
 
+    /** Entra con Google con ese correo y deja ese WhatsApp en su perfil (para las pruebas del bot). */
+    protected Sesion entrarConWhatsapp(String correo, String telefono) throws Exception {
+        Sesion sesion = entrar(correo, false);
+        MvcResult r = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/me")
+                .header("Authorization", "Bearer " + sesion.token()).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of("nombres", "Ana", "apellidos", "Pérez", "telefono", telefono)))).andReturn();
+        org.assertj.core.api.Assertions.assertThat(r.getResponse().getStatus()).isEqualTo(200);
+        return sesion;
+    }
+
+    /** El administrador inicial (lo autoriza AdministradorInicial desde el correo del perfil `test`). */
     protected Sesion ingresarAdmin() throws Exception {
-        return ingresar(ADMIN_CORREO, ADMIN_CLAVE, false);
+        return entrar(ADMIN_CORREO, false);
     }
 
-    /** Registra un cliente nuevo y devuelve su sesión. */
+    /** Un cliente nuevo con su sesión. */
     protected Sesion nuevoClienteConSesion() throws Exception {
-        String correo = correoUnico();
-        registrar(correo, CLAVE_VALIDA);
-        return ingresar(correo, CLAVE_VALIDA, false);
+        return entrar(correoUnico(), false);
     }
 
     protected Sesion sesionDe(MvcResult r) throws Exception {

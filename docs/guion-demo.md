@@ -5,7 +5,7 @@ Duración: **10 minutos** (más 2 de preguntas). Pensado para mostrar el flujo c
 ## Antes de empezar (5 minutos, el día anterior y 15 minutos antes)
 
 ```bash
-cp .env.example .env              # una sola vez; define DB_CLAVE, JWT_SECRETO y ADMIN_CLAVE
+cp .env.example .env              # una sola vez; define DB_CLAVE, JWT_SECRETO y ADMIN_CORREO (y GOOGLE_MODO_PRUEBA=true)
 docker compose down -v            # base de datos limpia
 docker compose up --build -d      # sistema completo (db, api, web, correo de pruebas)
 docker compose --profile demo run --rm demo   # carga los datos de demostración (2-3 minutos)
@@ -13,13 +13,15 @@ docker compose --profile demo run --rm demo   # carga los datos de demostración
 
 Abrir en pestañas: la app <http://localhost:8081>, el correo de pruebas <http://localhost:8025> y la documentación de la API <http://localhost:8080/swagger-ui.html>.
 
-| Quién | Correo | Clave |
-|---|---|---|
-| Administrador | el `ADMIN_CORREO` de `.env` | el `ADMIN_CLAVE` de `.env` |
-| Cliente (habilitada para inscribir equipos) | `camila.ortiz@demo.goltime.test` | `Demo2026*` |
-| Cliente | `santiago.rojas@demo.goltime.test` | `Demo2026*` |
+Nadie tiene contraseña: en la pantalla de ingreso (con `GOOGLE_MODO_PRUEBA=true`) escribe el correo y entras.
 
-Los otros 14 clientes usan el patrón `nombre.apellido@demo.goltime.test` con la misma clave. Abre una ventana normal con el administrador y una de incógnito con el cliente: así se ven los dos lados a la vez.
+| Quién | Correo |
+|---|---|
+| Administrador | el `ADMIN_CORREO` de `.env` |
+| Cliente (habilitada para inscribir equipos) | `camila.ortiz@demo.goltime.test` |
+| Cliente | `santiago.rojas@demo.goltime.test` |
+
+Los otros 14 clientes usan el patrón `nombre.apellido@demo.goltime.test` con el mismo ingreso. Abre una ventana normal con el administrador y una de incógnito con el cliente: así se ven los dos lados a la vez.
 
 ## Qué hay cargado
 

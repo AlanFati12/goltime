@@ -1,81 +1,39 @@
 import { describe, expect, it } from 'vitest'
 
-import { esquemaCambioClave, esquemaClave, esquemaRegistro, fortalezaClave } from './validaciones'
+import { esquemaNuevoAdmin, esquemaPerfil } from './validaciones'
 
-const registroValido = {
-  nombres: 'Ana',
-  apellidos: 'Pérez',
-  correo: 'ana@correo.com',
-  telefono: '3001234567',
-  clave: 'Clave1234',
-  confirmacionClave: 'Clave1234',
-  aceptaTerminos: true,
-}
+const perfilValido = { nombres: 'Ana', apellidos: 'Pérez', telefono: '3001234567' }
 
-describe('esquemaClave', () => {
-  it('exige 8 caracteres, una letra y un número', () => {
-    expect(esquemaClave.safeParse('Clave1234').success).toBe(true)
-    expect(esquemaClave.safeParse('corta1').success).toBe(false)
-    expect(esquemaClave.safeParse('sololetrasaqui').success).toBe(false)
-    expect(esquemaClave.safeParse('123456789').success).toBe(false)
-  })
-})
-
-describe('esquemaRegistro', () => {
-  it('acepta un registro válido', () => {
-    expect(esquemaRegistro.safeParse(registroValido).success).toBe(true)
+describe('esquemaPerfil (completar perfil y editarlo)', () => {
+  it('acepta nombres, apellidos y WhatsApp; el documento es opcional', () => {
+    expect(esquemaPerfil.safeParse(perfilValido).success).toBe(true)
+    expect(esquemaPerfil.safeParse({ ...perfilValido, documento: '1075123456' }).success).toBe(true)
   })
 
-  it('rechaza contraseñas que no coinciden', () => {
-    const r = esquemaRegistro.safeParse({ ...registroValido, confirmacionClave: 'Otra12345' })
-    expect(r.success).toBe(false)
-    expect(r.error?.issues[0].path).toEqual(['confirmacionClave'])
-  })
-
-  it('exige aceptar términos y un correo válido', () => {
-    expect(esquemaRegistro.safeParse({ ...registroValido, aceptaTerminos: false }).success).toBe(
-      false,
-    )
-    expect(esquemaRegistro.safeParse({ ...registroValido, correo: 'no-es-correo' }).success).toBe(
-      false,
-    )
-  })
   it('exige el WhatsApp y lo entrega con indicativo', () => {
-    const r = esquemaRegistro.safeParse({ ...registroValido, telefono: '300 123 4567' })
+    const r = esquemaPerfil.safeParse({ ...perfilValido, telefono: '300 123 4567' })
     expect(r.success && r.data.telefono).toBe('+573001234567')
-    expect(esquemaRegistro.safeParse({ ...registroValido, telefono: '' }).success).toBe(false)
-    expect(esquemaRegistro.safeParse({ ...registroValido, telefono: '8712345' }).success).toBe(
-      false,
-    )
+    expect(esquemaPerfil.safeParse({ ...perfilValido, telefono: '' }).success).toBe(false)
+    expect(esquemaPerfil.safeParse({ ...perfilValido, telefono: '8712345' }).success).toBe(false)
+  })
+
+  it('exige los apellidos (Google no siempre los da)', () => {
+    expect(esquemaPerfil.safeParse({ ...perfilValido, apellidos: '  ' }).success).toBe(false)
   })
 })
 
-describe('esquemaCambioClave', () => {
-  it('valida la política y la confirmación', () => {
+describe('esquemaNuevoAdmin', () => {
+  it('autoriza a una persona solo con su nombre y el correo de su cuenta de Google', () => {
     expect(
-      esquemaCambioClave.safeParse({
-        claveActual: 'x',
-        claveNueva: 'Nueva5678',
-        confirmacion: 'Nueva5678',
+      esquemaNuevoAdmin.safeParse({
+        nombres: 'Luisa',
+        apellidos: 'Rojas',
+        correo: 'luisa@gmail.com',
       }).success,
     ).toBe(true)
     expect(
-      esquemaCambioClave.safeParse({
-        claveActual: 'x',
-        claveNueva: 'Nueva5678',
-        confirmacion: 'distinta1',
-      }).success,
+      esquemaNuevoAdmin.safeParse({ nombres: 'Luisa', apellidos: 'Rojas', correo: 'no-es-correo' })
+        .success,
     ).toBe(false)
-  })
-})
-
-describe('fortalezaClave', () => {
-  it('sube el puntaje con la variedad y la longitud', () => {
-    expect(fortalezaClave('').puntaje).toBe(0)
-    expect(fortalezaClave('abc').puntaje).toBeLessThan(fortalezaClave('Clave1234').puntaje)
-    expect(fortalezaClave('Clave1234').puntaje).toBeLessThan(
-      fortalezaClave('Clave1234!Larga').puntaje,
-    )
-    expect(fortalezaClave('Clave1234!Larga').etiqueta).toBe('Excelente')
   })
 })

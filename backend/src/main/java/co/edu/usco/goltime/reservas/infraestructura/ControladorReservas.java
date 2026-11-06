@@ -19,6 +19,7 @@ import co.edu.usco.goltime.compartido.aplicacion.ContextoActual;
 import co.edu.usco.goltime.compartido.dominio.Actor;
 import co.edu.usco.goltime.compartido.dominio.CodigoError;
 import co.edu.usco.goltime.compartido.dominio.ExcepcionNegocio;
+import co.edu.usco.goltime.usuarios.aplicacion.ServicioPerfil;
 import co.edu.usco.goltime.compartido.dominio.Pagina;
 import co.edu.usco.goltime.compartido.dominio.SolicitudPagina;
 import co.edu.usco.goltime.reservas.aplicacion.RepositorioReservas.PestanaReservas;
@@ -44,10 +45,12 @@ public class ControladorReservas {
 
     private final ServicioReservas reservas;
     private final ContextoActual contexto;
+    private final ServicioPerfil perfiles;
 
-    public ControladorReservas(ServicioReservas reservas, ContextoActual contexto) {
+    public ControladorReservas(ServicioReservas reservas, ContextoActual contexto, ServicioPerfil perfiles) {
         this.reservas = reservas;
         this.contexto = contexto;
+        this.perfiles = perfiles;
     }
 
     @PostMapping("/reservas")
@@ -57,6 +60,11 @@ public class ControladorReservas {
     public ResponseEntity<RespuestaReserva> solicitar(@Valid @RequestBody SolicitudReserva s,
             @RequestHeader(value = "Idempotency-Key", required = false) String claveIdempotencia) {
         Actor actor = actor();
+        // Con Google no se piden el WhatsApp ni el apellido al entrar: sin ellos no se puede reservar.
+        if (!perfiles.obtener(actor.id()).perfilCompleto()) {
+            throw new ExcepcionNegocio(CodigoError.PERFIL_INCOMPLETO,
+                    "Completa tu perfil (tu WhatsApp y tus apellidos) antes de solicitar una reserva.");
+        }
         ResultadoSolicitud resultado = reservas.solicitar(actor.id(), s.canchaId(), s.inicio(), s.fin(), s.nombreEquipo(), s.notas(), claveIdempotencia, s.codigoPromocion(), s.premioId());
         return ResponseEntity.status(resultado.creada() ? HttpStatus.CREATED : HttpStatus.OK).body(MapeadorReservas.aRespuesta(resultado.vista()));
     }

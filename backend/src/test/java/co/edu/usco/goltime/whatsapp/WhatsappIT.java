@@ -84,16 +84,14 @@ class WhatsappIT extends BaseTorneosIT {
     /** Registra un cliente (con otro teléfono) y devuelve su correo. */
     private String registrarCliente() throws Exception {
         String correoNuevo = correoUnico();
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoNuevo, CLAVE_VALIDA));
-        datos.put("telefono", celular());
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
+        entrarConWhatsapp(correoNuevo, celular());
         return correoNuevo;
     }
 
     /** El código que el cliente genera en su perfil de la web. */
     private String codigoDelPerfil(String correoCuenta) throws Exception {
         MvcResult r = mvc.perform(post("/api/v1/me/whatsapp/codigo")
-                .header("Authorization", "Bearer " + ingresar(correoCuenta, CLAVE_VALIDA, false).token())).andReturn();
+                .header("Authorization", "Bearer " + entrar(correoCuenta, false).token())).andReturn();
         esperarEstado(r, 200);
         return leer(r, "$.codigo");
     }
@@ -199,7 +197,7 @@ class WhatsappIT extends BaseTorneosIT {
         esperarEstado(creada, 201);
         assertThat(jdbc.queryForObject("SELECT cliente_id FROM reservas WHERE codigo = ?", Long.class, codigoDe(creada))).isEqualTo(clienteId);
         // también aparece en «Mis reservas» de la web
-        Sesion web = ingresar(jdbc.queryForObject("SELECT correo FROM usuarios WHERE id = ?", String.class, clienteId), CLAVE_VALIDA, false);
+        Sesion web = entrar(jdbc.queryForObject("SELECT correo FROM usuarios WHERE id = ?", String.class, clienteId), false);
         assertThat((List<String>) leer(obtener("/api/v1/me/reservas", web.token()), "$.contenido[*].codigo")).contains(codigoDe(creada));
 
         // reprogramar: primero se previsualiza, luego se mueve
@@ -216,9 +214,8 @@ class WhatsappIT extends BaseTorneosIT {
     @Test
     void unaCuentaSinVincularNoReservaHastaVincularYUnaDesactivadaNoUsaElBot() throws Exception {
         String numero = celular();
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        datos.put("telefono", numero);
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
+        String correoCuenta = correoUnico();
+        entrarConWhatsapp(correoCuenta, numero);
 
         assertThat((String) leer(bot(get(BASE + "/contexto"), numero, null), "$.situacion")).isEqualTo("SIN_VERIFICAR");
         MvcResult r = reservar(numero, diaHabil(6), "19:00", "20:00", "Ana", null);
@@ -307,10 +304,7 @@ class WhatsappIT extends BaseTorneosIT {
 
         // un cliente de la web con el número sin vincular: el aviso queda en la web, no va por WhatsApp
         String sinVincular = celular();
-        Map<String, Object> datos = new HashMap<>(datosRegistro(correoUnico(), CLAVE_VALIDA));
-        datos.put("telefono", sinVincular);
-        esperarEstado(enviar("/api/v1/autenticacion/registrar", datos), 201);
-        Sesion web = ingresar((String) datos.get("correo"), CLAVE_VALIDA, false);
+        Sesion web = entrarConWhatsapp(correoUnico(), sinVincular);
         long deLaWeb = solicitarOk(web.token(), canchaId, diaHabil(8), "20:00", "21:00");
         aprobar(admin, deLaWeb);
         verify(enviador, after(1500).never()).enviar(argThat(a -> a.numero().equals(sinVincular)));
@@ -377,7 +371,7 @@ class WhatsappIT extends BaseTorneosIT {
         esperarEstado(creada, 201);
         assertThat(jdbc.queryForObject("SELECT cliente_id FROM reservas WHERE codigo = ?", Long.class, codigoDe(creada))).isEqualTo(clienteId);
         // el perfil lo muestra como vinculado aunque el teléfono siga sin verificar
-        Sesion web = ingresar(correoCuenta, CLAVE_VALIDA, false);
+        Sesion web = entrar(correoCuenta, false);
         assertThat((Boolean) leer(obtener("/api/v1/me", web.token()), "$.whatsappVinculado")).isTrue();
 
         // el aviso va al chat @lid (su teléfono no está verificado)

@@ -29,6 +29,8 @@ public enum CodigoError {
     CORREO_YA_REGISTRADO(409),
     TELEFONO_YA_REGISTRADO(409),
     TOKEN_INVALIDO(400),
+    /** El cliente entró con Google pero aún no completó los datos que Google no da (WhatsApp, apellidos). */
+    PERFIL_INCOMPLETO(409),
     SESION_INVALIDA(401),
     DEMASIADOS_INTENTOS(429),
     /** El número escribió al bot pero pertenece a una cuenta que aún no lo ha vinculado (ADR 0018). */

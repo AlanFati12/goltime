@@ -103,21 +103,20 @@ goltime:
     acceso-minutos: 15
     refresco-dias: 7          # sesión con "recordarme"
     refresco-sesion-horas: 12 # sesión sin "recordarme"
-    intentos-maximos: 5       # fallos de login antes del bloqueo temporal
-    bloqueo-minutos: 15
-    verificacion-correo-obligatoria: ${VERIFICACION_CORREO_OBLIGATORIA:false}
     url-publica: ${URL_PUBLICA:http://localhost:8081}
   limite-tasa:
     ingreso-por-minuto: 10
-    registro-por-hora: 10
-    recuperacion-por-hora: 5
   cors:
     origenes-permitidos: ${CORS_ORIGENES:http://localhost:5173}
   correo:
     remitente: ${CORREO_REMITENTE:no-responder@goltime.local}
   administrador-inicial:
     correo: ${ADMIN_CORREO:}
-    clave: ${ADMIN_CLAVE:}
+  # Ingreso con Google (ADR 0023). El ID de cliente es público; no hay secreto que guardar.
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    # Solo desarrollo: acepta credenciales de mentira. Con el perfil prod la aplicación no arranca si está activo.
+    modo-prueba: ${GOOGLE_MODO_PRUEBA:false}
   almacenamiento:
     directorio: ${DIRECTORIO_ARCHIVOS:./uploads}
   swagger:

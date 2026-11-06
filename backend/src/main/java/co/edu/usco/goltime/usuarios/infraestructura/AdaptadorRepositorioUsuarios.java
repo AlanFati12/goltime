@@ -34,6 +34,11 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
     }
 
     @Override
+    public Optional<Usuario> buscarPorGoogleSub(String sub) {
+        return jpa.findByGoogleSub(sub).map(AdaptadorRepositorioUsuarios::aDominio);
+    }
+
+    @Override
     public Optional<Usuario> buscarPorCorreo(String correo) {
         return jpa.buscarPorCorreo(correo.trim()).map(AdaptadorRepositorioUsuarios::aDominio);
     }
@@ -111,7 +116,7 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
         e.setTelefonoVerificado(u.telefonoVerificado());
         e.setWhatsappLid(u.whatsappLid());
         e.setDocumento(u.documento());
-        e.setClaveHash(u.claveHash());
+        e.setGoogleSub(u.googleSub());
         e.setActivo(u.activo());
         e.setCorreoVerificado(u.correoVerificado());
         e.setMotivoDesactivacion(u.motivoDesactivacion());
@@ -125,7 +130,7 @@ class AdaptadorRepositorioUsuarios implements RepositorioUsuarios {
 
     static Usuario aDominio(UsuarioEntidad e) {
         return Usuario.reconstruir(e.getId(), e.getNombres(), e.getApellidos(), e.getCorreo(), e.getTelefono(),
-                e.isTelefonoVerificado(), e.getWhatsappLid(), e.getDocumento(), e.getClaveHash(), e.getRol(), e.isActivo(), e.isCorreoVerificado(),
+                e.isTelefonoVerificado(), e.getWhatsappLid(), e.getDocumento(), e.getGoogleSub(), e.getRol(), e.isActivo(), e.isCorreoVerificado(),
                 e.getMotivoDesactivacion(), e.getDesactivadoPor(), e.getFechaDesactivacion(), e.getVersionToken(),
                 e.getUltimoLogin(), e.getAceptoTerminosEn(), e.isPuedeInscribirEquipos(), e.getCreadoEn());
     }

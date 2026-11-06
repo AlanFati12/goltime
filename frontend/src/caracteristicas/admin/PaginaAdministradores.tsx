@@ -7,7 +7,6 @@ import { avisar } from '@/componentes/ui/almacenAvisos'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo } from '@/componentes/ui/Campo'
 import { Cargando } from '@/componentes/ui/Cargando'
-import { IndicadorClave } from '@/componentes/ui/IndicadorClave'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { mensajeDeError } from '@/lib/api'
@@ -21,7 +20,6 @@ export function PaginaAdministradores() {
   const {
     register,
     handleSubmit,
-    watch,
     reset,
     formState: { errors },
   } = useForm<DatosNuevoAdmin>({ resolver: zodResolver(esquemaNuevoAdmin) })
@@ -29,7 +27,7 @@ export function PaginaAdministradores() {
   const alEnviar = handleSubmit((datos) =>
     crear.mutate(datos, {
       onSuccess: (u) => {
-        avisar.exito(`Administrador ${nombreCompleto(u)} creado.`)
+        avisar.exito(`${nombreCompleto(u)} quedó autorizado como administrador.`)
         reset()
       },
       onError: (e) => avisar.error(mensajeDeError(e)),
@@ -40,7 +38,7 @@ export function PaginaAdministradores() {
     <div className="flex flex-col gap-6">
       <EncabezadoPagina
         titulo="Administradores"
-        descripcion="Personas con acceso completo al panel."
+        descripcion="Personas con acceso completo al panel. Entran con su cuenta de Google."
       />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
@@ -66,7 +64,10 @@ export function PaginaAdministradores() {
         </div>
 
         <Tarjeta className="h-fit">
-          <TituloTarjeta titulo="Crear administrador" />
+          <TituloTarjeta
+            titulo="Autorizar administrador"
+            descripcion="Escribe el correo de su cuenta de Google: al entrar con él tendrá acceso al panel."
+          />
           <form onSubmit={alEnviar} noValidate className="flex flex-col gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Campo etiqueta="Nombres" error={errors.nombres?.message} {...register('nombres')} />
@@ -82,18 +83,8 @@ export function PaginaAdministradores() {
               error={errors.correo?.message}
               {...register('correo')}
             />
-            <div className="flex flex-col gap-2">
-              <Campo
-                etiqueta="Contraseña inicial"
-                type="password"
-                autoComplete="new-password"
-                error={errors.clave?.message}
-                {...register('clave')}
-              />
-              <IndicadorClave clave={watch('clave') ?? ''} />
-            </div>
             <Boton type="submit" disabled={crear.isPending} className="self-start">
-              {crear.isPending ? 'Creando…' : 'Crear administrador'}
+              {crear.isPending ? 'Autorizando…' : 'Autorizar administrador'}
             </Boton>
           </form>
         </Tarjeta>
