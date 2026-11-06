@@ -1,14 +1,16 @@
 import { ArrowLeft } from 'lucide-react'
 
 import { EnlaceBoton } from '@/componentes/ui/EnlaceBoton'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 /** 404 con el lenguaje de la cancha: la página quedó en fuera de lugar. */
 export function PaginaNoEncontrada() {
   return (
     <section className="bg-noche relative isolate flex min-h-[70svh] flex-col items-center justify-center gap-6 overflow-hidden rounded-[2rem] px-6 py-20 text-center text-white">
-      <img
+      <ImagenSitio
         src="/img/arco-niebla.webp"
         alt=""
+        prioridad
         className="absolute inset-0 -z-10 size-full object-cover opacity-35"
       />
       <div className="from-noche via-noche/70 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

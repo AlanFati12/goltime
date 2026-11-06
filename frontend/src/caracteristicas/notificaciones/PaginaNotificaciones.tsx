@@ -39,7 +39,7 @@ export function PaginaNotificaciones() {
           </Boton>
         }
       />
-      {isPending && <Cargando />}
+      {isPending && <Cargando variante="lista" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.contenido.length === 0 && (
         <EstadoVacio icono={BellOff} titulo="No tienes notificaciones" />

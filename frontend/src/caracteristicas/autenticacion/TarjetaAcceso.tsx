@@ -2,6 +2,7 @@ import { CalendarCheck, Gift, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 const VENTAJAS = [
   { icono: CalendarCheck, texto: 'Reserva en línea y sigue el estado de tus solicitudes.' },
@@ -29,9 +30,10 @@ export function TarjetaAcceso({
   return (
     <div className="grid min-h-[calc(100svh-72px)] lg:grid-cols-[1fr_1.05fr]">
       <aside className="bg-noche relative isolate flex min-h-56 flex-col justify-end overflow-hidden p-6 text-white sm:p-10 lg:min-h-0 lg:p-14">
-        <img
+        <ImagenSitio
           src="/img/reflector.webp"
           alt=""
+          prioridad
           className="animate-acercar absolute inset-0 -z-10 size-full object-cover opacity-80 motion-reduce:animate-none"
         />
         <div className="from-noche via-noche/70 absolute inset-0 -z-10 bg-gradient-to-t to-transparent" />

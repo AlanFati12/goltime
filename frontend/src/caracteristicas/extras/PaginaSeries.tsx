@@ -281,7 +281,7 @@ export function PaginaSeries() {
       <FormularioSerie />
       <Tarjeta className="flex flex-col gap-3">
         <h2 className="text-xl font-extrabold uppercase">Series creadas</h2>
-        {isPending && <Cargando texto="Cargando series…" />}
+        {isPending && <Cargando texto="Cargando series…" variante="lista" />}
         {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
         {data?.length === 0 && (
           <p className="text-texto-suave py-6 text-center text-sm">Aún no hay series.</p>

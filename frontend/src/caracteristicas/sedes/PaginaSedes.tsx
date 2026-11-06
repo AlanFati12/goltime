@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 
 import { useSedesPublicas } from './consultas'
 import { horarioDeHoy, modalidadesDe, precioDesde } from './horario'
+import { ImagenSitio } from '@/componentes/ui/ImagenSitio'
 
 export function PaginaSedes() {
   const { data, isPending, isError, error } = useSedesPublicas()
@@ -41,10 +42,10 @@ export function PaginaSedes() {
                 className="group bg-superficie border-borde/80 hover:shadow-flotante grid overflow-hidden rounded-[2rem] border transition-[border-color,box-shadow] duration-300 hover:border-transparent md:grid-cols-[1.1fr_1fr]"
               >
                 <div className="bg-tenue relative aspect-[16/10] overflow-hidden md:aspect-auto md:min-h-80">
-                  <img
+                  <ImagenSitio
                     src={s.fotos[0]?.url ?? '/img/cancha-aerea.webp'}
                     alt={`Sede ${s.nombre}`}
-                    loading="lazy"
+                    sizes="(min-width: 768px) 55vw, 100vw"
                     className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-salida)] group-hover:scale-105"
                   />
                 </div>

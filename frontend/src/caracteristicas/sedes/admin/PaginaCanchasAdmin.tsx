@@ -58,7 +58,7 @@ export function PaginaCanchasAdmin() {
         </CampoSelect>
       </Tarjeta>
 
-      {isPending && <Cargando texto="Cargando canchas…" />}
+      {isPending && <Cargando texto="Cargando canchas…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && <EstadoVacio icono={Flag} titulo="No hay canchas en esta selección" />}
       {data && data.length > 0 && (

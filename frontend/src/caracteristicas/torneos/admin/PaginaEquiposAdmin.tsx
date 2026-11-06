@@ -116,7 +116,7 @@ export function PaginaEquiposAdmin() {
           Mostrar desactivados
         </label>
       </Tarjeta>
-      {isPending && <Cargando texto="Cargando equipos…" />}
+      {isPending && <Cargando texto="Cargando equipos…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && <EstadoVacio icono={Shirt} titulo="No hay equipos" />}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

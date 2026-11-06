@@ -113,7 +113,7 @@ export function PaginaTorneos() {
         actual={grupo}
         alCambiar={setGrupo}
       />
-      {isPending && <Cargando texto="Cargando torneos…" />}
+      {isPending && <Cargando texto="Cargando torneos…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data && lista.length === 0 && (
         <EstadoVacio icono={Trophy} titulo="No hay torneos en esta categoría" />

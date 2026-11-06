@@ -45,7 +45,7 @@ export function PaginaTorneosAdmin() {
           ))}
         </CampoSelect>
       </Tarjeta>
-      {isPending && <Cargando texto="Cargando torneos…" />}
+      {isPending && <Cargando texto="Cargando torneos…" variante="tarjetas" />}
       {isError && <Alerta tipo="error">{mensajeDeError(error)}</Alerta>}
       {data?.length === 0 && <EstadoVacio icono={Trophy} titulo="No hay torneos" />}
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -128,7 +128,6 @@
     from {
       opacity: 0;
       transform: translateY(32px);
-      filter: blur(8px);
     }
   }
 
@@ -328,14 +327,12 @@
   .revelar {
     transition:
       opacity 700ms var(--ease-salida),
-      transform 900ms var(--ease-salida),
-      filter 700ms var(--ease-salida);
+      transform 900ms var(--ease-salida);
     transition-delay: calc(var(--i, 0) * 80ms);
   }
   :where(html.js) .revelar:not(.visible) {
     opacity: 0;
     transform: translateY(28px);
-    filter: blur(6px);
   }
   /* Revelado de imágenes: se descubren de abajo hacia arriba, como una luz que se enciende. */
   .revelar-imagen {
@@ -355,7 +352,6 @@
     }
     :where(html.js) .revelar:not(.visible) {
       transform: none;
-      filter: none;
     }
     :where(html.js) .revelar-contenedor:not(.visible) > .revelar-imagen {
       clip-path: inset(0 0 0 0);
@@ -391,6 +387,12 @@
     opacity: 0.07;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     mix-blend-mode: overlay;
+  }
+  /* En pantallas pequeñas el grano obliga a mezclar capas sobre la foto en cada cuadro: no vale su costo. */
+  @media (max-width: 1023px) {
+    .grano::after {
+      display: none;
+    }
   }
 }
 
