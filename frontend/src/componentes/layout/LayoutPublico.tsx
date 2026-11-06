@@ -243,7 +243,9 @@ export function LayoutPublico() {
       <main
         id="contenido"
         className={cn(
-          'flex-1',
+          // Alto mínimo de una pantalla: el pie (muy alto) arranca siempre fuera de la vista y no se ve «saltar»
+          // cuando el contenido pasa del esqueleto al real.
+          'min-h-svh flex-1',
           esInicio ? '' : esAcceso ? 'pt-[72px]' : 'contenedor pt-[104px] pb-16 sm:pt-[120px]',
         )}
       >
