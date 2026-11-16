@@ -40,3 +40,22 @@
 - **Qué se verificó:** 66 pruebas, lint sin errores, build, y revisión en <http://localhost:8081> en claro y oscuro (portada, sedes, reservar, torneo, promociones, ingreso), escritorio y móvil; el tema se mantiene al recargar.
 - **Revisión antes de fusionar:** se corrigieron tres errores del rediseño (la barra de carga parpadeaba con los refrescos automáticos, el menú móvil no se cerraba al navegar con el logo y la portada ofrecía «Mis premios» al administrador). `mvn verify` falló en 2 de 356 pruebas por un error de las propias pruebas: `diaHabil(n)` corría el domingo al lunes, así que `diaHabil(20)` y `diaHabil(21)` caían el mismo día según el día de la semana en que se corrieran y la segunda reserva chocaba (409). Ahora cuenta días hábiles; 356 de 356 pasan.
 - **Pendiente para el equipo:** revisar el panel de administración y las pantallas del cliente con sesión (las claves de prueba están en `.env`), y HTTPS al desplegar en el VPS (ver `docs/seguridad.md`).
+
+## Video promocional para INNOVASOFT IX (16/nov/2026)
+
+- **Prompt:** brief de director creativo para producir de principio a fin un video de 60 s con motion graphics (guion, locución, animación, música, efectos y archivo final). La estructura es la de la categoría «Proyecto de software finalizado» (problema y ODS, solución, prototipo funcional, resultados y cierre), con la paleta «Partido nocturno», el logo real, una voz es-CO, la app grabada funcionando y solo cifras verificadas.
+- **Resultado:** proyecto aparte, fuera del repositorio (Remotion + Playwright + Python), con el video final, sus supuestos y créditos, el guion final y los tiempos por palabra. Ver [ADR 0024](../decisiones/0024-video-promocional.md).
+- **Controles:**
+  - La app se grabó en una copia aislada (`goltime-video`), sin tocar la base de desarrollo, con un administrador de demostración en lugar del correo real.
+  - Los teléfonos de los clientes de demostración se enmascararon.
+  - Las cifras del video salen de ejecutar las pruebas ese mismo día, no de una búsqueda de texto.
+  - Se descargaron los íconos oficiales de los ODS 9 y 8 (un.org); la música y los efectos son sintetizados.
+- **Qué se verificó:**
+  - `mvn verify`: 413 de 413, BUILD SUCCESS.
+  - `npm test`: 102 de 102; lint sin errores; build correcto.
+  - Render: 1800 cuadros a 1920×1080 y 30 fps, −14,8 LUFS y pico de −1,8 dBFS.
+  - Revisión de fotogramas cada 0,5 s. Se corrigieron un dispositivo que entraba en blanco, el zoom que cortaba texto en el celular, anillos que no se apagaban, un contador que rodaba también el total y el logo de Mailpit en cuadro.
+- **Pendiente para el equipo:**
+  - Escuchar la pronunciación de «Goltime», «ODS» y «WhatsApp».
+  - Confirmar el ODS con el docente.
+  - Aclarar la fecha del evento (el brief dice 26/nov y las reglas de trabajo del proyecto, 19/nov).
