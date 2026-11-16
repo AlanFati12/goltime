@@ -59,3 +59,8 @@
   - Escuchar la pronunciación de «Goltime», «ODS» y «WhatsApp».
   - Confirmar el ODS con el docente.
   - Aclarar la fecha del evento (el brief dice 26/nov y las reglas de trabajo del proyecto, 19/nov).
+- **Segunda vuelta (16/nov/2026):** el equipo pidió una voz menos robótica y mostrar el aviso por WhatsApp en vez del correo, que Goltime no usa para eso.
+  - **Voz:** sin claves de ElevenLabs ni OpenAI, se probaron las voces «Multilingual» de edge-tts. El equipo escuchó cinco muestras y eligió Brian.
+  - **Aviso:** la escena de Mailpit se cambió por un celular con un chat simulado, con el texto real del aviso y el indicador «AVISO SIMULADO».
+  - **Ajuste de la voz:** se quitaron comas solo en el texto leído para controlar las pausas de la voz nueva.
+  - **Verificación:** render de 1800 cuadros, −15,3 LUFS y pico de −1,7 dBFS, con hojas de contacto revisadas cada 0,5 s.

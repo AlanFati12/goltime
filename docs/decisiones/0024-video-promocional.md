@@ -8,6 +8,7 @@
   3. **App real grabada, no maquetas**:
      - Playwright sobre una copia aislada de Goltime (proyecto compose `goltime-video`, volúmenes propios, datos de demostración y administrador `admin@demo.goltime.test`).
      - Captura a resolución completa grabando 1,5 veces más lento y acelerando después, porque el video de Playwright es VP8 de baja tasa y el screencast de Chrome ignora la densidad de píxeles.
-  4. **Voz con edge-tts** (`es-CO-SalomeNeural`) por frases, con tiempos por palabra. **Música y efectos sintetizados** con NumPy/SciPy: no hay material de terceros que licenciar.
-  5. **Cifras solo verificadas** y guardadas en `src/datos/resultados.json`, con la salida de las pruebas que las respalda.
+  4. **Voz con edge-tts** por frases, con tiempos por palabra. Se usa `en-US-BrianMultilingualNeural` (Copilot, más natural); el equipo la eligió entre cinco muestras porque `es-CO-SalomeNeural` sonaba robótica. **Música y efectos sintetizados** con NumPy/SciPy: no hay material de terceros que licenciar.
+  5. **El aviso de WhatsApp se simula** (un chat dibujado en Remotion con el texto real de `AvisosWhatsapp`), marcado en pantalla como «AVISO SIMULADO»: Goltime avisa por WhatsApp y no por correo, y no se quiso grabar un WhatsApp real. Es la única parte del prototipo que no es grabación.
+  6. **Cifras solo verificadas** y guardadas en `src/datos/resultados.json`, con la salida de las pruebas que las respalda.
 - Consecuencias: el video se rehace con `npm run voz`, `npm run grabar`, `npm run audio` y `npm run render`. Si la interfaz cambia, hay que volver a grabar y revisar las coordenadas de cámara y anillos de `escenas.json`. Los supuestos y créditos se guardan con el proyecto del video, fuera del repositorio.
