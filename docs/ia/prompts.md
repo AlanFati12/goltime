@@ -64,3 +64,8 @@
   - **Aviso:** la escena de Mailpit se cambió por un celular con un chat simulado, con el texto real del aviso y el indicador «AVISO SIMULADO».
   - **Ajuste de la voz:** se quitaron comas solo en el texto leído para controlar las pausas de la voz nueva.
   - **Verificación:** render de 1800 cuadros, −15,3 LUFS y pico de −1,7 dBFS, con hojas de contacto revisadas cada 0,5 s.
+- **Tercera vuelta (16/nov/2026):** el equipo notó que «Digitalizarlo es innovación» sonaba a otro idioma y que «WhatsApp» sonaba «whatsap-pe»; además pidió quitar «ODS 9» de la voz.
+  - **Verificación con Whisper:** se instaló Whisper local (`voz/verificar_voz.py`). Confirmó que esa frase salía en alemán.
+  - **Frase nueva:** «Es hora de llevar este servicio a lo digital.» (español al 100 %).
+  - **WhatsApp:** se escribe tal cual, porque «guatsáp» alargaba la palabra.
+  - **ODS:** se mantiene solo en pantalla, porque la rúbrica lo exige.
